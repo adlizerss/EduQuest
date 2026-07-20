@@ -88,6 +88,14 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
   const [studentImportSuccess, setStudentImportSuccess] = useState<number | null>(null);
   const [studentImportError, setStudentImportError] = useState('');
 
+  // Student manual account creation states
+  const [manualStudentName, setManualStudentName] = useState('');
+  const [manualStudentClass, setManualStudentClass] = useState('X MIPA 1');
+  const [manualStudentAbsen, setManualStudentAbsen] = useState('');
+  const [manualStudentNis, setManualStudentNis] = useState('');
+  const [manualStudentSuccess, setManualStudentSuccess] = useState(false);
+  const [manualStudentError, setManualStudentError] = useState('');
+
   const handleDownloadTemplate = () => {
     sound.playClick();
     const headers = [
@@ -561,6 +569,53 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
         sound.playDamage();
         loadStudents();
       }
+    }
+  };
+
+  const handleAddManualStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setManualStudentSuccess(false);
+    setManualStudentError('');
+
+    if (!manualStudentName.trim()) {
+      setManualStudentError('Nama siswa tidak boleh kosong.');
+      sound.playDamage();
+      return;
+    }
+    if (!manualStudentClass.trim()) {
+      setManualStudentError('Kelas tidak boleh kosong.');
+      sound.playDamage();
+      return;
+    }
+    if (!manualStudentAbsen.trim()) {
+      setManualStudentError('Nomor absen tidak boleh kosong.');
+      sound.playDamage();
+      return;
+    }
+
+    const newStudent: StudentAccount = {
+      student_name: manualStudentName.trim(),
+      class_name: manualStudentClass.trim(),
+      attendance_num: manualStudentAbsen.trim(),
+      nis: manualStudentNis.trim() || undefined
+    };
+
+    try {
+      sound.playSpell();
+      const success = await addStudent(newStudent);
+      if (success) {
+        setManualStudentSuccess(true);
+        setManualStudentName('');
+        setManualStudentAbsen('');
+        setManualStudentNis('');
+        loadStudents();
+      } else {
+        setManualStudentError('Gagal menambahkan akun murid ke database.');
+        sound.playDamage();
+      }
+    } catch (err: any) {
+      setManualStudentError(err.message || 'Terjadi kesalahan sistem.');
+      sound.playDamage();
     }
   };
 
@@ -1931,6 +1986,106 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                         >
                           <Copy className="w-3.5 h-3.5" /> Unduh Template Excel Siswa
                         </button>
+                      </div>
+                    </div>
+
+                    {/* Tambah Murid Manual Card */}
+                    <div className="glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl flex flex-col justify-between font-sans">
+                      <div>
+                        <h2 className="text-lg font-bold text-white font-display flex items-center gap-2 mb-1">
+                          <PlusCircle className="w-5 h-5 text-indigo-400" />
+                          Tambah Murid Manual
+                        </h2>
+                        <p className="text-xs text-slate-400 mb-4">
+                          Masukkan data murid secara individu untuk didaftarkan langsung ke database.
+                        </p>
+
+                        <form onSubmit={handleAddManualStudent} className="space-y-3.5 text-xs text-slate-300">
+                          {/* Nama */}
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                              Nama Lengkap Murid
+                            </label>
+                            <input
+                              type="text"
+                              value={manualStudentName}
+                              onChange={(e) => setManualStudentName(e.target.value)}
+                              placeholder="Nama lengkap..."
+                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-indigo-500 transition placeholder:text-slate-800"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            {/* Kelas */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                                Kelas
+                              </label>
+                              <select
+                                value={manualStudentClass}
+                                onChange={(e) => setManualStudentClass(e.target.value)}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none cursor-pointer focus:border-indigo-500 transition"
+                              >
+                                {[
+                                  'X MIPA 1', 'X MIPA 2', 'X IPS 1', 'X IPS 2',
+                                  'XI MIPA 1', 'XI MIPA 2', 'XI IPS 1', 'XI IPS 2',
+                                  'XII MIPA 1', 'XII MIPA 2', 'XII IPS 1', 'XII IPS 2',
+                                ].map(cls => (
+                                  <option key={cls} value={cls} className="bg-slate-950 text-white">{cls}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Nomor Absen */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                                Nomor Absen
+                              </label>
+                              <input
+                                type="text"
+                                maxLength={2}
+                                value={manualStudentAbsen}
+                                onChange={(e) => setManualStudentAbsen(e.target.value.replace(/\D/g, ''))}
+                                placeholder="01"
+                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-indigo-500 transition text-center font-bold placeholder:text-slate-800"
+                              />
+                            </div>
+                          </div>
+
+                          {/* NIS */}
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                              NIS (Nomor Induk Siswa - Opsional)
+                            </label>
+                            <input
+                              type="text"
+                              value={manualStudentNis}
+                              onChange={(e) => setManualStudentNis(e.target.value)}
+                              placeholder="212210001"
+                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-indigo-500 transition placeholder:text-slate-800"
+                            />
+                          </div>
+
+                          {/* Alerts */}
+                          {manualStudentSuccess && (
+                            <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl font-bold">
+                              ✓ Murid berhasil didaftarkan!
+                            </div>
+                          )}
+
+                          {manualStudentError && (
+                            <div className="p-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl font-bold">
+                              ⚠️ {manualStudentError}
+                            </div>
+                          )}
+
+                          <button
+                            type="submit"
+                            className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-indigo-500/10 text-xs uppercase tracking-wider"
+                          >
+                            <PlusCircle className="w-4 h-4" /> Daftarkan Murid
+                          </button>
+                        </form>
                       </div>
                     </div>
                   </div>
