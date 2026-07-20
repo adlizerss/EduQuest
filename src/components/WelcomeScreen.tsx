@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { BookOpen, User, Hash, School, Play, Lock, AlertTriangle, Shield, Sparkles, FolderOpen } from 'lucide-react';
 import { motion } from 'motion/react';
 import sound from '../utils/audio';
-import { QuizQuestion } from '../types';
+import { QuizQuestion, StudentAccount } from '../types';
 
 interface WelcomeScreenProps {
   onStartGame: (name: string, attendanceNum: string, className: string, category: string) => void;
   onGoToAdmin: () => void;
   quizzes: QuizQuestion[];
+  students: StudentAccount[];
 }
 
-export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes }: WelcomeScreenProps) {
+export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, students }: WelcomeScreenProps) {
   const [name, setName] = useState('');
   const [attendanceNum, setAttendanceNum] = useState('');
   const [className, setClassName] = useState('X MIPA 1');
@@ -42,6 +43,25 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes }: Wel
       setError('Folder / paket kuis terpilih tidak memiliki soal! Silakan pilih paket kuis lain.');
       sound.playDamage();
       return;
+    }
+
+    // Validate registered student account if the list is not empty
+    if (students && students.length > 0) {
+      const formattedName = name.trim().toLowerCase();
+      const formattedClass = className.trim().toLowerCase();
+      const formattedAbsen = String(Number(attendanceNum));
+
+      const found = students.find(s => 
+        s.student_name.trim().toLowerCase() === formattedName &&
+        s.class_name.trim().toLowerCase() === formattedClass &&
+        String(Number(s.attendance_num)) === formattedAbsen
+      );
+
+      if (!found) {
+        setError('Nama, kelas, atau nomor absen Anda tidak terdaftar sebagai murid! Silakan hubungi Guru Anda.');
+        sound.playDamage();
+        return;
+      }
     }
 
     setError('');

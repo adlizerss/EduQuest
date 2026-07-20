@@ -6,11 +6,11 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
-import { QuizQuestion, StudentResult } from '../types';
+import { QuizQuestion, StudentResult, StudentAccount } from '../types';
 import { 
   addQuiz, deleteQuiz, fetchQuizzes, fetchStudentResults, 
   getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, resetDatabaseToDefault,
-  updateCategoryName, updateQuizCategory
+  updateCategoryName, updateQuizCategory, fetchStudents, addStudent, deleteStudent
 } from '../db';
 import sound from '../utils/audio';
 
@@ -27,8 +27,8 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes }: Adm
   const [pin, setPin] = useState<string>('');
   const [pinError, setPinError] = useState<string>('');
   
-  // Dashboard Tabs: 'tracker' | 'builder' | 'database'
-  const [activeTab, setActiveTab] = useState<'tracker' | 'builder' | 'database'>('tracker');
+  // Dashboard Tabs: 'tracker' | 'builder' | 'students'
+  const [activeTab, setActiveTab] = useState<'tracker' | 'builder' | 'students'>('tracker');
   
   // Quiz Form State
   const [questionText, setQuestionText] = useState('');
@@ -73,6 +73,17 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes }: Adm
 
   // Bulk delete selected quizzes
   const [selectedQuizzes, setSelectedQuizzes] = useState<Set<string | number>>(new Set());
+
+  // Student Accounts state
+  const [students, setStudents] = useState<StudentAccount[]>([]);
+  const [studentsSearch, setStudentsSearch] = useState('');
+  const [studentsClassFilter, setStudentsClassFilter] = useState('All');
+  const [selectedStudents, setSelectedStudents] = useState<Set<string | number>>(new Set());
+  
+  // Student account import states
+  const [studentImportLoading, setStudentImportLoading] = useState(false);
+  const [studentImportSuccess, setStudentImportSuccess] = useState<number | null>(null);
+  const [studentImportError, setStudentImportError] = useState('');
 
   const handleDownloadTemplate = () => {
     sound.playClick();
@@ -239,12 +250,18 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes }: Adm
     
     if (isAuthenticated) {
       loadTrackerResults();
+      loadStudents();
     }
   }, [isAuthenticated]);
 
   const loadTrackerResults = async () => {
     const data = await fetchStudentResults();
     setResults(data);
+  };
+
+  const loadStudents = async () => {
+    const data = await fetchStudents();
+    setStudents(data);
   };
 
   const handleRenameFolder = async () => {
@@ -409,12 +426,180 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes }: Adm
   };
 
   const handleResetToDefault = async () => {
-    if (confirm('Apakah Anda yakin ingin mengatur ulang database lokal ke data bawaan kuis PKWU? Semua hasil rekap siswa lokal juga akan dihapus.')) {
+    if (confirm('Apakah Anda yakin ingin mengatur ulang database ke data bawaan kuis PKWU? Semua hasil rekap siswa dan soal saat ini akan dihapus.')) {
       await resetDatabaseToDefault();
       sound.playCorrect();
       onRefreshQuizzes();
       loadTrackerResults();
-      alert('Database lokal berhasil diatur ulang ke kuis bawaan PKWU!');
+      loadStudents();
+      alert('Database berhasil diatur ulang ke kuis bawaan PKWU!');
+    }
+  };
+
+  const handleImportStudentsFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    sound.playClick();
+    setStudentImportLoading(true);
+    setStudentImportError('');
+    setStudentImportSuccess(null);
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const data = evt.target?.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
+
+        if (rows.length <= 1) {
+          throw new Error("File Excel kosong atau hanya berisi judul kolom.");
+        }
+
+        const importedStudents: StudentAccount[] = [];
+
+        // Dynamic Header Matching
+        const headerRow = (rows[0] || []).map(h => String(h || '').toLowerCase().trim());
+        
+        let colName = headerRow.findIndex(h => h.includes('nama') || h.includes('name') || h.includes('siswa') || h.includes('student'));
+        let colClass = headerRow.findIndex(h => h.includes('kelas') || h.includes('class'));
+        let colAbsen = headerRow.findIndex(h => h.includes('absen') || h.includes('attendance') || h.includes('no') || h.includes('nomor'));
+        let colNis = headerRow.findIndex(h => h.includes('nis') || h.includes('id'));
+
+        // Fallbacks
+        if (colName === -1) colName = 0;
+        if (colClass === -1) colClass = 1;
+        if (colAbsen === -1) colAbsen = 2;
+        if (colNis === -1) colNis = 3;
+
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || row.length === 0 || !row[colName]) continue;
+
+          const student_name = String(row[colName] || '').trim();
+          const class_name = String(row[colClass] || 'X MIPA 1').trim();
+          const attendance_num = String(row[colAbsen] || '').trim();
+          const nis = colNis !== -1 && row[colNis] ? String(row[colNis]).trim() : undefined;
+
+          if (student_name && class_name && attendance_num) {
+            importedStudents.push({
+              student_name,
+              class_name,
+              attendance_num,
+              nis
+            });
+          }
+        }
+
+        if (importedStudents.length === 0) {
+          throw new Error("Tidak ada data murid yang valid ditemukan. Periksa kembali format kolom.");
+        }
+
+        let successCount = 0;
+        for (const student of importedStudents) {
+          await addStudent(student);
+          successCount++;
+        }
+
+        sound.playSpell();
+        setStudentImportSuccess(successCount);
+        loadStudents();
+      } catch (err: any) {
+        sound.playDamage();
+        setStudentImportError(err.message || "Gagal mengurai file Excel.");
+      } finally {
+        setStudentImportLoading(false);
+        e.target.value = '';
+      }
+    };
+
+    reader.onerror = () => {
+      sound.playDamage();
+      setStudentImportError("Gagal membaca file.");
+      setStudentImportLoading(false);
+    };
+
+    reader.readAsBinaryString(file);
+  };
+
+  const handleDownloadStudentsTemplate = () => {
+    sound.playClick();
+    const headers = [
+      "Nama Siswa", 
+      "Kelas (Contoh: X MIPA 1)", 
+      "Nomor Absen", 
+      "NIS (Opsional)"
+    ];
+    const sampleRow1 = [
+      "Ahmad Fauzi",
+      "X MIPA 1",
+      "01",
+      "212210001"
+    ];
+    const sampleRow2 = [
+      "Budi Santoso",
+      "X MIPA 1",
+      "02",
+      "212210002"
+    ];
+    
+    const ws = XLSX.utils.aoa_to_sheet([headers, sampleRow1, sampleRow2]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template Murid");
+    XLSX.writeFile(wb, "Template_Daftar_Siswa.xlsx");
+  };
+
+  const handleDeleteStudent = async (id: string | number) => {
+    if (confirm('Apakah Anda yakin ingin menghapus akun murid ini?')) {
+      const success = await deleteStudent(id);
+      if (success) {
+        sound.playDamage();
+        loadStudents();
+      }
+    }
+  };
+
+  const handleSelectStudentToggle = (id: string | number) => {
+    setSelectedStudents(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAllStudentsToggle = (visibleList: StudentAccount[]) => {
+    const allVisibleSelected = visibleList.every(s => selectedStudents.has(s.id!));
+    setSelectedStudents(prev => {
+      const newSet = new Set(prev);
+      if (allVisibleSelected) {
+        visibleList.forEach(s => newSet.delete(s.id!));
+      } else {
+        visibleList.forEach(s => newSet.add(s.id!));
+      }
+      return newSet;
+    });
+  };
+
+  const handleBulkDeleteStudents = async () => {
+    if (confirm(`Apakah Anda yakin ingin menghapus ${selectedStudents.size} akun murid terpilih?`)) {
+      sound.playClick();
+      let successCount = 0;
+      for (const id of selectedStudents) {
+        const success = await deleteStudent(id);
+        if (success) successCount++;
+      }
+      if (successCount > 0) {
+        sound.playDamage();
+        setSelectedStudents(new Set());
+        loadStudents();
+        alert(`Berhasil menghapus ${successCount} akun murid.`);
+      }
     }
   };
 
@@ -632,15 +817,18 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
             </button>
 
             <button
-              onClick={() => { sound.playClick(); setActiveTab('database'); }}
+              onClick={() => { sound.playClick(); setActiveTab('students'); }}
               className={`w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2.5 transition cursor-pointer ${
-                activeTab === 'database' 
+                activeTab === 'students' 
                   ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' 
                   : 'text-slate-400 hover:bg-slate-900/60'
               }`}
             >
-              <Database className="w-4 h-4" />
-              Database Supabase
+              <Users className="w-4 h-4 text-cyan-400" />
+              Akun Murid / Siswa
+              <span className="ml-auto bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                {students.length}
+              </span>
             </button>
           </div>
 
@@ -666,7 +854,7 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                 onClick={handleResetToDefault}
                 className="w-full bg-slate-900 hover:bg-rose-950 hover:text-rose-400 border border-slate-800 text-slate-400 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
               >
-                <RotateCcw className="w-3.5 h-3.5" /> Reset Default Lokal
+                <RotateCcw className="w-3.5 h-3.5" /> Atur Ulang Database
               </button>
             </div>
           </div>
@@ -1357,7 +1545,7 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                           {allQuizzes
                             .filter(q => adminCategoryFilter === 'Semua' || (q.category || 'Umum') === adminCategoryFilter)
                             .map((quiz, index) => (
-                              <tr key={quiz.id || index} className="hover:bg-slate-900/30 transition">
+                              <tr key={quiz.id ? `quiz-${quiz.id}` : `quiz-txt-${quiz.question}-${index}`} className="hover:bg-slate-900/30 transition">
                                 <td className="py-3 px-4 text-center">
                                   <input
                                     type="checkbox"
@@ -1414,97 +1602,190 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
               </motion.div>
             )}
 
-            {/* TAB 3: DATABASE CONFIGURATION */}
-            {activeTab === 'database' && (
+            {/* TAB 3: SISWA / AKUN SISWA */}
+            {activeTab === 'students' && (
               <motion.div
-                key="database"
+                key="students"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-6"
               >
-                <div className="glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl">
-                  <h2 className="text-lg font-bold text-white font-display flex items-center gap-2 mb-1">
-                    <Database className="w-5 h-5 text-indigo-400" />
-                    Koneksi Supabase Cloud Integration
-                  </h2>
-                  <p className="text-xs text-slate-400 mb-6 font-sans">
-                    Aplikasi mendukung integrasi penuh dengan Supabase. Masukkan kredensial proyek Supabase Anda di bawah ini agar data dapat diakses oleh kelas secara persisten.
-                  </p>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Left Side: Student List Table (8 cols) */}
+                  <div className="lg:col-span-8 flex flex-col gap-6">
+                    <div className="glass-panel rounded-2xl border border-slate-800 shadow-xl overflow-hidden font-display">
+                      <div className="p-5 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                          <h3 className="text-md font-bold text-white">
+                            Daftar Akun Murid Terdaftar ({students.length} Siswa)
+                          </h3>
+                          <p className="text-xs text-slate-400 mt-0.5 font-sans">
+                            Hanya murid yang terdaftar di bawah ini yang dapat masuk ke petualangan kuis.
+                          </p>
+                        </div>
 
-                  <form onSubmit={handleSaveConfig} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
-                          Supabase Project URL
-                        </label>
-                        <input
-                          type="text"
-                          value={sbUrl}
-                          onChange={(e) => setSbUrl(e.target.value)}
-                          placeholder="https://your-project-id.supabase.co"
-                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-mono text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 outline-none transition placeholder:text-slate-700"
-                        />
+                        <div className="flex flex-wrap items-center gap-2">
+                          {selectedStudents.size > 0 && (
+                            <button
+                              type="button"
+                              onClick={handleBulkDeleteStudents}
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 hover:text-rose-300 rounded-xl text-xs font-bold transition cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Hapus ({selectedStudents.size})</span>
+                            </button>
+                          )}
+
+                          <input
+                            type="text"
+                            placeholder="Cari nama / kelas..."
+                            value={studentsSearch}
+                            onChange={(e) => setStudentsSearch(e.target.value)}
+                            className="bg-slate-950 border border-slate-800 text-xs rounded-xl px-3 py-1.5 text-white outline-none w-40 placeholder:text-slate-600 focus:border-indigo-500 transition font-sans"
+                          />
+
+                          <select
+                            value={studentsClassFilter}
+                            onChange={(e) => setStudentsClassFilter(e.target.value)}
+                            className="bg-slate-950 border border-slate-800 text-xs rounded-xl px-3 py-1.5 outline-none text-cyan-400 font-bold cursor-pointer transition"
+                          >
+                            <option value="All">Semua Kelas</option>
+                            {Array.from(new Set(students.map(s => s.class_name))).map(cls => (
+                              <option key={cls} value={cls}>{cls}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
 
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
-                          Supabase API Anon Key (Public Key)
-                        </label>
-                        <input
-                          type="password"
-                          value={sbAnonKey}
-                          onChange={(e) => setSbAnonKey(e.target.value)}
-                          placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-mono text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 outline-none transition placeholder:text-slate-700"
-                        />
+                      <div className="overflow-x-auto">
+                        {students.length === 0 ? (
+                          <div className="text-center py-10 font-sans">
+                            <Users className="w-12 h-12 text-slate-700 mx-auto mb-2 animate-pulse" />
+                            <p className="text-sm font-semibold text-slate-400">Belum Ada Akun Murid</p>
+                            <p className="text-xs text-slate-500 mt-1">Gunakan panel kanan untuk mengimpor daftar murid dari Excel.</p>
+                          </div>
+                        ) : (() => {
+                          const visibleStudents = students.filter(s => {
+                            const matchText = s.student_name.toLowerCase().includes(studentsSearch.toLowerCase()) ||
+                              (s.nis && s.nis.toLowerCase().includes(studentsSearch.toLowerCase())) ||
+                              s.class_name.toLowerCase().includes(studentsSearch.toLowerCase());
+                            const matchClass = studentsClassFilter === 'All' || s.class_name === studentsClassFilter;
+                            return matchText && matchClass;
+                          });
+
+                          return (
+                            <table className="w-full text-left border-collapse">
+                              <thead>
+                                <tr className="bg-slate-900/60 border-b border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                  <th className="py-3 px-4 w-10 text-center">
+                                    <input
+                                      type="checkbox"
+                                      checked={visibleStudents.length > 0 && visibleStudents.every(s => selectedStudents.has(s.id!))}
+                                      onChange={() => handleSelectAllStudentsToggle(visibleStudents)}
+                                      className="w-3.5 h-3.5 rounded border-slate-800 bg-slate-950 focus:ring-1 focus:ring-indigo-500 text-indigo-500 cursor-pointer"
+                                    />
+                                  </th>
+                                  <th className="py-3 px-4 w-12 text-center">Absen</th>
+                                  <th className="py-3 px-4">Nama Siswa</th>
+                                  <th className="py-3 px-4 w-32">Kelas</th>
+                                  <th className="py-3 px-4 w-32">NIS</th>
+                                  <th className="py-3 px-4 w-20 text-center">Aksi</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-800/60 text-xs text-slate-300 font-sans">
+                                {visibleStudents.map((s, index) => (
+                                  <tr key={s.id ? `student-${s.id}` : `student-idx-${index}`} className="hover:bg-slate-900/30 transition">
+                                    <td className="py-2.5 px-4 text-center">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedStudents.has(s.id!)}
+                                        onChange={() => handleSelectStudentToggle(s.id!)}
+                                        className="w-3.5 h-3.5 rounded border-slate-800 bg-slate-950 focus:ring-1 focus:ring-indigo-500 text-indigo-500 cursor-pointer"
+                                      />
+                                    </td>
+                                    <td className="py-2.5 px-4 text-center font-bold text-slate-500">
+                                      {s.attendance_num}
+                                    </td>
+                                    <td className="py-2.5 px-4 font-semibold text-white">
+                                      {s.student_name}
+                                    </td>
+                                    <td className="py-2.5 px-4 font-semibold text-slate-300">
+                                      {s.class_name}
+                                    </td>
+                                    <td className="py-2.5 px-4 text-slate-400 font-mono">
+                                      {s.nis || '-'}
+                                    </td>
+                                    <td className="py-2.5 px-4 text-center">
+                                      <button
+                                        onClick={() => handleDeleteStudent(s.id!)}
+                                        className="text-rose-400 hover:text-rose-300 p-1.5 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
+                                        title="Hapus Murid"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          );
+                        })()}
                       </div>
                     </div>
-
-                    <div className="flex gap-2 justify-end pt-3">
-                      {isSbConnected && (
-                        <button
-                          type="button"
-                          onClick={handleClearConfig}
-                          className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold py-2 px-4 border border-rose-500/25 rounded-xl text-xs transition cursor-pointer"
-                        >
-                          Putuskan Koneksi Supabase
-                        </button>
-                      )}
-                      <button
-                        type="submit"
-                        className="bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-semibold py-2 px-5 rounded-xl text-xs shadow-lg shadow-indigo-500/10 transition flex items-center gap-1.5 cursor-pointer"
-                      >
-                        {configCopied ? 'Terkoneksi!' : 'Simpan & Hubungkan'}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-
-                {/* SQL Schema helper */}
-                <div className="glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-md font-bold text-white font-display flex items-center gap-1.5">
-                        <Sparkles className="w-5 h-5 text-amber-400" />
-                        Inisialisasi Tabel Supabase (SQL Editor)
-                      </h3>
-                      <p className="text-xs text-slate-400 font-sans mt-0.5">
-                        Salin kode di bawah ini lalu tempelkan (paste) pada menu <b>SQL Editor</b> di dashboard Supabase Anda untuk membuat struktur tabel yang sesuai.
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => copyToClipboard(sqlSchema, setSqlCopied)}
-                      className="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-850 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer"
-                    >
-                      {sqlCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      {sqlCopied ? 'Disalin!' : 'Salin SQL'}
-                    </button>
                   </div>
 
-                  <div className="bg-slate-950 rounded-xl p-4 font-mono text-[10px] text-slate-300 overflow-x-auto max-h-72 border border-slate-850">
-                    <pre>{sqlSchema}</pre>
+                  {/* Right Side: Student Import Panel (4 cols) */}
+                  <div className="lg:col-span-4 flex flex-col gap-6">
+                    <div className="glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl flex flex-col justify-between">
+                      <div>
+                        <h2 className="text-lg font-bold text-white font-display flex items-center gap-2 mb-1">
+                          <Upload className="w-5 h-5 text-cyan-400" />
+                          Impor Akun Murid
+                        </h2>
+                        <p className="text-xs text-slate-400 mb-6 font-sans">
+                          Unggah daftar nama murid Anda dari Excel agar murid terdaftar dan dapat login ke aplikasi.
+                        </p>
+
+                        <div className="border-2 border-dashed border-slate-800 hover:border-cyan-500/50 rounded-2xl p-6 flex flex-col items-center justify-center text-center transition relative bg-slate-950/40">
+                          <input
+                            type="file"
+                            accept=".xlsx, .xls, .csv"
+                            onChange={handleImportStudentsFile}
+                            disabled={studentImportLoading}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:pointer-events-none"
+                          />
+                          <Upload className={`w-8 h-8 text-cyan-400 mb-2 ${studentImportLoading ? 'animate-pulse' : ''}`} />
+                          <span className="text-xs font-bold text-white">
+                            {studentImportLoading ? 'Memproses data...' : 'Klik/seret Excel Siswa'}
+                          </span>
+                          <span className="text-[9px] text-slate-500 mt-1">
+                            Format kolom: Nama Siswa, Kelas, Nomor Absen, NIS
+                          </span>
+                        </div>
+
+                        {studentImportSuccess !== null && (
+                          <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl font-sans font-semibold">
+                            ✅ Berhasil mengimpor {studentImportSuccess} akun murid baru!
+                          </div>
+                        )}
+
+                        {studentImportError && (
+                          <div className="mt-4 p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-xl font-sans font-semibold">
+                            ⚠️ {studentImportError}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-6 pt-4 border-t border-slate-800/60">
+                        <button
+                          onClick={handleDownloadStudentsTemplate}
+                          className="w-full bg-slate-900 hover:bg-slate-850 text-slate-300 border border-slate-800 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer font-sans"
+                        >
+                          <Copy className="w-3.5 h-3.5" /> Unduh Template Excel Siswa
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </motion.div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { fetchQuizzes } from './db';
-import { QuizQuestion } from './types';
+import { fetchQuizzes, fetchStudents } from './db';
+import { QuizQuestion, StudentAccount } from './types';
 import WelcomeScreen from './components/WelcomeScreen';
 import StudentRPG from './components/StudentRPG';
 import AdminPanel from './components/AdminPanel';
@@ -9,6 +9,7 @@ import sound from './utils/audio';
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'welcome' | 'game' | 'admin'>('welcome');
   const [allQuizzes, setAllQuizzes] = useState<QuizQuestion[]>([]);
+  const [students, setStudents] = useState<StudentAccount[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Student registration details
@@ -20,16 +21,20 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
 
   useEffect(() => {
-    loadQuizzes();
+    loadData();
   }, []);
 
-  const loadQuizzes = async () => {
+  const loadData = async () => {
     setIsLoading(true);
     try {
-      const questions = await fetchQuizzes();
+      const [questions, registeredStudents] = await Promise.all([
+        fetchQuizzes(),
+        fetchStudents()
+      ]);
       setAllQuizzes(questions);
+      setStudents(registeredStudents);
     } catch (e) {
-      console.error("Gagal memuat kuis:", e);
+      console.error("Gagal memuat data EduQuest:", e);
     } finally {
       setIsLoading(false);
     }
@@ -44,7 +49,7 @@ export default function App() {
   const handleQuitGame = () => {
     setStudentDetails(null);
     setCurrentScreen('welcome');
-    loadQuizzes(); // Refresh list
+    loadData(); // Refresh list
   };
 
   if (isLoading) {
@@ -68,6 +73,7 @@ export default function App() {
           onStartGame={handleStartGame}
           onGoToAdmin={() => setCurrentScreen('admin')}
           quizzes={allQuizzes}
+          students={students}
         />
       )}
 
@@ -85,7 +91,7 @@ export default function App() {
         <AdminPanel
           onBack={() => setCurrentScreen('welcome')}
           allQuizzes={allQuizzes}
-          onRefreshQuizzes={loadQuizzes}
+          onRefreshQuizzes={loadData}
         />
       )}
     </>

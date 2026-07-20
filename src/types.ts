@@ -32,3 +32,11 @@ export interface RPGState {
   isAnswered: boolean;
   eliminatedOptions: ('A' | 'B' | 'C' | 'D')[];
 }
+
+export interface StudentAccount {
+  id?: string | number;
+  nis?: string;
+  student_name: string;
+  class_name: string;
+  attendance_num: string;
+}

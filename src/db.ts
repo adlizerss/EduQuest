@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { QuizQuestion, StudentResult } from './types';
+import { QuizQuestion, StudentResult, StudentAccount } from './types';
 
 // Pre-seeded high-quality general questions
 const SEED_QUESTIONS: QuizQuestion[] = [
@@ -118,6 +118,9 @@ function initLocalStorageDB() {
   }
   if (!localStorage.getItem('eduquest_student_results')) {
     localStorage.setItem('eduquest_student_results', JSON.stringify([]));
+  }
+  if (!localStorage.getItem('eduquest_students')) {
+    localStorage.setItem('eduquest_students', JSON.stringify([]));
   }
 }
 
@@ -347,6 +350,71 @@ export async function updateQuizCategory(id: string | number, newCategory: strin
     } catch (e) {
       console.error("Error parsing local quizzes", e);
     }
+  }
+  return false;
+}
+
+export async function fetchStudents(): Promise<StudentAccount[]> {
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select('*')
+        .order('student_name', { ascending: true });
+      if (error) throw error;
+      return data as StudentAccount[];
+    } catch (e) {
+      console.warn("Supabase fetchStudents failed, falling back to Local Storage:", e);
+    }
+  }
+  const localData = localStorage.getItem('eduquest_students');
+  return localData ? JSON.parse(localData) : [];
+}
+
+export async function addStudent(student: StudentAccount): Promise<StudentAccount> {
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .insert([student])
+        .select()
+        .single();
+      if (error) throw error;
+      return data as StudentAccount;
+    } catch (e) {
+      console.warn("Supabase addStudent failed, saving to Local Storage fallback:", e);
+    }
+  }
+  const localData = localStorage.getItem('eduquest_students');
+  const students: StudentAccount[] = localData ? JSON.parse(localData) : [];
+  const newStudent = { ...student, id: Date.now() };
+  students.push(newStudent);
+  localStorage.setItem('eduquest_students', JSON.stringify(students));
+  return newStudent;
+}
+
+export async function deleteStudent(id: string | number): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from('students')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return true;
+    } catch (e) {
+      console.warn("Supabase deleteStudent failed, removing from Local Storage fallback:", e);
+    }
+  }
+  const localData = localStorage.getItem('eduquest_students');
+  if (localData) {
+    const students: StudentAccount[] = JSON.parse(localData);
+    const filtered = students.filter(s => s.id !== id && String(s.id) !== String(id));
+    localStorage.setItem('eduquest_students', JSON.stringify(filtered));
+    return true;
   }
   return false;
 }
