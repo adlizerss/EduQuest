@@ -860,7 +860,27 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                           <div className="md:col-span-2">
                             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5 flex justify-between items-center">
                               <span>📂 Pilih Paket Kuis</span>
-                              <span className="text-[10px] text-slate-500 font-medium normal-case">Soal akan dikelompokkan ke dalam paket ini</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newPkg = prompt("Masukkan nama paket/folder baru:");
+                                  if (newPkg && newPkg.trim()) {
+                                    const trimmed = newPkg.trim();
+                                    if (customPackages.includes(trimmed)) {
+                                      setQuestionCategory(trimmed);
+                                      return;
+                                    }
+                                    sound.playCorrect();
+                                    const updated = [...customPackages, trimmed];
+                                    setCustomPackages(updated);
+                                    localStorage.setItem('eduquest_custom_packages', JSON.stringify(updated));
+                                    setQuestionCategory(trimmed);
+                                  }
+                                }}
+                                className="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold transition flex items-center gap-1 cursor-pointer"
+                              >
+                                ➕ Buat Paket Baru
+                              </button>
                             </label>
                             <select
                               value={questionCategory}
