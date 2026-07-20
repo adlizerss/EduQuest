@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { fetchQuizzes, fetchStudents } from './db';
-import { QuizQuestion, StudentAccount } from './types';
+import { fetchQuizzes, fetchStudents, fetchClassAssignments } from './db';
+import { QuizQuestion, StudentAccount, ClassAssignment } from './types';
 import WelcomeScreen from './components/WelcomeScreen';
 import StudentRPG from './components/StudentRPG';
 import AdminPanel from './components/AdminPanel';
@@ -10,6 +10,7 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'welcome' | 'game' | 'admin'>('welcome');
   const [allQuizzes, setAllQuizzes] = useState<QuizQuestion[]>([]);
   const [students, setStudents] = useState<StudentAccount[]>([]);
+  const [assignments, setAssignments] = useState<ClassAssignment[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Student registration details
@@ -27,16 +28,27 @@ export default function App() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [questions, registeredStudents] = await Promise.all([
+      const [questions, registeredStudents, classAssignments] = await Promise.all([
         fetchQuizzes(),
-        fetchStudents()
+        fetchStudents(),
+        fetchClassAssignments()
       ]);
       setAllQuizzes(questions);
       setStudents(registeredStudents);
+      setAssignments(classAssignments);
     } catch (e) {
       console.error("Gagal memuat data EduQuest:", e);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRefreshAssignments = async () => {
+    try {
+      const classAssignments = await fetchClassAssignments();
+      setAssignments(classAssignments);
+    } catch (e) {
+      console.error("Gagal menyegarkan data penugasan kelas:", e);
     }
   };
 
@@ -74,6 +86,7 @@ export default function App() {
           onGoToAdmin={() => setCurrentScreen('admin')}
           quizzes={allQuizzes}
           students={students}
+          assignments={assignments}
         />
       )}
 
@@ -92,6 +105,8 @@ export default function App() {
           onBack={() => setCurrentScreen('welcome')}
           allQuizzes={allQuizzes}
           onRefreshQuizzes={loadData}
+          assignments={assignments}
+          onRefreshAssignments={handleRefreshAssignments}
         />
       )}
     </>

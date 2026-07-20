@@ -6,11 +6,12 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
-import { QuizQuestion, StudentResult, StudentAccount } from '../types';
+import { QuizQuestion, StudentResult, StudentAccount, ClassAssignment } from '../types';
 import { 
   addQuiz, deleteQuiz, fetchQuizzes, fetchStudentResults, 
   getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, resetDatabaseToDefault,
-  updateCategoryName, updateQuizCategory, fetchStudents, addStudent, deleteStudent
+  updateCategoryName, updateQuizCategory, fetchStudents, addStudent, deleteStudent,
+  assignQuizToClass, removeClassAssignment
 } from '../db';
 import sound from '../utils/audio';
 
@@ -18,9 +19,11 @@ interface AdminPanelProps {
   onBack: () => void;
   allQuizzes: QuizQuestion[];
   onRefreshQuizzes: () => void;
+  assignments: ClassAssignment[];
+  onRefreshAssignments: () => void;
 }
 
-export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes }: AdminPanelProps) {
+export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assignments, onRefreshAssignments }: AdminPanelProps) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return localStorage.getItem('eduquest_admin_authenticated') === 'true';
   });
@@ -901,6 +904,150 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                         }
                       </span>
                       <span className="text-xs text-slate-400 mb-1">Rata-rata Kelas</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CBT CLASS ASSIGNMENT MANAGER */}
+                <div className="glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl -z-10" />
+                  
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="w-5 h-5 text-indigo-400 animate-pulse" />
+                    <h3 className="text-md font-bold text-white font-display uppercase tracking-wider">
+                      Posting Penugasan Kuis CBT (Ujian Online)
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-400 mb-6 font-sans">
+                    Tentukan paket kuis yang aktif untuk setiap kelas. Murid di kelas tersebut hanya bisa mengerjakan paket kuis yang Anda posting di sini.
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start font-sans">
+                    {/* Form Input Penugasan */}
+                    <div className="md:col-span-4 bg-slate-950/60 p-4 border border-slate-850 rounded-2xl space-y-4">
+                      <h4 className="text-xs font-black text-slate-300 uppercase tracking-widest border-b border-slate-850 pb-2">
+                        Buat Penugasan Baru
+                      </h4>
+                      
+                      {/* Pilihan Kelas */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                          Pilih Kelas Siswa
+                        </label>
+                        
+                        {Array.from(new Set(students.map(s => s.class_name))).length > 0 ? (
+                          <select
+                            id="assign-class-select"
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer"
+                          >
+                            {Array.from(new Set(students.map(s => s.class_name))).map(cls => (
+                              <option key={cls} value={cls}>{cls}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            id="assign-class-input"
+                            placeholder="Contoh: X MIPA 1"
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none placeholder:text-slate-700"
+                          />
+                        )}
+                      </div>
+
+                      {/* Pilihan Paket */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                          Pilih Paket / Folder Kuis
+                        </label>
+                        <select
+                          id="assign-package-select"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer"
+                        >
+                          {allCategories.map(cat => (
+                            <option key={cat} value={cat}>📁 {cat}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const classSelect = document.getElementById("assign-class-select") as HTMLSelectElement | null;
+                          const classInput = document.getElementById("assign-class-input") as HTMLInputElement | null;
+                          const classNameStr = classSelect ? classSelect.value : (classInput ? classInput.value.trim() : '');
+                          
+                          const packageSelect = document.getElementById("assign-package-select") as HTMLSelectElement | null;
+                          const packageStr = packageSelect ? packageSelect.value : '';
+
+                          if (!classNameStr) {
+                            alert("Masukkan atau pilih kelas terlebih dahulu!");
+                            return;
+                          }
+                          if (!packageStr) {
+                            alert("Pilih paket kuis yang ingin ditugaskan!");
+                            return;
+                          }
+
+                          sound.playSpell();
+                          const success = await assignQuizToClass(classNameStr, packageStr);
+                          if (success) {
+                            onRefreshAssignments();
+                            alert(`Berhasil memposting kuis "${packageStr}" untuk kelas "${classNameStr}"!`);
+                          }
+                        }}
+                        className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-indigo-500/10"
+                      >
+                        🚀 Posting Ujian Kelas
+                      </button>
+                    </div>
+
+                    {/* Daftar Penugasan Saat Ini */}
+                    <div className="md:col-span-8 space-y-3">
+                      <h4 className="text-xs font-black text-slate-300 uppercase tracking-widest border-b border-slate-850 pb-2">
+                        Status Posting Ujian Kelas Aktif
+                      </h4>
+
+                      {assignments.length === 0 ? (
+                        <div className="text-center py-6 text-slate-500 text-xs bg-slate-950/20 border border-slate-850/50 rounded-2xl border-dashed">
+                          Belum ada ujian kelas yang diposting. Murid dapat login bebas (Guest Mode).
+                        </div>
+                      ) : (
+                        <div className="max-h-56 overflow-y-auto space-y-2 pr-1.5">
+                          {assignments.map((asg) => (
+                            <div key={asg.class_name} className="flex justify-between items-center bg-slate-950 border border-slate-850 px-4 py-3 rounded-2xl text-xs">
+                              <div>
+                                <span className="text-white font-extrabold text-sm block">🏫 {asg.class_name}</span>
+                                <span className="text-slate-400 mt-1 inline-flex items-center gap-1">
+                                  📂 Paket Terposting: <strong className="text-cyan-400 font-bold">{asg.category}</strong>
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold px-2 py-0.5 rounded-full text-[10px] animate-pulse">
+                                  AKTIF
+                                </span>
+                                
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (confirm(`Apakah Anda yakin ingin menarik penugasan ujian kelas ${asg.class_name}? Murid kelas ini tidak akan bisa login lagi.`)) {
+                                      sound.playDamage();
+                                      const success = await removeClassAssignment(asg.class_name);
+                                      if (success) {
+                                        onRefreshAssignments();
+                                      }
+                                    }
+                                  }}
+                                  className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 rounded-lg transition cursor-pointer"
+                                  title="Tarik Ujian (Unpublish)"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

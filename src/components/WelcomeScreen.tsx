@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import { BookOpen, User, Hash, School, Play, Lock, AlertTriangle, Shield, Sparkles, FolderOpen } from 'lucide-react';
 import { motion } from 'motion/react';
 import sound from '../utils/audio';
-import { QuizQuestion, StudentAccount } from '../types';
+import { QuizQuestion, StudentAccount, ClassAssignment } from '../types';
 
 interface WelcomeScreenProps {
   onStartGame: (name: string, attendanceNum: string, className: string, category: string) => void;
   onGoToAdmin: () => void;
   quizzes: QuizQuestion[];
   students: StudentAccount[];
+  assignments: ClassAssignment[];
 }
 
-export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, students }: WelcomeScreenProps) {
+export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, students, assignments }: WelcomeScreenProps) {
   const [name, setName] = useState('');
   const [attendanceNum, setAttendanceNum] = useState('');
   const [className, setClassName] = useState('X MIPA 1');
@@ -36,11 +37,24 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
     }
     if (!attendanceNum.trim()) {
       setError('Nomor absen tidak boleh kosong!');
-      sound.playDamage();
-      return;
     }
-    if (getQuestionCountForCategory(selectedCategory) === 0) {
-      setError('Folder / paket kuis terpilih tidak memiliki soal! Silakan pilih paket kuis lain.');
+
+    // CBT Assignment mode
+    const hasAnyAssignments = assignments && assignments.length > 0;
+    let targetCategory = selectedCategory;
+
+    if (hasAnyAssignments) {
+      const activeAssignment = assignments.find(a => a.class_name.toLowerCase() === className.toLowerCase());
+      if (!activeAssignment) {
+        setError(`Belum ada kuis/ujian yang aktif diposting untuk kelas ${className}!`);
+        sound.playDamage();
+        return;
+      }
+      targetCategory = activeAssignment.category;
+    }
+
+    if (getQuestionCountForCategory(targetCategory) === 0) {
+      setError('Paket kuis terpilih tidak memiliki soal! Silakan hubungi guru untuk memposting kuis yang benar.');
       sound.playDamage();
       return;
     }
@@ -66,7 +80,7 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
 
     setError('');
     sound.playSpell();
-    onStartGame(name, attendanceNum, className, selectedCategory);
+    onStartGame(name, attendanceNum, className, targetCategory);
   };
 
   const commonClasses = [
@@ -232,27 +246,65 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
                 </div>
               </div>
 
-              {/* Dropdown Folder / Paket Kuis */}
-              {quizCount > 0 && (
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Pilih Folder / Paket Kuis</label>
-                  <div className="relative">
-                    <FolderOpen className="absolute left-4 top-4.5 w-5 h-5 text-slate-400" />
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="w-full bg-slate-950/90 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 text-base rounded-2xl pl-11 pr-2 py-4 outline-none text-white transition cursor-pointer appearance-none font-bold text-center text-cyan-400"
-                    >
-                      <option value="Semua" className="bg-slate-950 text-white">📦 Semua Paket ({quizzes.length} Soal)</option>
-                      {categories.map(cat => (
-                        <option key={cat} value={cat} className="bg-slate-950 text-white">
-                          📁 {cat} ({getQuestionCountForCategory(cat)} Soal)
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              )}
+              {/* CBT Class Assignment Active Status vs Manual Dropdown Fallback */}
+              {quizCount > 0 && (() => {
+                const hasAnyAssignments = assignments && assignments.length > 0;
+                if (hasAnyAssignments) {
+                  const activeAssignment = assignments.find(a => a.class_name.toLowerCase() === className.toLowerCase());
+                  if (activeAssignment) {
+                    return (
+                      <div className="bg-indigo-500/10 border border-indigo-500/20 p-4 rounded-2xl flex items-center gap-3.5 shadow-inner">
+                        <FolderOpen className="w-5 h-5 text-indigo-400 shrink-0 animate-pulse" />
+                        <div>
+                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block font-sans">
+                            Kuis Terjadwal Aktif (CBT Mode)
+                          </span>
+                          <span className="text-sm font-extrabold text-white font-sans mt-0.5 block">
+                            📁 {activeAssignment.category} ({getQuestionCountForCategory(activeAssignment.category)} Soal)
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div className="bg-rose-500/10 border border-rose-500/25 p-4 rounded-2xl flex items-center gap-3.5 shadow-inner">
+                        <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+                        <div>
+                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block font-sans">
+                            Status Ujian Kelas
+                          </span>
+                          <span className="text-sm font-bold text-rose-400 font-sans mt-0.5 block">
+                            🔴 Belum ada ujian terposting untuk kelas {className}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+                } else {
+                  return (
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest font-sans">
+                        Pilih Folder / Paket Kuis
+                      </label>
+                      <div className="relative">
+                        <FolderOpen className="absolute left-4 top-4.5 w-5 h-5 text-slate-400" />
+                        <select
+                          value={selectedCategory}
+                          onChange={(e) => setSelectedCategory(e.target.value)}
+                          className="w-full bg-slate-950/90 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 text-base rounded-2xl pl-11 pr-2 py-4 outline-none text-white transition cursor-pointer appearance-none font-bold text-center text-cyan-400"
+                        >
+                          <option value="Semua" className="bg-slate-950 text-white">📦 Semua Paket ({quizzes.length} Soal)</option>
+                          {categories.map(cat => (
+                            <option key={cat} value={cat} className="bg-slate-950 text-white">
+                              📁 {cat} ({getQuestionCountForCategory(cat)} Soal)
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  );
+                }
+              })()}
  
               {/* Warnings & Errors */}
               {error && (

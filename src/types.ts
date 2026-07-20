@@ -40,3 +40,10 @@ export interface StudentAccount {
   class_name: string;
   attendance_num: string;
 }
+
+export interface ClassAssignment {
+  id?: string | number;
+  class_name: string;
+  category: string;
+  assigned_at?: string;
+}
