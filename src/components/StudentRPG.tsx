@@ -23,6 +23,7 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
   const [shieldActive, setShieldActive] = useState<boolean>(false);
   const [score, setScore] = useState<number>(0);
   const [currentIdx, setCurrentIdx] = useState<number>(0);
+  const [timeLeft, setTimeLeft] = useState<number>(15);
   
   // Interaction State
   const [selectedAnswer, setSelectedAnswer] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
@@ -53,6 +54,48 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
       triggerGameOver(false);
     }
   }, [hp]);
+
+  const handleTimeOut = () => {
+    if (isAnswered) return;
+    sound.playDamage();
+    setIsAnswered(true);
+    setSelectedAnswer(null);
+
+    if (currentQuestion.type === 'cognitive') {
+      if (shieldActive) {
+        sound.playShield();
+        setShieldActive(false);
+        showCombatEvent("WAKTU HABIS! Perisai Menahan Damage", "text-cyan-400 font-extrabold");
+      } else {
+        setHp(prev => Math.max(0, prev - 25));
+        setShakeScreen(true);
+        showCombatEvent("WAKTU HABIS! -25 HP (Damage)", "text-rose-500 font-extrabold");
+        setTimeout(() => setShakeScreen(false), 500);
+      }
+    } else {
+      showCombatEvent("WAKTU HABIS! (Eksplorasi)", "text-amber-400 font-extrabold");
+    }
+  };
+
+  // Countdown Timer Effect (15 seconds per question)
+  useEffect(() => {
+    if (isAnswered || isGameOver) return;
+    
+    setTimeLeft(15);
+    
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          handleTimeOut();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [currentIdx, isAnswered, isGameOver]);
 
   const triggerGameOver = (isSuccess: boolean) => {
     setIsGameOver(true);
@@ -125,9 +168,10 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
       const isCorrect = opt === currentQuestion.correct_answer;
       if (isCorrect) {
         sound.playCorrect();
-        setScore(prev => prev + 10);
+        const earnedScore = 10 + timeLeft;
+        setScore(prev => prev + earnedScore);
         setMp(prev => Math.min(100, prev + 20));
-        showCombatEvent("+10 Skor, +20 Mana", "text-emerald-400");
+        showCombatEvent(`+${earnedScore} Skor! (Bonus Detik: +${timeLeft})`, "text-emerald-400 font-extrabold");
       } else {
         // Incorrect answer
         if (shieldActive) {
@@ -145,9 +189,10 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
     } else {
       // Interest survey type: All answers are correct, and they map to wirausaha roles
       sound.playCorrect();
-      setScore(prev => prev + 10);
+      const earnedScore = 10 + timeLeft;
+      setScore(prev => prev + earnedScore);
       setMp(prev => Math.min(100, prev + 20));
-      showCombatEvent("+10 Skor, +20 Mana (Eksplorasi)", "text-purple-400");
+      showCombatEvent(`+${earnedScore} Skor! (Eksplorasi)`, "text-purple-400 font-extrabold");
       
       // Track the selected choice for final role calculation
       setInterestVotes(prev => ({
@@ -455,20 +500,58 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
         <section className="col-span-1 lg:col-span-8 bg-slate-900/80 border border-slate-800 rounded-3xl p-6 md:p-8 flex flex-col justify-between shadow-2xl">
           
           {/* Header of Quiz Card */}
-          <div className="flex justify-between items-center pb-5 border-b border-slate-800/60 mb-6">
-            <span className="text-xs text-slate-400 font-mono font-black uppercase tracking-widest">
-              Soal {currentIdx + 1} dari {questions.length}
-            </span>
-            
-            <span className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider ${
-              currentQuestion.type === 'cognitive' 
-                ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' 
-                : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-            }`}>
-              <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-              {currentQuestion.type === 'cognitive' ? 'Soal Pengetahuan' : 'Eksplorasi Minat'}
-            </span>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-5 border-b border-slate-800/60 mb-6 gap-3">
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-slate-400 font-mono font-black uppercase tracking-widest">
+                Soal {currentIdx + 1} dari {questions.length}
+              </span>
+              
+              <span className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider ${
+                currentQuestion.type === 'cognitive' 
+                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' 
+                  : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+              }`}>
+                <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                {currentQuestion.type === 'cognitive' ? 'Soal Pengetahuan' : 'Eksplorasi Minat'}
+              </span>
+            </div>
+
+            {/* Timer Countdown Display */}
+            {!isAnswered ? (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-mono">⌛ WAKTU:</span>
+                <span className={`font-black font-display text-xs px-2.5 py-1 rounded-lg border transition duration-150 flex items-center gap-1 ${
+                  timeLeft > 10 
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                    : timeLeft > 4 
+                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse' 
+                    : 'bg-rose-500/20 text-rose-400 border-rose-500/30 text-sm font-black'
+                }`}>
+                  {timeLeft} Detik
+                </span>
+              </div>
+            ) : (
+              <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest font-mono bg-slate-950 px-2.5 py-1 border border-slate-900 rounded-lg">
+                🔒 Waktu Terkunci
+              </div>
+            )}
           </div>
+
+          {/* Timer Progress Bar */}
+          {!isAnswered && (
+            <div className="w-full bg-slate-950 h-1.5 border border-slate-800 rounded-full overflow-hidden relative -mt-4 mb-6 shadow-inner">
+              <div 
+                className={`h-full rounded-full transition-all duration-1000 ${
+                  timeLeft > 10 
+                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' 
+                    : timeLeft > 4 
+                    ? 'bg-gradient-to-r from-amber-500 to-amber-400 animate-pulse' 
+                    : 'bg-gradient-to-r from-rose-600 to-rose-400 animate-pulse'
+                }`}
+                style={{ width: `${(timeLeft / 15) * 100}%` }}
+              />
+            </div>
+          )}
 
           {/* Question Text */}
           <div className="flex-1 flex flex-col justify-center min-h-[160px] mb-8">
