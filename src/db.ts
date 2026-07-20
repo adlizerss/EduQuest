@@ -293,10 +293,60 @@ export async function resetDatabaseToDefault() {
   const supabase = getSupabaseClient();
   if (supabase) {
     try {
-      // Clear quizzes in Supabase and re-seed if the user wants to
-      console.log("Database reset requested. Local storage is reset. Supabase must be managed directly via SQL.");
+      // Clear quizzes in Supabase
+      const { data: qData } = await supabase.from('quizzes').select('id');
+      if (qData && qData.length > 0) {
+        const { error } = await supabase.from('quizzes').delete().in('id', qData.map(d => d.id));
+        if (error) throw error;
+      }
+      
+      // Clear student results in Supabase
+      const { data: rData } = await supabase.from('student_results').select('id');
+      if (rData && rData.length > 0) {
+        const { error } = await supabase.from('student_results').delete().in('id', rData.map(d => d.id));
+        if (error) throw error;
+      }
+
+      // Re-seed default questions in Supabase
+      const { error: seedError } = await supabase.from('quizzes').insert(SEED_QUESTIONS);
+      if (seedError) throw seedError;
     } catch (e) {
-      console.warn(e);
+      console.warn("Gagal mereset database Supabase:", e);
+      throw e;
     }
   }
+}
+
+export async function updateQuizCategory(id: string | number, newCategory: string): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from('quizzes')
+        .update({ category: newCategory })
+        .eq('id', id);
+      if (error) throw error;
+      return true;
+    } catch (e) {
+      console.warn("Supabase updateQuizCategory failed, falling back to Local Storage:", e);
+    }
+  }
+  // Fallback
+  const localData = localStorage.getItem('eduquest_quizzes');
+  if (localData) {
+    try {
+      const quizzes: QuizQuestion[] = JSON.parse(localData);
+      const updated = quizzes.map(q => {
+        if (q.id === id || String(q.id) === String(id)) {
+          return { ...q, category: newCategory };
+        }
+        return q;
+      });
+      localStorage.setItem('eduquest_quizzes', JSON.stringify(updated));
+      return true;
+    } catch (e) {
+      console.error("Error parsing local quizzes", e);
+    }
+  }
+  return false;
 }

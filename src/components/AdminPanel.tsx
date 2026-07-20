@@ -10,7 +10,7 @@ import { QuizQuestion, StudentResult } from '../types';
 import { 
   addQuiz, deleteQuiz, fetchQuizzes, fetchStudentResults, 
   getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, resetDatabaseToDefault,
-  updateCategoryName
+  updateCategoryName, updateQuizCategory
 } from '../db';
 import sound from '../utils/audio';
 
@@ -1203,14 +1203,47 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                     {allQuizzes.length > 0 && (
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                         {selectedQuizzes.size > 0 && (
-                          <button
-                            type="button"
-                            onClick={handleBulkDelete}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 hover:text-rose-300 rounded-xl text-xs font-bold transition cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>Hapus Terpilih ({selectedQuizzes.size})</span>
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={handleBulkDelete}
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 hover:text-rose-300 rounded-xl text-xs font-bold transition cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Hapus ({selectedQuizzes.size})</span>
+                            </button>
+
+                            <select
+                              defaultValue=""
+                              onChange={async (e) => {
+                                const targetCategory = e.target.value;
+                                if (!targetCategory) return;
+                                sound.playClick();
+                                if (confirm(`Apakah Anda yakin ingin memindahkan ${selectedQuizzes.size} soal terpilih ke folder "${targetCategory}"?`)) {
+                                  let successCount = 0;
+                                  for (const id of selectedQuizzes) {
+                                    const success = await updateQuizCategory(id, targetCategory);
+                                    if (success) successCount++;
+                                  }
+                                  if (successCount > 0) {
+                                    sound.playCorrect();
+                                    setSelectedQuizzes(new Set());
+                                    onRefreshQuizzes();
+                                    alert(`Berhasil memindahkan ${successCount} soal ke folder "${targetCategory}".`);
+                                  }
+                                }
+                                e.target.value = "";
+                              }}
+                              className="bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs rounded-xl px-2.5 py-1.5 text-indigo-400 font-bold transition cursor-pointer outline-none"
+                            >
+                              <option value="" disabled>📁 Pindahkan ke...</option>
+                              {allCategories.map(cat => (
+                                <option key={cat} value={cat} className="text-white bg-slate-950">
+                                  📁 {cat}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                         )}
 
                         <div className="flex items-center gap-2">
