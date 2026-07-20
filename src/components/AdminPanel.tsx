@@ -62,6 +62,7 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes }: Adm
   const [importLoading, setImportLoading] = useState(false);
   const [importSuccessCount, setImportSuccessCount] = useState<number | null>(null);
   const [importError, setImportError] = useState<string>('');
+  const [importTargetPackage, setImportTargetPackage] = useState<string>('excel');
 
   // Custom packages management
   const [customPackages, setCustomPackages] = useState<string[]>(() => {
@@ -136,25 +137,53 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes }: Adm
 
         const importedQuizzes: QuizQuestion[] = [];
 
+        // Dynamic Header Matching
+        const headerRow = (rows[0] || []).map(h => String(h || '').toLowerCase().trim());
+        
+        let colQuestion = headerRow.findIndex(h => h.includes('pertanyaan') || h.includes('soal') || h.includes('question') || h.includes('tanya'));
+        let colOptA = headerRow.findIndex(h => h.includes('pilihan a') || h.includes('opsi a') || h.includes('option a') || h === 'a');
+        let colOptB = headerRow.findIndex(h => h.includes('pilihan b') || h.includes('opsi b') || h.includes('option b') || h === 'b');
+        let colOptC = headerRow.findIndex(h => h.includes('pilihan c') || h.includes('opsi c') || h.includes('option c') || h === 'c');
+        let colOptD = headerRow.findIndex(h => h.includes('pilihan d') || h.includes('opsi d') || h.includes('option d') || h === 'd');
+        let colCorrect = headerRow.findIndex(h => h.includes('kunci') || h.includes('jawaban') || h.includes('correct') || h.includes('key'));
+        let colType = headerRow.findIndex(h => h.includes('tipe') || h.includes('type') || h.includes('jenis'));
+        let colCategory = headerRow.findIndex(h => h.includes('folder') || h.includes('paket') || h.includes('kategori') || h.includes('category'));
+
+        // Fallbacks
+        if (colQuestion === -1) colQuestion = 0;
+        if (colOptA === -1) colOptA = 1;
+        if (colOptB === -1) colOptB = 2;
+        if (colOptC === -1) colOptC = 3;
+        if (colOptD === -1) colOptD = 4;
+        if (colCorrect === -1) colCorrect = 5;
+        if (colType === -1) colType = 6;
+        if (colCategory === -1) colCategory = 7;
+
         for (let i = 1; i < rows.length; i++) {
           const row = rows[i];
-          if (!row || row.length === 0 || !row[0]) continue;
+          if (!row || row.length === 0 || !row[colQuestion]) continue;
 
-          const question = String(row[0] || '').trim();
-          const option_a = String(row[1] || '').trim();
-          const option_b = String(row[2] || '').trim();
-          const option_c = String(row[3] || '').trim();
-          const option_d = String(row[4] || '').trim();
+          const question = String(row[colQuestion] || '').trim();
+          const option_a = String(row[colOptA] || '').trim();
+          const option_b = String(row[colOptB] || '').trim();
+          const option_c = String(row[colOptC] || '').trim();
+          const option_d = String(row[colOptD] || '').trim();
           
-          let correct_answer = String(row[5] || 'A').toUpperCase().trim();
+          let correct_answer = String(row[colCorrect] || 'A').toUpperCase().trim();
           if (!['A', 'B', 'C', 'D'].includes(correct_answer)) {
             correct_answer = 'A';
           }
 
-          let typeStr = String(row[6] || 'cognitive').toLowerCase().trim();
+          let typeStr = String(row[colType] || 'cognitive').toLowerCase().trim();
           const type: 'cognitive' | 'interest' = typeStr === 'interest' ? 'interest' : 'cognitive';
 
-          const category = String(row[7] || 'Umum').trim() || 'Umum';
+          // Override package name if user selected a target package
+          let category = 'Umum';
+          if (importTargetPackage !== 'excel') {
+            category = importTargetPackage;
+          } else {
+            category = String(row[colCategory] || 'Umum').trim() || 'Umum';
+          }
 
           if (question && option_a && option_b && option_c && option_d) {
             importedQuizzes.push({
@@ -1005,9 +1034,28 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                           <FileSpreadsheet className="w-5 h-5 text-cyan-400" />
                           Impor Massal (Excel / CSV)
                         </h2>
-                        <p className="text-xs text-slate-400 mb-6 font-sans">
+                        <p className="text-xs text-slate-400 mb-4 font-sans">
                           Unggah file Excel atau CSV berisi daftar soal untuk dimasukkan ke database kuis sekaligus.
                         </p>
+
+                        {/* Target Package Selection Override */}
+                        <div className="mb-4 font-sans">
+                          <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5 flex justify-between items-center">
+                            <span>🎯 Masukkan Ke Paket / Folder:</span>
+                          </label>
+                          <select
+                            value={importTargetPackage}
+                            onChange={(e) => setImportTargetPackage(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:border-cyan-500 outline-none text-white cursor-pointer transition"
+                          >
+                            <option value="excel" className="text-white bg-slate-950">📄 Gunakan Kategori di Kolom Excel (Default)</option>
+                            {allCategories.map(cat => (
+                              <option key={cat} value={cat} className="text-white bg-slate-950">
+                                📁 Paksa Masuk Ke: {cat}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
 
                         {/* Drop Zone File Upload */}
                         <div className="border-2 border-dashed border-slate-800 hover:border-cyan-500/50 rounded-2xl p-8 flex flex-col items-center justify-center text-center transition relative bg-slate-950/40">
