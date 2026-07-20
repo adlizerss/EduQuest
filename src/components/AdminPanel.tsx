@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Database, Trash2, PlusCircle, Copy, CheckCircle, ArrowLeft, 
   Lock, RotateCcw, FileSpreadsheet, Users, BookOpen, Settings, Sparkles, LogOut, Check,
-  Upload, Download, AlertTriangle, Pencil, X
+  Upload, Download, AlertTriangle, Pencil, X, FolderOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
@@ -21,7 +21,9 @@ interface AdminPanelProps {
 }
 
 export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes }: AdminPanelProps) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('eduquest_admin_authenticated') === 'true';
+  });
   const [pin, setPin] = useState<string>('');
   const [pinError, setPinError] = useState<string>('');
   
@@ -36,7 +38,7 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes }: Adm
   const [optD, setOptD] = useState('');
   const [correctAnswer, setCorrectAnswer] = useState<'A' | 'B' | 'C' | 'D'>('A');
   const [questionType, setQuestionType] = useState<'cognitive' | 'interest'>('cognitive');
-  const [questionCategory, setQuestionCategory] = useState('');
+  const [questionCategory, setQuestionCategory] = useState('Umum');
   const [adminCategoryFilter, setAdminCategoryFilter] = useState('Semua');
   const [isRenamingFolder, setIsRenamingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
@@ -60,6 +62,16 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes }: Adm
   const [importLoading, setImportLoading] = useState(false);
   const [importSuccessCount, setImportSuccessCount] = useState<number | null>(null);
   const [importError, setImportError] = useState<string>('');
+
+  // Custom packages management
+  const [customPackages, setCustomPackages] = useState<string[]>(() => {
+    const stored = localStorage.getItem('eduquest_custom_packages');
+    return stored ? JSON.parse(stored) : ['Umum', 'Sains & Logika', 'Lingkungan & Alam', 'Eksplorasi Karakter'];
+  });
+  const [newPackageName, setNewPackageName] = useState('');
+
+  // Bulk delete selected quizzes
+  const [selectedQuizzes, setSelectedQuizzes] = useState<Set<string | number>>(new Set());
 
   const handleDownloadTemplate = () => {
     sound.playClick();
@@ -241,6 +253,7 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes }: Adm
     if (pin === '1919') {
       sound.playCorrect();
       setIsAuthenticated(true);
+      localStorage.setItem('eduquest_admin_authenticated', 'true');
       setPinError('');
     } else {
       sound.playDamage();
@@ -322,6 +335,50 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes }: Adm
     }
   };
 
+  const handleSelectQuizToggle = (id: string | number) => {
+    setSelectedQuizzes(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAllToggle = () => {
+    const visibleQuizzes = allQuizzes.filter(q => adminCategoryFilter === 'Semua' || (q.category || 'Umum') === adminCategoryFilter);
+    const allVisibleSelected = visibleQuizzes.every(q => selectedQuizzes.has(q.id!));
+    
+    setSelectedQuizzes(prev => {
+      const newSet = new Set(prev);
+      if (allVisibleSelected) {
+        visibleQuizzes.forEach(q => newSet.delete(q.id!));
+      } else {
+        visibleQuizzes.forEach(q => newSet.add(q.id!));
+      }
+      return newSet;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (confirm(`Apakah Anda yakin ingin menghapus ${selectedQuizzes.size} soal terpilih?`)) {
+      sound.playClick();
+      let successCount = 0;
+      for (const id of selectedQuizzes) {
+        const success = await deleteQuiz(id);
+        if (success) successCount++;
+      }
+      if (successCount > 0) {
+        sound.playDamage();
+        setSelectedQuizzes(new Set());
+        onRefreshQuizzes();
+        alert(`Berhasil menghapus ${successCount} soal kuis.`);
+      }
+    }
+  };
+
   const handleResetToDefault = async () => {
     if (confirm('Apakah Anda yakin ingin mengatur ulang database lokal ke data bawaan kuis PKWU? Semua hasil rekap siswa lokal juga akan dihapus.')) {
       await resetDatabaseToDefault();
@@ -343,6 +400,12 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes }: Adm
 
   // Unique classes for filtering
   const classes = Array.from(new Set(results.map(r => r.class_name)));
+
+  // Combine custom packages and existing categories in allQuizzes
+  const allCategories = Array.from(new Set([
+    ...customPackages,
+    ...allQuizzes.map(q => q.category || 'Umum')
+  ])).filter(Boolean);
 
   const sqlSchema = `-- SKEMA SQL SUPABASE UNTUK EDUQUEST PKWU
 -- Jalankan skrip ini di SQL Editor di dashboard Supabase Anda.
@@ -484,9 +547,22 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
         <div className="flex items-center gap-2">
           <button 
             onClick={() => { sound.playClick(); onBack(); }}
-            className="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer"
+            className="bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer"
+            title="Kembali ke layar utama tanpa melogout sesi admin"
           >
-            <ArrowLeft className="w-4 h-4" /> Keluar Dashboard
+            <ArrowLeft className="w-4 h-4" /> Kembali
+          </button>
+          <button 
+            onClick={() => { 
+              sound.playClick(); 
+              localStorage.removeItem('eduquest_admin_authenticated');
+              setIsAuthenticated(false);
+              onBack(); 
+            }}
+            className="bg-rose-950/40 hover:bg-rose-900/40 text-rose-300 hover:text-rose-200 border border-rose-900/30 hover:border-rose-900/50 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer"
+            title="Keluar dan hapus sesi login admin"
+          >
+            <LogOut className="w-4 h-4" /> Log Out
           </button>
         </div>
       </header>
@@ -783,22 +859,20 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                           {/* Folder / Paket Kuis */}
                           <div className="md:col-span-2">
                             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5 flex justify-between items-center">
-                              <span>📂 Folder / Paket Kuis</span>
-                              <span className="text-[10px] text-slate-500 font-medium normal-case">Tulis baru atau pilih dari folder yang ada</span>
+                              <span>📂 Pilih Paket Kuis</span>
+                              <span className="text-[10px] text-slate-500 font-medium normal-case">Soal akan dikelompokkan ke dalam paket ini</span>
                             </label>
-                            <input
-                              type="text"
-                              list="admin-categories-list"
+                            <select
                               value={questionCategory}
                               onChange={(e) => setQuestionCategory(e.target.value)}
-                              placeholder="Contoh: Kuis Pertemuan 1, Bab 1 Kewirausahaan, dll."
-                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 outline-none text-white transition placeholder:text-slate-700"
-                            />
-                            <datalist id="admin-categories-list">
-                              {Array.from(new Set(allQuizzes.map(q => q.category || 'Umum'))).map(cat => (
-                                <option key={cat} value={cat} />
+                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 outline-none text-white transition cursor-pointer"
+                            >
+                              {allCategories.map(cat => (
+                                <option key={cat} value={cat}>
+                                  📁 {cat}
+                                </option>
                               ))}
-                            </datalist>
+                            </select>
                           </div>
 
                           {/* Opsi A */}
@@ -902,73 +976,145 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                     </div>
                   </div>
 
-                  {/* Right Column: Bulk Import Spreadsheet (5 cols) */}
-                  <div className="lg:col-span-5 glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl flex flex-col justify-between">
-                    <div>
-                      <h2 className="text-lg font-bold text-white font-display flex items-center gap-2 mb-1">
-                        <FileSpreadsheet className="w-5 h-5 text-cyan-400" />
-                        Impor Massal (Excel / CSV)
-                      </h2>
-                      <p className="text-xs text-slate-400 mb-6 font-sans">
-                        Unggah file Excel atau CSV berisi daftar soal untuk dimasukkan ke database kuis sekaligus.
-                      </p>
+                  {/* Right Column: Bulk Import & Packages (5 cols) */}
+                  <div className="lg:col-span-5 flex flex-col gap-6">
+                    {/* Impor Massal Card */}
+                    <div className="glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl flex flex-col justify-between">
+                      <div>
+                        <h2 className="text-lg font-bold text-white font-display flex items-center gap-2 mb-1">
+                          <FileSpreadsheet className="w-5 h-5 text-cyan-400" />
+                          Impor Massal (Excel / CSV)
+                        </h2>
+                        <p className="text-xs text-slate-400 mb-6 font-sans">
+                          Unggah file Excel atau CSV berisi daftar soal untuk dimasukkan ke database kuis sekaligus.
+                        </p>
 
-                      {/* Drop Zone File Upload */}
-                      <div className="border-2 border-dashed border-slate-800 hover:border-cyan-500/50 rounded-2xl p-8 flex flex-col items-center justify-center text-center transition relative bg-slate-950/40">
-                        <input
-                          type="file"
-                          accept=".xlsx, .xls, .csv"
-                          onChange={handleImportFile}
-                          disabled={importLoading}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:pointer-events-none"
-                        />
-                        <Upload className={`w-10 h-10 text-cyan-400 mb-3 ${importLoading ? 'animate-pulse' : ''}`} />
-                        <span className="text-sm font-extrabold text-white">
-                          {importLoading ? 'Membaca data file...' : 'Klik atau seret file ke sini'}
-                        </span>
-                        <span className="text-[10px] text-slate-500 mt-1">
-                          Mendukung berkas berekstensi .xlsx, .xls, .csv
-                        </span>
+                        {/* Drop Zone File Upload */}
+                        <div className="border-2 border-dashed border-slate-800 hover:border-cyan-500/50 rounded-2xl p-8 flex flex-col items-center justify-center text-center transition relative bg-slate-950/40">
+                          <input
+                            type="file"
+                            accept=".xlsx, .xls, .csv"
+                            onChange={handleImportFile}
+                            disabled={importLoading}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:pointer-events-none"
+                          />
+                          <Upload className={`w-10 h-10 text-cyan-400 mb-3 ${importLoading ? 'animate-pulse' : ''}`} />
+                          <span className="text-sm font-extrabold text-white">
+                            {importLoading ? 'Membaca data file...' : 'Klik atau seret file ke sini'}
+                          </span>
+                          <span className="text-[10px] text-slate-500 mt-1">
+                            Mendukung berkas berekstensi .xlsx, .xls, .csv
+                          </span>
+                        </div>
+
+                        {/* Info / Warnings */}
+                        {importSuccessCount !== null && (
+                          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex items-start gap-2.5 text-xs text-emerald-400 mt-4 leading-relaxed font-sans font-medium">
+                            <CheckCircle className="w-5 h-5 shrink-0 text-emerald-400" />
+                            <div>
+                              <span className="font-extrabold block mb-0.5">Berhasil Mengimpor!</span>
+                              Dimuat sebanyak <b>{importSuccessCount}</b> soal baru ke dalam kuis.
+                            </div>
+                          </div>
+                        )}
+
+                        {importError && (
+                          <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 flex items-start gap-2.5 text-xs text-rose-400 mt-4 leading-relaxed font-sans font-medium">
+                            <AlertTriangle className="w-5 h-5 shrink-0 text-rose-400" />
+                            <div>
+                              <span className="font-extrabold block mb-0.5">Gagal Mengimpor!</span>
+                              {importError}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
-                      {/* Info / Warnings */}
-                      {importSuccessCount !== null && (
-                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex items-start gap-2.5 text-xs text-emerald-400 mt-4 leading-relaxed font-sans font-medium">
-                          <CheckCircle className="w-5 h-5 shrink-0 text-emerald-400" />
-                          <div>
-                            <span className="font-extrabold block mb-0.5">Berhasil Mengimpor!</span>
-                            Dimuat sebanyak <b>{importSuccessCount}</b> soal baru ke dalam kuis.
-                          </div>
+                      <div className="pt-6 border-t border-slate-800/60 mt-6 space-y-3.5">
+                        <div className="flex items-start gap-2.5 text-xs text-slate-400 leading-relaxed font-sans">
+                          <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                          <span>
+                            Gunakan tombol di bawah untuk mengunduh berkas template Excel yang sudah terstruktur agar proses impor berjalan lancar tanpa error.
+                          </span>
                         </div>
-                      )}
-
-                      {importError && (
-                        <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 flex items-start gap-2.5 text-xs text-rose-400 mt-4 leading-relaxed font-sans font-medium">
-                          <AlertTriangle className="w-5 h-5 shrink-0 text-rose-400" />
-                          <div>
-                            <span className="font-extrabold block mb-0.5">Gagal Mengimpor!</span>
-                            {importError}
-                          </div>
-                        </div>
-                      )}
+                        
+                        <button
+                          type="button"
+                          onClick={handleDownloadTemplate}
+                          className="w-full flex items-center justify-center gap-2 py-3 bg-slate-900 hover:bg-slate-850 active:scale-[0.98] border border-slate-800 text-slate-300 hover:text-white font-black rounded-xl text-xs uppercase tracking-wider transition cursor-pointer"
+                        >
+                          <Download className="w-4 h-4 text-cyan-400" />
+                          Unduh Template Excel (.xlsx)
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="pt-6 border-t border-slate-800/60 mt-6 space-y-3.5">
-                      <div className="flex items-start gap-2.5 text-xs text-slate-400 leading-relaxed font-sans">
-                        <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                        <span>
-                          Gunakan tombol di bawah untuk mengunduh berkas template Excel yang sudah terstruktur agar proses impor berjalan lancar tanpa error.
-                        </span>
+                    {/* Kelola Paket Kuis Card */}
+                    <div className="glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl flex flex-col justify-between">
+                      <div>
+                        <h2 className="text-lg font-bold text-white font-display flex items-center gap-2 mb-1">
+                          <FolderOpen className="w-5 h-5 text-indigo-400" />
+                          Kelola Paket Kuis
+                        </h2>
+                        <p className="text-xs text-slate-400 mb-4 font-sans">
+                          Buat paket kuis terlebih dahulu untuk memisahkan mapel atau topik kuis sebelum menambahkan soal.
+                        </p>
+
+                        <div className="space-y-3 font-sans">
+                          {/* Create Package Input */}
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              placeholder="Nama paket baru (misal: IPA Paket A)"
+                              value={newPackageName}
+                              onChange={(e) => setNewPackageName(e.target.value)}
+                              className="bg-slate-950 border border-slate-800 text-xs rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none flex-1 transition"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const name = newPackageName.trim();
+                                if (!name) return;
+                                if (customPackages.includes(name)) {
+                                  alert("Paket dengan nama tersebut sudah ada!");
+                                  return;
+                                }
+                                sound.playCorrect();
+                                const updated = [...customPackages, name];
+                                setCustomPackages(updated);
+                                localStorage.setItem('eduquest_custom_packages', JSON.stringify(updated));
+                                setNewPackageName('');
+                              }}
+                              className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition cursor-pointer"
+                            >
+                              Buat Paket
+                            </button>
+                          </div>
+
+                          {/* List of Custom Packages */}
+                          <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1 border border-slate-900 rounded-xl p-2 bg-slate-950/40">
+                            {customPackages.map((pkg, idx) => (
+                              <div key={pkg || idx} className="flex justify-between items-center bg-slate-950/80 px-3 py-1.5 rounded-lg border border-slate-900 text-xs">
+                                <span className="text-slate-300 font-medium">📁 {pkg}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (confirm(`Apakah Anda yakin ingin menghapus paket "${pkg}"? Kuis yang berada dalam paket ini tidak akan terhapus, tetapi paket kosong ini akan dihapus dari daftar opsi.`)) {
+                                      sound.playDamage();
+                                      const updated = customPackages.filter(p => p !== pkg);
+                                      setCustomPackages(updated);
+                                      localStorage.setItem('eduquest_custom_packages', JSON.stringify(updated));
+                                    }
+                                  }}
+                                  className="text-slate-500 hover:text-rose-400 transition"
+                                  title="Hapus Paket"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                      
-                      <button
-                        type="button"
-                        onClick={handleDownloadTemplate}
-                        className="w-full flex items-center justify-center gap-2 py-3 bg-slate-900 hover:bg-slate-850 active:scale-[0.98] border border-slate-800 text-slate-300 hover:text-white font-black rounded-xl text-xs uppercase tracking-wider transition cursor-pointer"
-                      >
-                        <Download className="w-4 h-4 text-cyan-400" />
-                        Unduh Template Excel (.xlsx)
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -988,6 +1134,17 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                     {/* Folder Filter & Rename Option */}
                     {allQuizzes.length > 0 && (
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        {selectedQuizzes.size > 0 && (
+                          <button
+                            type="button"
+                            onClick={handleBulkDelete}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 hover:text-rose-300 rounded-xl text-xs font-bold transition cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Hapus Terpilih ({selectedQuizzes.size})</span>
+                          </button>
+                        )}
+
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-slate-400 font-bold whitespace-nowrap">Filter Folder:</span>
                           <select
@@ -999,7 +1156,7 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                             className="bg-slate-950 border border-slate-800 text-xs rounded-xl px-3 py-1.5 outline-none text-cyan-400 font-bold transition cursor-pointer appearance-none text-center"
                           >
                             <option value="Semua" className="bg-slate-950 text-white">📁 Semua Folder</option>
-                            {Array.from(new Set(allQuizzes.map(q => q.category || 'Umum'))).map(cat => (
+                            {allCategories.map(cat => (
                               <option key={cat} value={cat} className="bg-slate-950 text-white">
                                 📁 {cat}
                               </option>
@@ -1077,6 +1234,17 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                       <table className="w-full text-left border-collapse">
                         <thead>
                           <tr className="bg-slate-900/60 border-b border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            <th className="py-3 px-4 w-10 text-center">
+                              <input
+                                type="checkbox"
+                                checked={
+                                  allQuizzes.filter(q => adminCategoryFilter === 'Semua' || (q.category || 'Umum') === adminCategoryFilter).length > 0 &&
+                                  allQuizzes.filter(q => adminCategoryFilter === 'Semua' || (q.category || 'Umum') === adminCategoryFilter).every(q => selectedQuizzes.has(q.id!))
+                                }
+                                onChange={handleSelectAllToggle}
+                                className="w-3.5 h-3.5 rounded border-slate-800 bg-slate-950 focus:ring-1 focus:ring-indigo-500 text-indigo-500 cursor-pointer"
+                              />
+                            </th>
                             <th className="py-3 px-5 w-12 text-center">No</th>
                             <th className="py-3 px-4">Pertanyaan</th>
                             <th className="py-3 px-4 w-28">Tipe Soal</th>
@@ -1089,6 +1257,14 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                             .filter(q => adminCategoryFilter === 'Semua' || (q.category || 'Umum') === adminCategoryFilter)
                             .map((quiz, index) => (
                               <tr key={quiz.id || index} className="hover:bg-slate-900/30 transition">
+                                <td className="py-3 px-4 text-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedQuizzes.has(quiz.id!)}
+                                    onChange={() => handleSelectQuizToggle(quiz.id!)}
+                                    className="w-3.5 h-3.5 rounded border-slate-800 bg-slate-950 focus:ring-1 focus:ring-indigo-500 text-indigo-500 cursor-pointer"
+                                  />
+                                </td>
                                 <td className="py-3 px-5 text-center font-bold text-slate-500">{index + 1}</td>
                                 <td className="py-3 px-4">
                                   <div className="flex items-center gap-2 mb-1.5">
