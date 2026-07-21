@@ -83,7 +83,7 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
       <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center my-auto py-6">
         
         {/* Left Side: Electric Purple Hero Banner & Features */}
-        <div className="lg:col-span-7 space-y-6 sm:space-y-8">
+        <div className="lg:col-span-7 space-y-6 sm:space-y-8 order-2 lg:order-1">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -172,7 +172,7 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
         </div>
  
         {/* Right Side: Fluid Student Login Card */}
-        <div className="lg:col-span-5 w-full">
+        <div className="lg:col-span-5 w-full order-1 lg:order-2">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}

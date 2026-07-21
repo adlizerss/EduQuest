@@ -11,7 +11,7 @@ export default function App() {
   const [allQuizzes, setAllQuizzes] = useState<QuizQuestion[]>([]);
   const [students, setStudents] = useState<StudentAccount[]>([]);
   const [assignments, setAssignments] = useState<ClassAssignment[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Student registration details
   const [studentDetails, setStudentDetails] = useState<{
@@ -26,7 +26,6 @@ export default function App() {
   }, []);
 
   const loadData = async () => {
-    setIsLoading(true);
     try {
       // Run bi-directional sync to push local records and pull Supabase records
       await syncLocalDataToSupabase();
@@ -41,8 +40,6 @@ export default function App() {
       setAssignments(classAssignments);
     } catch (e) {
       console.error("Gagal memuat data EduQuest:", e);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -66,16 +63,6 @@ export default function App() {
     setCurrentScreen('welcome');
     loadData(); // Refresh list
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-4">
-        <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <h2 className="text-sm font-semibold tracking-wide text-cyan-400">MEMULAI PORTAL EDUQUEST...</h2>
-        <p className="text-xs text-slate-500 mt-1">Sedang menghubungkan ke basis data kuis</p>
-      </div>
-    );
-  }
 
   const playableQuestions = selectedCategory === 'Semua' 
     ? allQuizzes 
