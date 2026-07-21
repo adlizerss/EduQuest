@@ -13,7 +13,7 @@ import {
   updateCategoryName, updateQuizCategory, fetchStudents, addStudent, deleteStudent,
   assignQuizToClass, removeClassAssignment, syncLocalDataToSupabase,
   signInTeacher, signOutTeacher, fetchClasses, addClassToDb, deleteClassFromDb,
-  deleteStudentResult, deleteAllStudentResults
+  deleteStudentResult, deleteAllStudentResults, updateQuiz, updateClassName
 } from '../db';
 import sound from '../utils/audio';
 import { generateUniqueCode } from '../utils/codeGenerator';
@@ -38,8 +38,12 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   
-  // Dashboard Tabs: 'tracker' | 'builder' | 'students'
-  const [activeTab, setActiveTab] = useState<'tracker' | 'builder' | 'students'>('tracker');
+  // Dashboard Pages: 'tracker' | 'assignments' | 'bank' | 'builder' | 'students' | 'classes' | 'settings'
+  const [activePage, setActivePage] = useState<'tracker' | 'assignments' | 'bank' | 'builder' | 'students' | 'classes' | 'settings'>('tracker');
+  const [selectedFolderDetail, setSelectedFolderDetail] = useState<string | null>(null);
+  const [editingQuiz, setEditingQuiz] = useState<QuizQuestion | null>(null);
+  const [editingClass, setEditingClass] = useState<{ oldName: string; newName: string } | null>(null);
+  const [showEditClassModal, setShowEditClassModal] = useState<boolean>(false);
   
   // Quiz Form State
   const [questionText, setQuestionText] = useState('');
@@ -1004,35 +1008,151 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
       </div>
     );
   }
-
   return (
-    <div className="min-h-screen bg-[#0b0518] text-slate-100 font-sans flex flex-col relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#0b0518] text-slate-100 font-sans flex relative overflow-hidden">
       {/* Background Orbs */}
       <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-purple-600/15 rounded-full blur-[130px] -z-10" />
       <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-violet-600/15 rounded-full blur-[140px] -z-10" />
 
-      {/* Top Header Dashboard */}
-      <header className="bg-gradient-to-r from-purple-700 via-violet-800 to-indigo-900 border-b-2 border-purple-400/50 sticky top-0 z-20 px-4 sm:px-6 py-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-2xl text-white">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-amber-400/20 text-amber-300 border border-amber-300/40 rounded-xl shadow-inner">
-            <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-extrabold text-white font-display">EduQuest Guru Board</h1>
-              <span className="text-[10px] bg-purple-950/80 text-amber-300 border border-purple-300/40 font-bold px-2.5 py-0.5 rounded-full font-mono">
+      {/* FULL-HEIGHT LEFT SIDEBAR */}
+      <aside className="w-64 sm:w-72 shrink-0 border-r-2 border-purple-400/40 bg-gradient-to-b from-purple-950 via-violet-950 to-slate-950 flex flex-col justify-between p-6 z-20 text-white shadow-2xl">
+        <div className="space-y-6">
+          {/* Logo & Header Info */}
+          <div className="flex items-center gap-3 border-b border-purple-300/20 pb-4">
+            <div className="p-2.5 bg-amber-400/20 text-amber-300 border border-amber-300/40 rounded-xl shadow-inner">
+              <BookOpen className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-md font-extrabold text-white font-display uppercase tracking-wider">EduQuest Board</h1>
+              <span className="text-[9px] bg-purple-950/80 text-amber-300 border border-purple-300/40 font-bold px-2 py-0.5 rounded-full font-mono mt-1 inline-block">
                 {isSbConnected ? 'Supabase Connected' : 'Local Fallback'}
               </span>
             </div>
-            <p className="text-xs text-purple-200">Platform Kuis Interaktif • Panel Guru Terintegrasi</p>
+          </div>
+
+          {/* Navigation Links */}
+          <div className="space-y-2 font-display">
+            <p className="text-[9px] font-black text-amber-300/60 uppercase tracking-widest px-3 mb-2">Menu Dashboard</p>
+            
+            {/* 1. Live Tracker */}
+            <button
+              onClick={() => { sound.playClick(); setActivePage('tracker'); setSelectedFolderDetail(null); }}
+              className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer ${
+                activePage === 'tracker' 
+                  ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
+                  : 'text-purple-200 hover:bg-purple-900/40 hover:text-white'
+              }`}
+            >
+              <Users className={`w-4 h-4 ${activePage === 'tracker' ? 'text-slate-950' : 'text-amber-300'}`} />
+              Rekap Skor
+            </button>
+
+            {/* 2. Posting Ujian */}
+            <button
+              onClick={() => { sound.playClick(); setActivePage('assignments'); setSelectedFolderDetail(null); }}
+              className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer ${
+                activePage === 'assignments' 
+                  ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
+                  : 'text-purple-200 hover:bg-purple-900/40 hover:text-white'
+              }`}
+            >
+              <Sparkles className={`w-4 h-4 ${activePage === 'assignments' ? 'text-slate-950' : 'text-amber-300'}`} />
+              Posting Ujian
+            </button>
+
+            {/* 3. Bank Kuis */}
+            <button
+              onClick={() => { sound.playClick(); setActivePage('bank'); setSelectedFolderDetail(null); }}
+              className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer ${
+                activePage === 'bank' 
+                  ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
+                  : 'text-purple-200 hover:bg-purple-900/40 hover:text-white'
+              }`}
+            >
+              <FolderOpen className={`w-4 h-4 ${activePage === 'bank' ? 'text-slate-950' : 'text-amber-300'}`} />
+              Bank Kuis
+              <span className={`ml-auto border text-[9px] px-2 py-0.5 rounded-full font-mono font-black ${
+                activePage === 'bank' 
+                  ? 'bg-slate-950 text-amber-300 border-slate-800' 
+                  : 'bg-purple-950 text-amber-300 border-purple-300/40'
+              }`}>
+                {allQuizzes.length}
+              </span>
+            </button>
+
+            {/* 4. Buat Kuis */}
+            <button
+              onClick={() => { sound.playClick(); setActivePage('builder'); setSelectedFolderDetail(null); }}
+              className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer ${
+                activePage === 'builder' 
+                  ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
+                  : 'text-purple-200 hover:bg-purple-900/40 hover:text-white'
+              }`}
+            >
+              <PlusCircle className={`w-4 h-4 ${activePage === 'builder' ? 'text-slate-950' : 'text-amber-300'}`} />
+              Buat Kuis
+            </button>
+
+            {/* 5. Daftar Murid */}
+            <button
+              onClick={() => { sound.playClick(); setActivePage('students'); setSelectedFolderDetail(null); }}
+              className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer ${
+                activePage === 'students' 
+                  ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
+                  : 'text-purple-200 hover:bg-purple-900/40 hover:text-white'
+              }`}
+            >
+              <Users className={`w-4 h-4 ${activePage === 'students' ? 'text-slate-950' : 'text-amber-300'}`} />
+              Daftar Murid
+              <span className={`ml-auto border text-[9px] px-2 py-0.5 rounded-full font-mono font-black ${
+                activePage === 'students' 
+                  ? 'bg-slate-950 text-amber-300 border-slate-800' 
+                  : 'bg-purple-950 text-amber-300 border-purple-300/40'
+              }`}>
+                {students.length}
+              </span>
+            </button>
+
+            {/* 6. Kelola Kelas */}
+            <button
+              onClick={() => { sound.playClick(); setActivePage('classes'); setSelectedFolderDetail(null); }}
+              className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer ${
+                activePage === 'classes' 
+                  ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
+                  : 'text-purple-200 hover:bg-purple-900/40 hover:text-white'
+              }`}
+            >
+              <School className={`w-4 h-4 ${activePage === 'classes' ? 'text-slate-950' : 'text-amber-300'}`} />
+              Kelola Kelas
+              <span className={`ml-auto border text-[9px] px-2 py-0.5 rounded-full font-mono font-black ${
+                activePage === 'classes' 
+                  ? 'bg-slate-950 text-amber-300 border-slate-800' 
+                  : 'bg-purple-950 text-amber-300 border-purple-300/40'
+              }`}>
+                {classList.length}
+              </span>
+            </button>
+
+            {/* 7. Pengaturan Supabase */}
+            <button
+              onClick={() => { sound.playClick(); setActivePage('settings'); setSelectedFolderDetail(null); }}
+              className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer ${
+                activePage === 'settings' 
+                  ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
+                  : 'text-purple-200 hover:bg-purple-900/40 hover:text-white'
+              }`}
+            >
+              <Settings className={`w-4 h-4 ${activePage === 'settings' ? 'text-slate-950' : 'text-amber-300'}`} />
+              Pengaturan DB
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Sidebar Footer Buttons */}
+        <div className="space-y-2 font-display">
           <button 
             onClick={() => { sound.playClick(); onBack(); }}
-            className="bg-purple-950/80 hover:bg-purple-900/90 text-purple-200 hover:text-white border border-purple-300/40 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-1.5 transition cursor-pointer"
-            title="Kembali ke layar utama tanpa melogout sesi admin"
+            className="w-full bg-purple-900/40 hover:bg-purple-800 text-purple-200 hover:text-white border border-purple-300/30 py-2.5 rounded-2xl text-xs font-extrabold flex items-center justify-center gap-2 transition cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" /> Kembali
           </button>
@@ -1043,146 +1163,48 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
               setIsAuthenticated(false);
               onBack(); 
             }}
-            className="bg-rose-900/80 hover:bg-rose-800 text-rose-100 border border-rose-400/50 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black flex items-center gap-1.5 transition cursor-pointer shadow-md"
-            title="Keluar dan hapus sesi login admin"
+            className="w-full bg-rose-950/80 hover:bg-rose-900 text-rose-100 border border-rose-500/35 py-2.5 rounded-2xl text-xs font-black flex items-center justify-center gap-2 transition cursor-pointer shadow-md"
           >
             <LogOut className="w-4 h-4" /> Log Out
           </button>
         </div>
-      </header>
+      </aside>
 
-      {/* Main Content Body */}
-      <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+      {/* MAIN VIEWPORT (RIGHT SIDE) */}
+      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto z-10">
         
-        {/* Sidebar Nav with Fluid Tab Buttons */}
-        <div className="lg:col-span-1 space-y-4">
-          <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-5 space-y-2 shadow-2xl text-white">
-            <p className="text-[10px] font-black text-amber-300 uppercase tracking-widest px-3 mb-2 font-display">MENU DASHBOARD</p>
-            
-            <button
-              onClick={() => { sound.playClick(); setActiveTab('tracker'); }}
-              className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer font-sans ${
-                activeTab === 'tracker' 
-                  ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
-                  : 'text-purple-200 hover:bg-purple-800/50 hover:text-white'
-              }`}
-            >
-              <Users className={`w-4 h-4 ${activeTab === 'tracker' ? 'text-slate-950' : 'text-amber-300'}`} />
-              Live Student Tracker
-            </button>
-
-            <button
-              onClick={() => { sound.playClick(); setActiveTab('builder'); }}
-              className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer font-sans ${
-                activeTab === 'builder' 
-                  ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
-                  : 'text-purple-200 hover:bg-purple-800/50 hover:text-white'
-              }`}
-            >
-              <FileSpreadsheet className={`w-4 h-4 ${activeTab === 'builder' ? 'text-slate-950' : 'text-cyan-300'}`} />
-              Quiz Management
-              <span className={`ml-auto border text-[10px] px-2 py-0.5 rounded-full font-mono font-black ${
-                activeTab === 'builder' 
-                  ? 'bg-slate-950 text-amber-300 border-slate-800' 
-                  : 'bg-purple-950 text-amber-300 border-purple-300/40'
-              }`}>
-                {allQuizzes.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => { sound.playClick(); setActiveTab('students'); }}
-              className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer font-sans ${
-                activeTab === 'students' 
-                  ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
-                  : 'text-purple-200 hover:bg-purple-800/50 hover:text-white'
-              }`}
-            >
-              <Users className={`w-4 h-4 ${activeTab === 'students' ? 'text-slate-950' : 'text-pink-300'}`} />
-              Akun Murid / Siswa
-              <span className={`ml-auto border text-[10px] px-2 py-0.5 rounded-full font-mono font-black ${
-                activeTab === 'students' 
-                  ? 'bg-slate-950 text-amber-300 border-slate-800' 
-                  : 'bg-purple-950 text-amber-300 border-purple-300/40'
-              }`}>
-                {students.length}
-              </span>
-            </button>
-          </div>
-
-          {/* Database Health Card */}
-          <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-5 space-y-3 shadow-2xl text-white">
-            <h3 className="text-xs font-black text-amber-300 uppercase tracking-widest font-display">STATUS DATABASE</h3>
-            <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${isSbConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-              <span className="text-xs font-extrabold text-white">
-                {isSbConnected ? 'Terkoneksi ke Supabase' : 'Menggunakan Sandbox Lokal'}
-              </span>
-            </div>
-            
-            <p className="text-xs text-purple-200 leading-relaxed font-sans font-medium">
-              {isSbConnected 
-                ? 'Semua soal, akun murid, dan hasil ujian tersimpan aman & tersinkron di Cloud Supabase.' 
-                : 'Penyimpanan berjalan di Local Storage browser. Data dapat hilang jika Anda membersihkan cache.'
-              }
+        {/* Active Page Header bar */}
+        <header className="bg-gradient-to-r from-purple-900/40 via-violet-950/40 to-slate-950/40 border-b border-purple-300/20 px-6 py-4 flex items-center justify-between shadow-md">
+          <div>
+            <h2 className="text-md font-extrabold text-white font-display uppercase tracking-widest">
+              {activePage === 'tracker' && 'Live Student Tracker'}
+              {activePage === 'assignments' && 'Posting Penugasan Ujian'}
+              {activePage === 'bank' && (selectedFolderDetail ? `Bank Kuis > Folder: ${selectedFolderDetail}` : 'Bank Kuis')}
+              {activePage === 'builder' && 'Buat Kuis Baru'}
+              {activePage === 'students' && 'Manajemen Akun Murid'}
+              {activePage === 'classes' && 'Manajemen Daftar Kelas'}
+              {activePage === 'settings' && 'Pengaturan Supabase Cloud'}
+            </h2>
+            <p className="text-xs text-purple-300 font-sans mt-0.5">
+              EduQuest • Panel Guru Terintegrasi
             </p>
-
-            {syncMessage && (
-              <div className="text-[11px] bg-purple-950/80 border border-purple-300/40 text-amber-300 p-2.5 rounded-xl font-bold leading-relaxed">
-                {syncMessage}
-              </div>
-            )}
-
-            <div className="pt-2 border-t border-purple-300/30 flex flex-col gap-2">
-              <button
-                type="button"
-                disabled={isSyncing}
-                onClick={async () => {
-                  sound.playClick();
-                  setIsSyncing(true);
-                  setSyncMessage('');
-                  try {
-                    const res = await syncLocalDataToSupabase();
-                    if (res.success) {
-                      sound.playCorrect();
-                      setSyncMessage(`✅ Sinkronisasi berhasil! ${res.syncedStudents} murid & ${res.syncedQuizzes} kuis tersinkron.`);
-                      onRefreshQuizzes();
-                      loadTrackerResults();
-                      loadStudents();
-                    } else {
-                      sound.playDamage();
-                      setSyncMessage('⚠️ Konfigurasi Supabase belum diset.');
-                    }
-                  } catch (e) {
-                    setSyncMessage('⚠️ Terjadi kesalahan sinkronisasi.');
-                  } finally {
-                    setIsSyncing(false);
-                  }
-                }}
-                className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md"
-              >
-                <Zap className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-                {isSyncing ? 'Menyinkronkan...' : '⚡ Sinkronkan Data ke Supabase'}
-              </button>
-
-              <button 
-                onClick={handleResetToDefault}
-                className="w-full bg-slate-900 hover:bg-rose-950 hover:text-rose-400 border border-slate-800 text-slate-400 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5" /> Atur Ulang Database
-              </button>
-            </div>
           </div>
-        </div>
+          <div className="flex items-center gap-2">
+            <span className={`w-2.5 h-2.5 rounded-full ${isSbConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+            <span className="text-[10px] text-purple-200 font-bold uppercase tracking-wider font-mono">
+              {isSbConnected ? 'Supabase Sync Active' : 'Offline Sandbox'}
+            </span>
+          </div>
+        </header>
 
-        {/* Dynamic Panels */}
-        <div className="lg:col-span-3">
+        {/* Content Box */}
+        <div className="p-6 max-w-7xl w-full mx-auto flex-1">
           <AnimatePresence mode="wait">
             
-            {/* TAB 1: LIVE STUDENT TRACKER */}
-            {activeTab === 'tracker' && (
+            {/* PAGE 1: REKAP SKOR / TRACKER */}
+            {activePage === 'tracker' && (
               <motion.div
-                key="tracker"
+                key="page-tracker"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
@@ -1220,7 +1242,110 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                   </div>
                 </div>
 
-                {/* CBT CLASS ASSIGNMENT MANAGER */}
+                {/* Table Live Student Tracker */}
+                <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl shadow-2xl overflow-hidden text-white">
+                  <div className="p-5 border-b border-purple-300/30 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+                    <div>
+                      <h2 className="text-lg font-extrabold text-white font-display">Live Student Tracker Dashboard</h2>
+                      <p className="text-xs text-purple-200">Pantau perolehan nilai, sisa HP RPG, dan profil gaya belajar siswa secara real-time.</p>
+                      
+                      <div className="flex gap-2 mt-4">
+                        <input 
+                          type="text"
+                          placeholder="Cari siswa..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="bg-purple-950/90 border border-purple-300/50 text-sm px-3 py-1.5 rounded-xl outline-none text-white focus:border-amber-300 w-48 transition"
+                        />
+                        <select
+                          value={classFilter}
+                          onChange={(e) => setClassFilter(e.target.value)}
+                          className="bg-purple-950/90 border border-purple-300/50 text-sm px-3 py-1.5 rounded-xl outline-none text-amber-300 font-bold cursor-pointer transition"
+                        >
+                          <option value="All" className="bg-purple-950 text-white">Semua Kelas</option>
+                          {classes.map(cls => (
+                            <option key={cls} value={cls} className="bg-purple-950 text-white">{cls}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => { sound.playClick(); loadTrackerResults(); }}
+                        className="bg-purple-900/80 hover:bg-purple-800 text-amber-300 border border-purple-300/40 p-2 px-3 rounded-xl text-xs font-black transition cursor-pointer"
+                      >
+                        🔄 Segarkan
+                      </button>
+                      {results.length > 0 && (
+                        <button 
+                          onClick={async () => {
+                            if (confirm("Hapus SEMUA rekap nilai?")) {
+                              await deleteAllStudentResults();
+                              loadTrackerResults();
+                            }
+                          }}
+                          className="bg-rose-900/80 text-rose-100 hover:bg-rose-800 border border-rose-400/50 p-2 px-3 rounded-xl text-xs font-black transition cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    {filteredResults.length === 0 ? (
+                      <div className="text-center py-12 text-purple-300 italic">Belum ada data nilai murid.</div>
+                    ) : (
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-purple-950/90 border-b border-purple-300/30 text-[10px] font-bold text-amber-300 uppercase tracking-wider">
+                            <th className="py-3 px-5">Nama Murid</th>
+                            <th className="py-3 px-4">Kelas</th>
+                            <th className="py-3 px-4 text-center">Skor</th>
+                            <th className="py-3 px-5">Waktu Submit</th>
+                            <th className="py-3 px-4 text-center">Aksi</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-purple-300/20 text-xs">
+                          {filteredResults.map((result, idx) => (
+                            <tr key={result.id || idx} className="hover:bg-purple-900/40 transition">
+                              <td className="py-3 px-5 font-bold text-white">{result.student_name}</td>
+                              <td className="py-3 px-4"><span className="bg-purple-950 px-2 py-0.5 rounded border border-purple-300/30">{result.class_name}</span></td>
+                              <td className="py-3 px-4 text-center font-black text-amber-300">{result.score}</td>
+                              <td className="py-3 px-5 font-mono text-purple-200">{new Date(result.submit_at).toLocaleDateString()}</td>
+                              <td className="py-3 px-4 text-center">
+                                <button
+                                  onClick={async () => {
+                                    if (confirm(`Hapus skor ${result.student_name}?`)) {
+                                      await deleteStudentResult(result.id);
+                                      loadTrackerResults();
+                                    }
+                                  }}
+                                  className="text-rose-300 hover:text-white"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* PAGE 2: POSTING UJIAN / ASSIGNMENTS */}
+            {activePage === 'assignments' && (
+              <motion.div
+                key="page-assignments"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-6"
+              >
                 <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl relative overflow-hidden text-white">
                   <div className="flex items-center gap-2 mb-3">
                     <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
@@ -1244,107 +1369,95 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                         <label className="block text-[10px] font-bold text-purple-200 uppercase tracking-widest mb-1.5">
                           Pilih Kelas Siswa
                         </label>
-                        
                         <select
                           id="assign-class-select"
-                          className="w-full bg-purple-900/90 border border-purple-300/40 rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer"
+                          defaultValue=""
+                          onChange={async (e) => {
+                            const cls = e.target.value;
+                            const folder = (document.getElementById('assign-folder-select') as HTMLSelectElement)?.value;
+                            if (cls && folder) {
+                              sound.playSpell();
+                              await assignQuizToClass(cls, folder);
+                              onRefreshAssignments();
+                              e.target.value = "";
+                              (document.getElementById('assign-folder-select') as HTMLSelectElement).value = "";
+                            }
+                          }}
+                          className="w-full bg-purple-950 border-2 border-purple-300/50 text-xs rounded-xl px-3 py-2 text-white font-bold outline-none cursor-pointer"
                         >
-                          {Array.from(new Set([...classList, ...students.map(s => s.class_name)])).map(cls => (
-                            <option key={cls} value={cls} className="bg-purple-950 text-white">{cls}</option>
+                          <option value="" disabled>--- Pilih Kelas ---</option>
+                          {classList.map(c => (
+                            <option key={c} value={c} className="bg-purple-950 text-white">{c}</option>
                           ))}
                         </select>
                       </div>
 
-                      {/* Pilihan Paket */}
+                      {/* Pilihan Paket / Folder */}
                       <div>
                         <label className="block text-[10px] font-bold text-purple-200 uppercase tracking-widest mb-1.5">
-                          Pilih Paket / Folder Kuis
+                          Pilih Folder / Paket Kuis
                         </label>
                         <select
-                          id="assign-package-select"
-                          className="w-full bg-purple-900/90 border border-purple-300/40 rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer"
+                          id="assign-folder-select"
+                          defaultValue=""
+                          onChange={async (e) => {
+                            const folder = e.target.value;
+                            const cls = (document.getElementById('assign-class-select') as HTMLSelectElement)?.value;
+                            if (cls && folder) {
+                              sound.playSpell();
+                              await assignQuizToClass(cls, folder);
+                              onRefreshAssignments();
+                              e.target.value = "";
+                              (document.getElementById('assign-class-select') as HTMLSelectElement).value = "";
+                            }
+                          }}
+                          className="w-full bg-purple-950 border-2 border-purple-300/50 text-xs rounded-xl px-3 py-2 text-white font-bold outline-none cursor-pointer"
                         >
+                          <option value="" disabled>--- Pilih Paket Kuis ---</option>
+                          <option value="Semua" className="bg-purple-950 text-white">📁 Semua Soal Kuis (Acak)</option>
                           {allCategories.map(cat => (
                             <option key={cat} value={cat} className="bg-purple-950 text-white">📁 {cat}</option>
                           ))}
                         </select>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          const classSelect = document.getElementById("assign-class-select") as HTMLSelectElement | null;
-                          const classInput = document.getElementById("assign-class-input") as HTMLInputElement | null;
-                          const classNameStr = classSelect ? classSelect.value : (classInput ? classInput.value.trim() : '');
-                          
-                          const packageSelect = document.getElementById("assign-package-select") as HTMLSelectElement | null;
-                          const packageStr = packageSelect ? packageSelect.value : '';
-
-                          if (!classNameStr) {
-                            alert("Masukkan atau pilih kelas terlebih dahulu!");
-                            return;
-                          }
-                          if (!packageStr) {
-                            alert("Pilih paket kuis yang ingin ditugaskan!");
-                            return;
-                          }
-
-                          sound.playSpell();
-                          const success = await assignQuizToClass(classNameStr, packageStr);
-                          if (success) {
-                            onRefreshAssignments();
-                            alert(`Berhasil memposting kuis "${packageStr}" untuk kelas "${classNameStr}"!`);
-                          }
-                        }}
-                        className="w-full py-3 bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 font-black text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-lg uppercase tracking-wider"
-                      >
-                        🚀 Posting Ujian Kelas
-                      </button>
+                      
+                      <p className="text-[10px] text-purple-300 italic font-medium leading-relaxed">
+                        * Pilihlah salah satu kelas terlebih dahulu, kemudian pilih paket kuis untuk langsung memposting penugasan.
+                      </p>
                     </div>
 
-                    {/* Daftar Penugasan Saat Ini */}
+                    {/* Daftar Penugasan Aktif */}
                     <div className="md:col-span-8 space-y-3">
-                      <h4 className="text-xs font-black text-amber-300 uppercase tracking-widest border-b border-purple-300/30 pb-2">
-                        Status Posting Ujian Kelas Aktif
+                      <h4 className="text-xs font-black text-amber-300 uppercase tracking-widest mb-1">
+                        Daftar Penugasan Aktif saat ini ({assignments.length})
                       </h4>
-
                       {assignments.length === 0 ? (
-                        <div className="text-center py-6 text-purple-300/70 text-xs bg-purple-950/40 border border-purple-300/30 rounded-2xl border-dashed">
-                          Belum ada ujian kelas yang diposting. Murid dapat login bebas (Guest Mode).
+                        <div className="border border-dashed border-purple-300/30 rounded-2xl p-8 text-center text-purple-300 italic">
+                          Belum ada ujian kuis yang diposting. Seluruh siswa dapat mengakses semua paket soal secara default.
                         </div>
                       ) : (
-                        <div className="max-h-56 overflow-y-auto space-y-2 pr-1.5">
-                          {assignments.map((asg) => (
-                            <div key={asg.class_name} className="flex justify-between items-center bg-purple-950/80 border border-purple-300/40 px-4 py-3 rounded-2xl text-xs">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {assignments.map(assign => (
+                            <div key={assign.class_name} className="bg-purple-950/70 border border-purple-300/40 rounded-2xl p-4 flex items-center justify-between shadow-md">
                               <div>
-                                <span className="text-white font-extrabold text-sm block">🏫 {asg.class_name}</span>
-                                <span className="text-purple-200 mt-1 inline-flex items-center gap-1">
-                                  📂 Paket Terposting: <strong className="text-amber-300 font-bold">{asg.category}</strong>
+                                <span className="block text-xs font-black text-amber-300 uppercase tracking-wider">{assign.class_name}</span>
+                                <span className="text-[11px] text-purple-200 font-bold mt-1 inline-block bg-purple-900/60 px-2 py-0.5 rounded border border-purple-300/20">
+                                  📁 Paket: {assign.category}
                                 </span>
                               </div>
-
-                              <div className="flex items-center gap-2">
-                                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-bold px-2 py-0.5 rounded-full text-[10px] animate-pulse">
-                                  AKTIF
-                                </span>
-                                
-                                <button
-                                  type="button"
-                                  onClick={async () => {
-                                    if (confirm(`Apakah Anda yakin ingin menarik penugasan ujian kelas ${asg.class_name}? Murid kelas ini tidak akan bisa login lagi.`)) {
-                                      sound.playDamage();
-                                      const success = await removeClassAssignment(asg.class_name);
-                                      if (success) {
-                                        onRefreshAssignments();
-                                      }
-                                    }
-                                  }}
-                                  className="p-1.5 bg-rose-900/60 hover:bg-rose-800 border border-rose-400/50 text-rose-200 rounded-lg transition cursor-pointer"
-                                  title="Tarik Ujian (Unpublish)"
-                                >
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
+                              <button
+                                onClick={async () => {
+                                  if (confirm(`Hapus postingan kuis untuk kelas ${assign.class_name}?`)) {
+                                    sound.playDamage();
+                                    await removeClassAssignment(assign.class_name);
+                                    onRefreshAssignments();
+                                  }
+                                }}
+                                className="p-2 bg-rose-900/60 hover:bg-rose-800 border border-rose-400/50 text-rose-200 hover:text-white rounded-xl transition cursor-pointer"
+                                title="Batalkan Postingan Kelas Ini"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
                           ))}
                         </div>
@@ -1352,1234 +1465,496 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                     </div>
                   </div>
                 </div>
+              </motion.div>
+            )}
 
-                <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl shadow-2xl overflow-hidden text-white">
-                  <div className="p-5 border-b border-purple-300/30 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-                    <div>
-                      <h2 className="text-lg font-extrabold text-white font-display">Live Student Tracker Dashboard</h2>
-                      <p className="text-xs text-purple-200">Pantau perolehan nilai, sisa HP RPG, dan profil gaya belajar siswa secara real-time.</p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 w-full md:w-auto">
-                      <input 
-                        type="text"
-                        placeholder="Cari siswa atau peran..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="bg-purple-950/90 border-2 border-purple-300/50 text-sm px-3 py-1.5 rounded-xl outline-none text-white focus:border-amber-300 flex-1 md:w-48 placeholder:text-purple-300/40 transition"
-                      />
-
-                      <select
-                        value={classFilter}
-                        onChange={(e) => setClassFilter(e.target.value)}
-                        className="bg-purple-950/90 border-2 border-purple-300/50 text-sm px-3 py-1.5 rounded-xl outline-none text-amber-300 font-bold cursor-pointer transition"
-                      >
-                        <option value="All" className="bg-purple-950 text-white">Semua Kelas</option>
-                        {classes.map(cls => (
-                          <option key={cls} value={cls} className="bg-purple-950 text-white">{cls}</option>
-                        ))}
-                      </select>
-                      <button 
-                        onClick={() => { sound.playClick(); loadTrackerResults(); }}
-                        className="bg-purple-900/80 hover:bg-purple-800 text-amber-300 border border-purple-300/40 p-2 px-3 rounded-xl text-xs font-black transition cursor-pointer"
-                        title="Segarkan Rekap Data"
-                      >
-                        🔄 Segarkan
-                      </button>
-
-                      {results.length > 0 && (
-                        <button 
-                          onClick={async () => {
-                            if (confirm("Apakah Anda yakin ingin MENGHAPUS SEMUA REKAP NILAI MURID? Semua riwayat poin akan dikosongkan.")) {
-                              sound.playDamage();
-                              const success = await deleteAllStudentResults();
-                              if (success) {
-                                loadTrackerResults();
-                              }
-                            }
-                          }}
-                          className="bg-rose-900/80 text-rose-100 hover:bg-rose-800 border border-rose-400/50 p-2 px-3 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 shadow-md"
-                          title="Hapus Semua Hasil Nilai Murid"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Hapus Semua Nilai
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Table */}
-                  <div className="overflow-x-auto">
-                    {filteredResults.length === 0 ? (
-                      <div className="text-center py-12 px-4">
-                        <Users className="w-12 h-12 text-purple-300 mx-auto mb-3 animate-pulse" />
-                        <h3 className="text-sm font-bold text-white">Belum Ada Rekap Murid</h3>
-                        <p className="text-xs text-purple-200 mt-1 max-w-xs mx-auto font-sans leading-relaxed">
-                          Murid yang menyelesaikan kuis EduQuest akan otomatis masuk ke daftar ini secara langsung.
-                        </p>
+            {activePage === 'bank' && (
+              <motion.div
+                key="page-bank"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-6"
+              >
+                {!selectedFolderDetail ? (
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-extrabold text-white font-display">Folder Bank Kuis</h3>
+                        <p className="text-xs text-purple-200">Klik pada folder kuis di bawah ini untuk melihat detail soal dan manajemen kuis di dalamnya.</p>
                       </div>
-                    ) : (
-                      <table className="w-full text-left border-collapse">
-                        <thead>
-                          <tr className="bg-purple-950/90 border-b border-purple-300/30 text-[11px] font-bold text-amber-300 uppercase tracking-wider">
-                            <th className="py-3.5 px-5">Nama Murid</th>
-                            <th className="py-3.5 px-4">Kelas & Absen</th>
-                            <th className="py-3.5 px-4 text-center">Total Poin</th>
-                            <th className="py-3.5 px-4 text-center">Status</th>
-                            <th className="py-3.5 px-5">Waktu Submit</th>
-                            <th className="py-3.5 px-4 text-center">Aksi</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-purple-300/20 text-xs text-purple-100 font-sans">
-                          {filteredResults.map((result, idx) => (
-                            <tr key={result.id || idx} className="hover:bg-purple-900/40 transition-colors">
-                              <td className="py-3 px-5 font-bold text-white">{result.student_name}</td>
-                              <td className="py-3 px-4">
-                                <span className="bg-purple-950 text-amber-300 font-extrabold px-2 py-0.5 rounded-md text-[11px] border border-purple-300/40">
-                                  {result.class_name}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newPkg = prompt("Masukkan nama folder kuis baru:");
+                          if (newPkg && newPkg.trim()) {
+                            const trimmed = newPkg.trim();
+                            if (customPackages.includes(trimmed)) return;
+                            sound.playCorrect();
+                            const updated = [...customPackages, trimmed];
+                            setCustomPackages(updated);
+                            localStorage.setItem('eduquest_custom_packages', JSON.stringify(updated));
+                          }
+                        }}
+                        className="bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 hover:from-amber-300 hover:to-pink-400 text-slate-950 font-black px-4 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 uppercase tracking-wider shrink-0 shadow-lg cursor-pointer whitespace-nowrap"
+                      >
+                        <PlusCircle className="w-4 h-4 text-slate-950" /> Buat Folder Baru
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {allCategories.map(cat => {
+                        const count = allQuizzes.filter(q => (q.category || 'Umum') === cat).length;
+                        return (
+                          <div 
+                            key={cat}
+                            className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-5 shadow-2xl relative overflow-hidden flex flex-col justify-between group hover:border-amber-400/60 transition duration-300 text-white"
+                          >
+                            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500" />
+                            <div>
+                              <div className="flex items-start justify-between mb-3 mt-1">
+                                <FolderOpen className="w-10 h-10 text-amber-300 group-hover:scale-110 transition duration-300" />
+                                <span className="bg-purple-950 border border-purple-300/40 text-amber-300 font-mono text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                                  {count} Soal
                                 </span>
-                              </td>
-                              <td className="py-3 px-4 text-center">
-                                <span className="text-base font-black text-amber-300 font-display">{result.score} Poin</span>
-                              </td>
-                              <td className="py-3 px-4 text-center">
-                                <span className="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                                  ✓ Selesai
-                                </span>
-                              </td>
-                              <td className="py-3 px-5 text-purple-200 font-mono">
-                                {new Date(result.submit_at).toLocaleString('id-ID', {
-                                  day: '2-digit',
-                                  month: 'short',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </td>
-                              <td className="py-3 px-4 text-center">
+                              </div>
+                              <h4 className="text-sm font-extrabold text-white line-clamp-1">{cat}</h4>
+                            </div>
+
+                            <div className="mt-5 pt-3 border-t border-purple-300/20 flex gap-2">
+                              <button
+                                onClick={() => { sound.playClick(); setSelectedFolderDetail(cat); }}
+                                className="flex-1 bg-purple-950/80 hover:bg-purple-900 text-amber-300 hover:text-white border border-purple-300/40 py-2 rounded-xl text-center text-xs font-black transition cursor-pointer"
+                              >
+                                Buka Folder
+                              </button>
+                              <button
+                                onClick={() => handleRenameCategory(cat)}
+                                className="p-2 bg-purple-900/40 hover:bg-purple-800 text-purple-200 hover:text-white rounded-xl transition cursor-pointer"
+                                title="Ubah Nama Folder"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              {cat !== 'Umum' && (
                                 <button
-                                  type="button"
-                                  onClick={async () => {
-                                    if (confirm(`Apakah Anda yakin ingin menghapus skor kuis milik "${result.student_name}"?`)) {
-                                      sound.playDamage();
-                                      const success = await deleteStudentResult(result.id);
-                                      if (success) {
-                                        loadTrackerResults();
-                                      }
-                                    }
-                                  }}
-                                  className="p-1.5 bg-rose-900/60 hover:bg-rose-800 border border-rose-400/50 text-rose-200 hover:text-white rounded-lg transition cursor-pointer"
-                                  title="Hapus Nilai Murid Ini"
+                                  onClick={() => handleDeleteCategory(cat)}
+                                  className="p-2 bg-rose-950/80 hover:bg-rose-900 text-rose-300 hover:text-white rounded-xl transition cursor-pointer"
+                                  title="Hapus Folder & Soal"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* TAB 2: QUIZ BUILDER */}
-            {activeTab === 'builder' && (
-              <motion.div
-                key="builder"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="space-y-6"
-              >
-                {/* TOP SECTION: KARTU FOLDER PAKET KUIS (GRID CARDS) */}
-                <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl space-y-4 relative overflow-hidden text-white">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-purple-300/30">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-amber-400/20 text-amber-300 border border-amber-300/40 rounded-2xl shadow-inner shrink-0">
-                        <FolderOpen className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-extrabold text-white font-display">Folder & Paket Kuis Ujian</h2>
-                        <p className="text-xs text-purple-200 font-medium">Kelola paket kuis, ubah nama folder, dan posting langsung ke kelas target.</p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newPkg = prompt("Masukkan nama paket / folder kuis baru:");
-                        if (newPkg && newPkg.trim()) {
-                          const trimmed = newPkg.trim();
-                          sound.playCorrect();
-                          const updated = [...new Set([...customPackages, trimmed])];
-                          setCustomPackages(updated);
-                          localStorage.setItem('eduquest_custom_packages', JSON.stringify(updated));
-                          setQuestionCategory(trimmed);
-                        }
-                      }}
-                      className="bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 hover:from-amber-300 hover:to-pink-400 text-slate-950 font-black px-4 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-lg font-display uppercase tracking-wider shrink-0 whitespace-nowrap"
-                    >
-                      <PlusCircle className="w-4 h-4 text-slate-950" /> Buat Folder Baru
-                    </button>
-                  </div>
-
-                  {/* Folder Cards Grid */}
-                  {allCategories.length === 0 ? (
-                    <div className="text-center py-8 text-purple-200 text-xs bg-purple-950/40 border border-purple-300/30 rounded-2xl border-dashed">
-                      📂 Belum ada folder paket kuis. Klik <b>"+ Buat Folder Baru"</b> di atas atau buat soal pertama Anda.
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 font-sans">
-                      {allCategories.map((cat) => {
-                        const catQuestions = allQuizzes.filter(q => (q.category || 'Umum') === cat);
-                        const assignedToClasses = assignments.filter(a => a.category === cat).map(a => a.class_name);
-                        const isSelectedFilter = adminCategoryFilter === cat;
-
-                        return (
-                          <motion.div
-                            key={cat}
-                            whileHover={{ y: -2, scale: 1.01 }}
-                            className={`p-4.5 rounded-2xl border transition-all duration-200 flex flex-col justify-between space-y-3 relative overflow-hidden ${
-                              isSelectedFilter 
-                                ? 'bg-gradient-to-br from-purple-800 to-indigo-900 border-2 border-amber-300 shadow-xl' 
-                                : 'bg-purple-950/80 border-purple-300/30 hover:border-purple-300/60 shadow-md'
-                            }`}
-                          >
-                            {/* Top Accent Gradient Bar */}
-                            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-pink-400 via-amber-300 to-cyan-400" />
-
-                            <div className="space-y-2">
-                              <div className="flex items-start justify-between gap-2 pt-1">
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <span className="p-2 bg-amber-400/20 text-amber-300 border border-amber-300/40 rounded-xl shrink-0">
-                                    <FolderOpen className="w-4 h-4 text-amber-300" />
-                                  </span>
-                                  <div className="min-w-0">
-                                    <h3 className="text-base font-black text-white font-display truncate">{cat}</h3>
-                                    <span className="text-[11px] text-amber-300 font-extrabold font-mono block">
-                                      {catQuestions.length} Soal Terdaftar
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-1 shrink-0">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRenameCategory(cat)}
-                                    className="p-1.5 bg-purple-900/80 hover:bg-purple-800 text-purple-200 hover:text-white border border-purple-300/40 rounded-lg text-xs font-bold transition cursor-pointer"
-                                    title="Ubah Nama Folder Ini"
-                                  >
-                                    <Pencil className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteCategory(cat)}
-                                    className="p-1.5 bg-rose-900/60 hover:bg-rose-800 text-rose-200 hover:text-white border border-rose-400/40 rounded-lg text-xs font-bold transition cursor-pointer"
-                                    title="Hapus Folder & Seluruh Soal"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* Status Assignment Badges */}
-                              <div className="pt-1">
-                                {assignedToClasses.length > 0 ? (
-                                  <div className="flex flex-wrap items-center gap-1.5">
-                                    <span className="text-[10px] text-purple-200 font-bold uppercase">Posting di:</span>
-                                    {assignedToClasses.map(cName => (
-                                      <span key={cName} className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-black px-2 py-0.5 rounded-full font-mono">
-                                        🏫 {cName}
-                                      </span>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <span className="text-[10px] text-purple-300/70 font-semibold italic block">
-                                    Belum diposting ke kelas tertentu
-                                  </span>
-                                )}
-                              </div>
+                              )}
                             </div>
-
-                            {/* Bottom Actions Row */}
-                            <div className="pt-3 border-t border-purple-300/30 flex items-center justify-between gap-2">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  sound.playClick();
-                                  setAdminCategoryFilter(isSelectedFilter ? 'All' : cat);
-                                }}
-                                className={`text-xs px-3 py-1.5 rounded-xl font-extrabold transition cursor-pointer flex items-center gap-1 ${
-                                  isSelectedFilter 
-                                    ? 'bg-amber-400 text-slate-950 font-black' 
-                                    : 'bg-purple-900/80 hover:bg-purple-800 text-purple-200 border border-purple-300/30'
-                                }`}
-                              >
-                                👁️ {isSelectedFilter ? 'Semua Soal' : 'Lihat Soal'}
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  const targetClass = prompt(`Posting paket "${cat}" untuk kelas apa?\nKelas yang ada: ${classes.join(', ')}`);
-                                  if (targetClass && targetClass.trim()) {
-                                    const trimmedClass = targetClass.trim();
-                                    sound.playSpell();
-                                    const success = await assignQuizToClass(trimmedClass, cat);
-                                    if (success) {
-                                      onRefreshAssignments();
-                                      alert(`Berhasil memposting kuis "${cat}" untuk kelas "${trimmedClass}"!`);
-                                    }
-                                  }
-                                }}
-                                className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black px-3 py-1.5 rounded-xl text-xs transition cursor-pointer shadow-md flex items-center gap-1"
-                              >
-                                🚀 Posting
-                              </button>
-                            </div>
-                          </motion.div>
+                          </div>
                         );
                       })}
                     </div>
-                  )}
-                </div>
-
-                {/* Two Column Layout: Single Addition & Bulk Import */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-                  
-                  {/* Left Column: Form Builder (7 cols) */}
-                  <div className="lg:col-span-7 bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl flex flex-col justify-between text-white">
-                    <div>
-                      <h2 className="text-lg font-extrabold text-white font-display flex items-center gap-2 mb-1">
-                        <PlusCircle className="w-5 h-5 text-amber-300" />
-                        Tambah Soal Kuis Baru Dinamis
-                      </h2>
-                      <p className="text-xs text-purple-200 mb-6 font-sans">
-                        Soal yang ditambahkan akan langsung dimasukkan ke dalam daftar ujian siswa secara real-time.
-                      </p>
-
-                      <form onSubmit={handleAddQuestion} className="space-y-4">
-                        {formError && (
-                          <p className="text-rose-200 bg-rose-900/80 border border-rose-400/50 text-xs p-3 rounded-xl font-bold">
-                            ⚠ {formError}
-                          </p>
-                        )}
-                        {formSuccess && (
-                          <p className="text-emerald-300 bg-emerald-950/80 border border-emerald-400/50 text-xs p-3 rounded-xl font-extrabold flex items-center gap-1.5">
-                            <CheckCircle className="w-4 h-4 text-emerald-300" /> Soal berhasil ditambahkan ke database!
-                          </p>
-                        )}
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans">
-                          {/* Teks Soal */}
-                          <div className="md:col-span-2">
-                            <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1.5">
-                              Teks / Pertanyaan Kuis
-                            </label>
-                            <textarea
-                              rows={3}
-                              value={questionText}
-                              onChange={(e) => setQuestionText(e.target.value)}
-                              placeholder="Contoh: Manakah yang merupakan contoh pengolahan data yang valid?"
-                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-4 py-3 text-sm outline-none text-white transition placeholder:text-purple-300/40 resize-none shadow-inner"
-                            />
-                          </div>
-
-                          {/* Folder / Paket Kuis */}
-                          <div className="md:col-span-2">
-                            <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1.5 flex justify-between items-center">
-                              <span>📂 Pilih Paket Kuis</span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const newPkg = prompt("Masukkan nama paket/folder baru:");
-                                  if (newPkg && newPkg.trim()) {
-                                    const trimmed = newPkg.trim();
-                                    if (customPackages.includes(trimmed)) {
-                                      setQuestionCategory(trimmed);
-                                      return;
-                                    }
-                                    sound.playCorrect();
-                                    const updated = [...customPackages, trimmed];
-                                    setCustomPackages(updated);
-                                    localStorage.setItem('eduquest_custom_packages', JSON.stringify(updated));
-                                    setQuestionCategory(trimmed);
-                                  }
-                                }}
-                                className="text-[11px] text-amber-300 hover:text-white font-extrabold transition flex items-center gap-1 cursor-pointer"
-                              >
-                                Buat Paket Baru
-                              </button>
-                            </label>
-                            <select
-                              value={questionCategory}
-                              onChange={(e) => setQuestionCategory(e.target.value)}
-                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-4 py-2.5 text-sm outline-none text-white transition cursor-pointer"
-                            >
-                              {allCategories.map(cat => (
-                                <option key={cat} value={cat} className="bg-purple-950 text-white">
-                                  📁 {cat}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {/* Opsi A */}
-                          <div>
-                            <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1.5">
-                              Pilihan A (Perencana / Strategi)
-                            </label>
-                            <input
-                              type="text"
-                              value={optA}
-                              onChange={(e) => setOptA(e.target.value)}
-                              placeholder="Pilihan Jawaban A"
-                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-4 py-2.5 text-sm outline-none text-white transition placeholder:text-purple-300/40"
-                            />
-                          </div>
-
-                          {/* Opsi B */}
-                          <div>
-                            <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1.5">
-                              Pilihan B (Kreator / Pelaksana)
-                            </label>
-                            <input
-                              type="text"
-                              value={optB}
-                              onChange={(e) => setOptB(e.target.value)}
-                              placeholder="Pilihan Jawaban B"
-                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-4 py-2.5 text-sm outline-none text-white transition placeholder:text-purple-300/40"
-                            />
-                          </div>
-
-                          {/* Opsi C */}
-                          <div>
-                            <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1.5">
-                              Pilihan C (Komunikator / Presenter)
-                            </label>
-                            <input
-                              type="text"
-                              value={optC}
-                              onChange={(e) => setOptC(e.target.value)}
-                              placeholder="Pilihan Jawaban C"
-                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-4 py-2.5 text-sm outline-none text-white transition placeholder:text-purple-300/40"
-                            />
-                          </div>
-
-                          {/* Opsi D */}
-                          <div>
-                            <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1.5">
-                              Pilihan D (Koordinator Tim)
-                            </label>
-                            <input
-                              type="text"
-                              value={optD}
-                              onChange={(e) => setOptD(e.target.value)}
-                              placeholder="Pilihan Jawaban D"
-                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-4 py-2.5 text-sm outline-none text-white transition placeholder:text-purple-300/40"
-                            />
-                          </div>
-
-                          {/* Dropdown Kunci Jawaban */}
-                          <div>
-                            <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1.5">
-                              Kunci Jawaban Benar
-                            </label>
-                            <select
-                              value={correctAnswer}
-                              onChange={(e) => setCorrectAnswer(e.target.value as any)}
-                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-4 py-2.5 text-sm outline-none text-white transition cursor-pointer text-center font-bold"
-                            >
-                              <option value="A" className="bg-purple-950 text-white">Pilihan A</option>
-                              <option value="B" className="bg-purple-950 text-white">Pilihan B</option>
-                              <option value="C" className="bg-purple-950 text-white">Pilihan C</option>
-                              <option value="D" className="bg-purple-950 text-white">Pilihan D</option>
-                            </select>
-                          </div>
-
-                          {/* Dropdown Tipe Soal */}
-                          <div>
-                            <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1.5">
-                              Tipe / Jenis Soal
-                            </label>
-                            <select
-                              value={questionType}
-                              onChange={(e) => setQuestionType(e.target.value as any)}
-                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-4 py-2.5 text-sm outline-none text-white transition cursor-pointer text-center font-semibold"
-                            >
-                              <option value="cognitive" className="bg-purple-950 text-white">Soal Utama (Kognitif / Ujian)</option>
-                              <option value="interest" className="bg-purple-950 text-white">Eksplorasi (Menilai Profil Karakter)</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <div className="flex justify-end pt-3">
-                          <button
-                            type="submit"
-                            className="bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 hover:from-amber-300 hover:to-pink-400 text-slate-950 font-black py-3 px-6 rounded-2xl shadow-lg transition flex items-center gap-1.5 cursor-pointer text-xs uppercase tracking-wider font-display"
-                          >
-                            <PlusCircle className="w-4 h-4 text-slate-950" /> Simpan Soal Kuis
-                          </button>
-                        </div>
-                      </form>
-                    </div>
                   </div>
-
-                  {/* Right Column: Bulk Import & Packages (5 cols) */}
-                  <div className="lg:col-span-5 flex flex-col gap-6">
-                    {/* Impor Massal Card */}
-                    <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl flex flex-col justify-between text-white">
-                      <div>
-                        <h2 className="text-lg font-extrabold text-white font-display flex items-center gap-2 mb-1">
-                          <FileSpreadsheet className="w-5 h-5 text-cyan-300" />
-                          Impor Massal (Excel / CSV)
-                        </h2>
-                        <p className="text-xs text-purple-200 mb-4 font-sans">
-                          Unggah file Excel atau CSV berisi daftar soal untuk dimasukkan ke database kuis sekaligus.
-                        </p>
-
-                        {/* Target Package Selection Override */}
-                        <div className="mb-4 font-sans">
-                          <label className="block text-[11px] font-bold text-purple-200 uppercase tracking-wide mb-1.5 flex justify-between items-center">
-                            <span>🎯 Masukkan Ke Paket / Folder:</span>
-                          </label>
-                          <select
-                            value={importTargetPackage}
-                            onChange={(e) => setImportTargetPackage(e.target.value)}
-                            className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-3 py-2 text-xs outline-none text-white cursor-pointer transition"
-                          >
-                            <option value="excel" className="text-white bg-purple-950">📄 Gunakan Kategori di Kolom Excel (Default)</option>
-                            {allCategories.map(cat => (
-                              <option key={cat} value={cat} className="text-white bg-purple-950">
-                                📁 Paksa Masuk Ke: {cat}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        {/* Drop Zone File Upload */}
-                        <div className="border-2 border-dashed border-purple-300/50 hover:border-amber-300 rounded-2xl p-8 flex flex-col items-center justify-center text-center transition relative bg-purple-950/60">
-                          <input
-                            type="file"
-                            accept=".xlsx, .xls, .csv"
-                            onChange={handleImportFile}
-                            disabled={importLoading}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:pointer-events-none"
-                          />
-                          <Upload className={`w-10 h-10 text-amber-300 mb-3 ${importLoading ? 'animate-pulse' : ''}`} />
-                          <span className="text-sm font-extrabold text-white">
-                            {importLoading ? 'Membaca data file...' : 'Klik atau seret file ke sini'}
-                          </span>
-                          <span className="text-[10px] text-purple-200 mt-1">
-                            Mendukung berkas berekstensi .xlsx, .xls, .csv
-                          </span>
-                        </div>
-
-                        {/* Info / Warnings */}
-                        {importSuccessCount !== null && (
-                          <div className="bg-emerald-950/80 border border-emerald-400/50 rounded-xl p-4 flex items-start gap-2.5 text-xs text-emerald-300 mt-4 leading-relaxed font-sans font-medium">
-                            <CheckCircle className="w-5 h-5 shrink-0 text-emerald-300" />
-                            <div>
-                              <span className="font-extrabold block mb-0.5">Berhasil Mengimpor!</span>
-                              Dimuat sebanyak <b>{importSuccessCount}</b> soal baru ke dalam kuis.
-                            </div>
-                          </div>
-                        )}
-
-                        {importError && (
-                          <div className="bg-rose-900/80 border border-rose-400/50 rounded-xl p-4 flex items-start gap-2.5 text-xs text-rose-200 mt-4 leading-relaxed font-sans font-medium">
-                            <AlertTriangle className="w-5 h-5 shrink-0 text-rose-300" />
-                            <div>
-                              <span className="font-extrabold block mb-0.5">Gagal Mengimpor!</span>
-                              {importError}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="pt-6 border-t border-purple-300/30 mt-6 space-y-3.5">
-                        <div className="flex items-start gap-2.5 text-xs text-purple-200 leading-relaxed font-sans">
-                          <Sparkles className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
-                          <span>
-                            Gunakan tombol di bawah untuk mengunduh berkas template Excel yang sudah terstruktur agar proses impor berjalan lancar tanpa error.
-                          </span>
-                        </div>
-                        
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
                         <button
-                          type="button"
-                          onClick={handleDownloadTemplate}
-                          className="w-full flex items-center justify-center gap-2 py-3 bg-purple-950/80 hover:bg-purple-900 text-amber-300 border border-purple-300/40 font-black rounded-xl text-xs uppercase tracking-wider transition cursor-pointer shadow-md"
+                          onClick={() => { sound.playClick(); setSelectedFolderDetail(null); }}
+                          className="p-2 bg-purple-950 hover:bg-purple-900 text-purple-200 border border-purple-300/40 rounded-xl transition cursor-pointer"
                         >
-                          <Download className="w-4 h-4 text-amber-300" />
-                          Unduh Template Excel (.xlsx)
+                          <ArrowLeft className="w-4 h-4" />
                         </button>
-                      </div>
-                    </div>
-
-                    {/* Kelola Paket Kuis Card */}
-                    <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl flex flex-col justify-between text-white">
-                      <div>
-                        <h2 className="text-lg font-extrabold text-white font-display flex items-center gap-2 mb-1">
-                          <FolderOpen className="w-5 h-5 text-amber-300" />
-                          Kelola Paket Kuis
-                        </h2>
-                        <p className="text-xs text-purple-200 mb-4 font-sans">
-                          Buat paket kuis terlebih dahulu untuk memisahkan mapel atau topik kuis sebelum menambahkan soal.
-                        </p>
-
-                        <div className="space-y-3 font-sans">
-                          {/* Create Package Input */}
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              placeholder="Nama paket baru (misal: IPA Paket A)"
-                              value={newPackageName}
-                              onChange={(e) => setNewPackageName(e.target.value)}
-                              className="bg-purple-950/90 border-2 border-purple-300/50 text-xs rounded-xl px-3 py-2 text-white focus:border-amber-300 outline-none flex-1 transition"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const name = newPackageName.trim();
-                                if (!name) return;
-                                if (customPackages.includes(name)) {
-                                  alert("Paket dengan nama tersebut sudah ada!");
-                                  return;
-                                }
-                                sound.playCorrect();
-                                const updated = [...customPackages, name];
-                                setCustomPackages(updated);
-                                localStorage.setItem('eduquest_custom_packages', JSON.stringify(updated));
-                                setNewPackageName('');
-                              }}
-                              className="px-4 py-2 bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 text-xs font-black rounded-xl transition cursor-pointer shadow-md uppercase tracking-wider"
-                            >
-                              Buat Paket
-                            </button>
-                          </div>
-
-                          {/* List of Custom Packages */}
-                          <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1 border border-purple-300/30 rounded-xl p-2 bg-purple-950/60">
-                            {customPackages.map((pkg, idx) => (
-                              <div key={pkg || idx} className="flex justify-between items-center bg-purple-900/80 px-3 py-1.5 rounded-lg border border-purple-300/40 text-xs">
-                                <span className="text-white font-bold">📁 {pkg}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (confirm(`Apakah Anda yakin ingin menghapus paket "${pkg}"? Kuis yang berada dalam paket ini tidak akan terhapus, tetapi paket kosong ini akan dihapus dari daftar opsi.`)) {
-                                      sound.playDamage();
-                                      const updated = customPackages.filter(p => p !== pkg);
-                                      setCustomPackages(updated);
-                                      localStorage.setItem('eduquest_custom_packages', JSON.stringify(updated));
-                                    }
-                                  }}
-                                  className="text-purple-300 hover:text-rose-300 transition"
-                                  title="Hapus Paket"
-                                >
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
+                        <div>
+                          <h3 className="text-lg font-extrabold text-white font-display">Folder: {selectedFolderDetail}</h3>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Question List Table */}
-                <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl shadow-2xl overflow-hidden text-white">
-                  <div className="p-5 border-b border-purple-300/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h3 className="text-md font-extrabold text-white font-display">
-                        Daftar Soal Kuis Saat Ini ({allQuizzes.length} Soal)
-                      </h3>
-                      <p className="text-xs text-purple-200 mt-0.5 font-sans">
-                        Siswa akan menjawab seluruh daftar kuis di bawah ini secara acak atau sesuai urutan ID.
-                      </p>
-                    </div>
-
-                    {/* Folder Filter & Rename Option */}
-                    {allQuizzes.length > 0 && (
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                      <div className="flex gap-2">
                         {selectedQuizzes.size > 0 && (
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={handleBulkDelete}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-900/60 hover:bg-rose-800 border border-rose-400/50 text-rose-200 hover:text-white rounded-xl text-xs font-bold transition cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>Hapus ({selectedQuizzes.size})</span>
-                            </button>
-
-                            <select
-                              defaultValue=""
-                              onChange={async (e) => {
-                                const targetCategory = e.target.value;
-                                if (!targetCategory) return;
-                                sound.playClick();
-                                if (confirm(`Apakah Anda yakin ingin memindahkan ${selectedQuizzes.size} soal terpilih ke folder "${targetCategory}"?`)) {
-                                  let successCount = 0;
-                                  for (const id of selectedQuizzes) {
-                                    const success = await updateQuizCategory(id, targetCategory);
-                                    if (success) successCount++;
-                                  }
-                                  if (successCount > 0) {
-                                    sound.playCorrect();
-                                    setSelectedQuizzes(new Set());
-                                    onRefreshQuizzes();
-                                    alert(`Berhasil memindahkan ${successCount} soal ke folder "${targetCategory}".`);
-                                  }
-                                }
-                                e.target.value = "";
-                              }}
-                              className="bg-purple-950/90 border-2 border-purple-300/50 text-xs rounded-xl px-2.5 py-1.5 text-amber-300 font-bold transition cursor-pointer outline-none"
-                            >
-                              <option value="" disabled className="bg-purple-950 text-white">📁 Pindahkan ke...</option>
-                              {allCategories.map(cat => (
-                                <option key={cat} value={cat} className="text-white bg-purple-950">
-                                  📁 {cat}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        )}
-
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-purple-200 font-bold whitespace-nowrap">Filter Folder:</span>
-                          <select
-                            value={adminCategoryFilter}
-                            onChange={(e) => {
-                              setAdminCategoryFilter(e.target.value);
-                              setIsRenamingFolder(false);
-                            }}
-                            className="bg-purple-950/90 border-2 border-purple-300/50 text-xs rounded-xl px-3 py-1.5 outline-none text-amber-300 font-bold transition cursor-pointer appearance-none text-center"
+                          <button
+                            onClick={handleBulkDelete}
+                            className="bg-rose-900/60 hover:bg-rose-800 border border-rose-400/50 text-rose-200 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer"
                           >
-                            <option value="Semua" className="bg-purple-950 text-white">📁 Semua Folder</option>
-                            {allCategories.map(cat => (
-                              <option key={cat} value={cat} className="bg-purple-950 text-white">
-                                📁 {cat}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        {adminCategoryFilter !== 'Semua' && (
-                          <div className="flex items-center gap-2">
-                            {!isRenamingFolder ? (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setNewFolderName(adminCategoryFilter);
-                                  setIsRenamingFolder(true);
-                                  setRenameError('');
-                                  sound.playClick();
-                                }}
-                                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-purple-950/90 hover:bg-purple-900 border border-purple-300/40 text-amber-300 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap"
-                                title="Edit nama folder ini"
-                              >
-                                <Pencil className="w-3.5 h-3.5 text-amber-300" />
-                                <span>Ubah Nama Folder</span>
-                              </button>
-                            ) : (
-                              <div className="flex flex-col gap-1 w-full sm:w-auto">
-                                <div className="flex items-center gap-1.5">
-                                  <input
-                                    type="text"
-                                    value={newFolderName}
-                                    onChange={(e) => setNewFolderName(e.target.value)}
-                                    placeholder="Nama folder baru..."
-                                    className="bg-purple-950/90 border-2 border-purple-300/50 text-xs rounded-xl px-2.5 py-1.5 text-white focus:border-amber-300 outline-none w-36 sm:w-48 transition"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={handleRenameFolder}
-                                    className="p-1.5 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-400/50 text-emerald-300 rounded-lg transition cursor-pointer"
-                                    title="Simpan"
-                                  >
-                                    <Check className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setIsRenamingFolder(false);
-                                      setRenameError('');
-                                      sound.playClick();
-                                    }}
-                                    className="p-1.5 bg-purple-900/80 hover:bg-purple-800 text-purple-200 hover:text-white rounded-lg transition cursor-pointer"
-                                    title="Batal"
-                                  >
-                                    <X className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                                {renameError && (
-                                  <span className="text-[10px] text-rose-300 font-bold font-sans">{renameError}</span>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                            Hapus Terpilih ({selectedQuizzes.size})
+                          </button>
                         )}
                       </div>
-                    )}
-                  </div>
+                    </div>
 
-                  <div className="overflow-x-auto">
-                    {allQuizzes.length === 0 ? (
-                      <div className="text-center py-10 font-sans">
-                        <BookOpen className="w-12 h-12 text-purple-300 mx-auto mb-2 animate-bounce" />
-                        <p className="text-sm font-bold text-white">Kuis Belum Siap / Kosong</p>
-                        <p className="text-xs text-purple-200">Tambahkan soal baru melalui form di atas.</p>
-                      </div>
-                    ) : (
-                      <table className="w-full text-left border-collapse">
-                        <thead>
-                          <tr className="bg-purple-950/90 border-b border-purple-300/30 text-[10px] font-bold text-amber-300 uppercase tracking-wider">
-                            <th className="py-3 px-4 w-10 text-center">
-                              <input
-                                type="checkbox"
-                                checked={
-                                  allQuizzes.filter(q => adminCategoryFilter === 'Semua' || (q.category || 'Umum') === adminCategoryFilter).length > 0 &&
-                                  allQuizzes.filter(q => adminCategoryFilter === 'Semua' || (q.category || 'Umum') === adminCategoryFilter).every(q => selectedQuizzes.has(q.id!))
-                                }
-                                onChange={handleSelectAllToggle}
-                                className="w-3.5 h-3.5 rounded border-purple-400 bg-purple-950 focus:ring-1 focus:ring-amber-300 text-amber-400 cursor-pointer"
-                              />
-                            </th>
-                            <th className="py-3 px-5 w-12 text-center">No</th>
-                            <th className="py-3 px-4">Pertanyaan</th>
-                            <th className="py-3 px-4 w-28">Tipe Soal</th>
-                            <th className="py-3 px-4 w-28">Kunci Jawaban</th>
-                            <th className="py-3 px-4 w-24 text-center">Aksi</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-purple-300/20 text-xs text-purple-100 font-sans">
-                          {allQuizzes
-                            .filter(q => adminCategoryFilter === 'Semua' || (q.category || 'Umum') === adminCategoryFilter)
-                            .map((quiz, index) => (
-                              <tr key={quiz.id ? `quiz-${quiz.id}` : `quiz-txt-${quiz.question}-${index}`} className="hover:bg-purple-900/40 transition">
-                                <td className="py-3 px-4 text-center">
+                    <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl shadow-2xl overflow-hidden text-white">
+                      <div className="overflow-x-auto">
+                        {allQuizzes.filter(q => (q.category || 'Umum') === selectedFolderDetail).length === 0 ? (
+                          <div className="text-center py-10">Folder ini kosong.</div>
+                        ) : (
+                          <table className="w-full text-left border-collapse">
+                            <thead>
+                              <tr className="bg-purple-950/90 border-b border-purple-300/30 text-[10px] font-bold text-amber-300 uppercase tracking-wider">
+                                <th className="py-3 px-4 w-10 text-center">
                                   <input
                                     type="checkbox"
-                                    checked={selectedQuizzes.has(quiz.id!)}
-                                    onChange={() => handleSelectQuizToggle(quiz.id!)}
+                                    checked={
+                                      allQuizzes.filter(q => (q.category || 'Umum') === selectedFolderDetail).length > 0 &&
+                                      allQuizzes.filter(q => (q.category || 'Umum') === selectedFolderDetail).every(q => selectedQuizzes.has(q.id!))
+                                    }
+                                    onChange={() => {
+                                      const visibleQuizzes = allQuizzes.filter(q => (q.category || 'Umum') === selectedFolderDetail);
+                                      const allSelected = visibleQuizzes.every(q => selectedQuizzes.has(q.id!));
+                                      setSelectedQuizzes(prev => {
+                                        const newSet = new Set(prev);
+                                        visibleQuizzes.forEach(q => allSelected ? newSet.delete(q.id!) : newSet.add(q.id!));
+                                        return newSet;
+                                      });
+                                    }}
                                     className="w-3.5 h-3.5 rounded border-purple-400 bg-purple-950 focus:ring-1 focus:ring-amber-300 text-amber-400 cursor-pointer"
                                   />
-                                </td>
-                                <td className="py-3 px-5 text-center font-black text-amber-300">{index + 1}</td>
-                                <td className="py-3 px-4">
-                                  <div className="flex items-center gap-2 mb-1.5">
-                                    <span className="bg-purple-950 text-amber-300 border border-purple-300/40 px-2 py-0.5 rounded text-[10px] font-extrabold flex items-center gap-1 uppercase tracking-wider">
-                                      📁 {quiz.category || 'Umum'}
-                                    </span>
-                                  </div>
-                                  <p className="font-bold text-white line-clamp-2">{quiz.question}</p>
-                                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-1.5 text-[11px] text-purple-200 font-sans">
-                                    <span><b>A:</b> {quiz.option_a}</span>
-                                    <span><b>B:</b> {quiz.option_b}</span>
-                                    <span><b>C:</b> {quiz.option_c}</span>
-                                    <span><b>D:</b> {quiz.option_d}</span>
-                                  </div>
-                                </td>
-                                <td className="py-3 px-4">
-                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                    quiz.type === 'cognitive' 
-                                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40' 
-                                      : 'bg-purple-500/20 text-purple-300 border border-purple-400/40'
-                                  }`}>
-                                    {quiz.type === 'cognitive' ? 'Kognitif' : 'Minat'}
-                                  </span>
-                                </td>
-                                <td className="py-3 px-4">
-                                  <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-extrabold px-2.5 py-0.5 rounded-md text-xs">
-                                    Opsi {quiz.correct_answer}
-                                  </span>
-                                </td>
-                                <td className="py-3 px-4 text-center">
-                                  <button
-                                    onClick={() => handleDeleteQuestion(quiz.id!)}
-                                    className="text-rose-300 hover:text-white p-2 hover:bg-rose-900/60 rounded-lg transition cursor-pointer"
-                                    title="Hapus Soal"
-                                  >
-                                    <Trash2 className="w-4.5 h-4.5" />
-                                  </button>
-                                </td>
+                                </th>
+                                <th className="py-3 px-4">Pertanyaan</th>
+                                <th className="py-3 px-4 w-28">Kunci</th>
+                                <th className="py-3 px-4 w-28 text-center">Aksi</th>
                               </tr>
-                            ))}
-                        </tbody>
-                      </table>
-                    )}
+                            </thead>
+                            <tbody className="divide-y divide-purple-300/20 text-xs">
+                              {allQuizzes
+                                .filter(q => (q.category || 'Umum') === selectedFolderDetail)
+                                .map((quiz, index) => (
+                                  <tr key={quiz.id || index} className="hover:bg-purple-900/40 transition">
+                                    <td className="py-3 px-4 text-center">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedQuizzes.has(quiz.id!)}
+                                        onChange={() => handleSelectQuizToggle(quiz.id!)}
+                                        className="w-3.5 h-3.5 rounded border-purple-400 bg-purple-950 text-amber-400 cursor-pointer"
+                                      />
+                                    </td>
+                                    <td className="py-3 px-4">
+                                      <p className="font-bold text-white">{quiz.question}</p>
+                                      <span className="text-[10px] text-purple-300">A: {quiz.option_a} | B: {quiz.option_b} | C: {quiz.option_c} | D: {quiz.option_d}</span>
+                                    </td>
+                                    <td className="py-3 px-4 font-bold text-emerald-400">{quiz.correct_answer}</td>
+                                    <td className="py-3 px-4 text-center">
+                                      <div className="flex justify-center gap-2">
+                                        <button type="button" onClick={() => { sound.playClick(); setEditingQuiz(quiz); }} className="p-1.5 bg-purple-900/60 text-amber-300 rounded-lg">
+                                          <Pencil className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button type="button" onClick={() => handleDeleteQuestion(quiz.id!)} className="p-1.5 bg-rose-900/60 text-rose-300 rounded-lg">
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* PAGE 4: BUAT KUIS */}
+            {activePage === 'builder' && (
+              <motion.div
+                key="page-builder"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="grid grid-cols-1 lg:grid-cols-12 gap-6"
+              >
+                <div className="lg:col-span-7 bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl text-white font-sans">
+                  <h2 className="text-lg font-extrabold text-white font-display flex items-center gap-2 mb-4">
+                    <PlusCircle className="w-5 h-5 text-amber-300" /> Buat Kuis Baru
+                  </h2>
+                  
+                  <form onSubmit={handleAddQuestion} className="space-y-4">
+                    {formError && <p className="text-rose-300 text-xs font-bold">⚠ {formError}</p>}
+                    {formSuccess && <p className="text-emerald-300 text-xs font-bold">✓ Soal berhasil ditambahkan!</p>}
+
+                    <div>
+                      <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1">Pertanyaan</label>
+                      <textarea
+                        rows={2}
+                        value={questionText}
+                        onChange={(e) => setQuestionText(e.target.value)}
+                        className="w-full bg-purple-950 border border-purple-300/40 rounded-xl p-3 text-xs outline-none text-white focus:border-amber-300 transition"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-purple-200 uppercase mb-1">Pilihan A</label>
+                        <input type="text" value={optA} onChange={(e) => setOptA(e.target.value)} className="w-full bg-purple-950 border border-purple-300/40 rounded-xl p-2 text-xs text-white" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-purple-200 uppercase mb-1">Pilihan B</label>
+                        <input type="text" value={optB} onChange={(e) => setOptB(e.target.value)} className="w-full bg-purple-950 border border-purple-300/40 rounded-xl p-2 text-xs text-white" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-purple-200 uppercase mb-1">Pilihan C</label>
+                        <input type="text" value={optC} onChange={(e) => setOptC(e.target.value)} className="w-full bg-purple-950 border border-purple-300/40 rounded-xl p-2 text-xs text-white" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-purple-200 uppercase mb-1">Pilihan D</label>
+                        <input type="text" value={optD} onChange={(e) => setOptD(e.target.value)} className="w-full bg-purple-950 border border-purple-300/40 rounded-xl p-2 text-xs text-white" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-purple-200 uppercase mb-1">Kunci</label>
+                        <select value={correctAnswer} onChange={(e) => setCorrectAnswer(e.target.value as any)} className="w-full bg-purple-950 border border-purple-300/40 rounded-xl p-2 text-xs text-white">
+                          <option value="A">A</option>
+                          <option value="B">B</option>
+                          <option value="C">C</option>
+                          <option value="D">D</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-purple-200 uppercase mb-1">Tipe</label>
+                        <select value={questionType} onChange={(e) => setQuestionType(e.target.value as any)} className="w-full bg-purple-950 border border-purple-300/40 rounded-xl p-2 text-xs text-white">
+                          <option value="cognitive">Kognitif</option>
+                          <option value="interest">Minat</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-purple-200 uppercase mb-1">Folder</label>
+                        <select value={questionCategory} onChange={(e) => setQuestionCategory(e.target.value)} className="w-full bg-purple-950 border border-purple-300/40 rounded-xl p-2 text-xs text-white">
+                          {allCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <button type="submit" className="w-full bg-gradient-to-r from-amber-400 to-pink-500 text-slate-950 font-black py-2.5 rounded-xl text-xs uppercase tracking-wider">
+                      Simpan Soal Kuis
+                    </button>
+                  </form>
+                </div>
+
+                <div className="lg:col-span-5 space-y-6">
+                  <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl text-white">
+                    <h3 className="text-md font-bold mb-3">Bulk Import Excel Kuis</h3>
+                    <div className="border-2 border-dashed border-purple-300/40 rounded-xl p-6 flex flex-col items-center justify-center relative bg-purple-950/40 font-sans">
+                      <input type="file" accept=".xlsx, .xls, .csv" onChange={handleImportFile} disabled={importLoading} className="absolute inset-0 opacity-0 cursor-pointer" />
+                      <Upload className="w-8 h-8 text-amber-300 mb-2" />
+                      <span className="text-xs font-bold">{importLoading ? 'Mengimpor...' : 'Klik/seret Excel Kuis'}</span>
+                    </div>
+                    {importSuccessCount !== null && <p className="text-emerald-400 text-xs font-bold mt-2 font-sans">✓ Berhasil impor {importSuccessCount} soal!</p>}
+                    {importError && <p className="text-rose-300 text-xs font-bold mt-2 font-sans">⚠ {importError}</p>}
+                    <button onClick={handleDownloadTemplate} className="w-full mt-4 bg-purple-950 text-amber-300 text-xs border border-purple-300/40 py-2 rounded-xl font-bold font-sans">
+                      Unduh Template Excel Kuis
+                    </button>
                   </div>
                 </div>
               </motion.div>
             )}
 
-            {/* TAB 3: SISWA / AKUN SISWA */}
-            {activeTab === 'students' && (
+            {/* PAGE 5: DAFTAR MURID */}
+            {activePage === 'students' && (
               <motion.div
-                key="students"
+                key="page-students"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="space-y-6"
+                className="grid grid-cols-1 lg:grid-cols-12 gap-6"
               >
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                  {/* Left Side: Student List Table (8 cols) */}
-                  <div className="lg:col-span-8 flex flex-col gap-6">
-                    <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl shadow-2xl overflow-hidden font-display text-white">
-                      <div className="p-5 border-b border-purple-300/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div>
-                          <h3 className="text-md font-extrabold text-white">
-                            Daftar Akun Murid Terdaftar ({students.length} Siswa)
-                          </h3>
-                          <p className="text-xs text-purple-200 mt-0.5 font-sans">
-                            Hanya murid yang terdaftar di bawah ini yang dapat masuk ke petualangan kuis.
-                          </p>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-2">
-                          {selectedStudents.size > 0 && (
-                            <button
-                              type="button"
-                              onClick={handleBulkDeleteStudents}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-900/60 hover:bg-rose-800 border border-rose-400/50 text-rose-200 hover:text-white rounded-xl text-xs font-bold transition cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>Hapus ({selectedStudents.size})</span>
-                            </button>
-                          )}
-
-                          <input
-                            type="text"
-                            placeholder="Cari nama / kelas..."
-                            value={studentsSearch}
-                            onChange={(e) => setStudentsSearch(e.target.value)}
-                            className="bg-purple-950/90 border-2 border-purple-300/50 text-xs rounded-xl px-3 py-1.5 text-white outline-none w-40 placeholder:text-purple-300/40 focus:border-amber-300 transition font-sans"
-                          />
-
-                          <select
-                            value={studentsClassFilter}
-                            onChange={(e) => setStudentsClassFilter(e.target.value)}
-                            className="bg-purple-950/90 border-2 border-purple-300/50 text-xs rounded-xl px-3 py-1.5 outline-none text-amber-300 font-bold cursor-pointer transition"
-                          >
-                            <option value="All" className="bg-purple-950 text-white">Semua Kelas</option>
-                            {Array.from(new Set([...classList, ...students.map(s => s.class_name)])).map(cls => (
-                              <option key={cls} value={cls} className="bg-purple-950 text-white">{cls}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="overflow-x-auto">
-                        {students.length === 0 ? (
-                          <div className="text-center py-10 font-sans">
-                            <Users className="w-12 h-12 text-purple-300 mx-auto mb-2 animate-pulse" />
-                            <p className="text-sm font-bold text-white">Belum Ada Akun Murid</p>
-                            <p className="text-xs text-purple-200 mt-1">Gunakan panel kanan untuk mengimpor daftar murid dari Excel.</p>
-                          </div>
-                        ) : (() => {
-                          const visibleStudents = students.filter(s => {
-                            const matchText = s.student_name.toLowerCase().includes(studentsSearch.toLowerCase()) ||
-                              (s.nis && s.nis.toLowerCase().includes(studentsSearch.toLowerCase())) ||
-                              s.class_name.toLowerCase().includes(studentsSearch.toLowerCase());
-                            const matchClass = studentsClassFilter === 'All' || s.class_name === studentsClassFilter;
-                            return matchText && matchClass;
-                          });
-
-                          return (
-                            <table className="w-full text-left border-collapse">
-                              <thead>
-                                <tr className="bg-purple-950/90 border-b border-purple-300/30 text-[10px] font-bold text-amber-300 uppercase tracking-wider">
-                                  <th className="py-3 px-4 w-10 text-center">
-                                    <input
-                                      type="checkbox"
-                                      checked={visibleStudents.length > 0 && visibleStudents.every(s => selectedStudents.has(s.id!))}
-                                      onChange={() => handleSelectAllStudentsToggle(visibleStudents)}
-                                      className="w-3.5 h-3.5 rounded border-purple-400 bg-purple-950 focus:ring-1 focus:ring-amber-300 text-amber-400 cursor-pointer"
-                                    />
-                                  </th>
-                                  <th className="py-3 px-4 w-12 text-center">Absen</th>
-                                  <th className="py-3 px-4">Nama Siswa</th>
-                                  <th className="py-3 px-4 w-32">Kelas</th>
-                                  <th className="py-3 px-4 w-36">Kode Unik / NIS</th>
-                                  <th className="py-3 px-4 w-20 text-center">Aksi</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-purple-300/20 text-xs text-purple-100 font-sans">
-                                {visibleStudents.map((s, index) => (
-                                  <tr key={s.id ? `student-${s.id}` : `student-idx-${index}`} className="hover:bg-purple-900/40 transition">
-                                    <td className="py-2.5 px-4 text-center">
-                                      <input
-                                        type="checkbox"
-                                        checked={selectedStudents.has(s.id!)}
-                                        onChange={() => handleSelectStudentToggle(s.id!)}
-                                        className="w-3.5 h-3.5 rounded border-purple-400 bg-purple-950 focus:ring-1 focus:ring-amber-300 text-amber-400 cursor-pointer"
-                                      />
-                                    </td>
-                                    <td className="py-2.5 px-4 text-center font-black text-amber-300">
-                                      {s.attendance_num}
-                                    </td>
-                                    <td className="py-2.5 px-4 font-bold text-white">
-                                      {s.student_name}
-                                    </td>
-                                    <td className="py-2.5 px-4 font-bold text-purple-200">
-                                      {s.class_name}
-                                    </td>
-                                    <td className="py-2.5 px-4 font-mono font-bold text-amber-300">
-                                      <span className="bg-amber-400/20 border border-amber-300/40 px-2 py-0.5 rounded text-[11px]">
-                                        {s.nis || '-'}
-                                      </span>
-                                    </td>
-                                    <td className="py-2.5 px-4 text-center">
-                                      <button
-                                        onClick={() => handleDeleteStudent(s.id!)}
-                                        className="text-rose-300 hover:text-white p-1.5 hover:bg-rose-900/60 rounded-lg transition cursor-pointer"
-                                        title="Hapus Murid"
-                                      >
-                                        <Trash2 className="w-4 h-4" />
-                                      </button>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          );
-                        })()}
-                      </div>
+                <div className="lg:col-span-8 bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl text-white font-sans">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-md font-bold">Daftar Akun Murid Terdaftar ({students.length})</h3>
+                    <div className="flex gap-2">
+                      <input type="text" placeholder="Cari..." value={studentsSearch} onChange={(e) => setStudentsSearch(e.target.value)} className="bg-purple-950 border border-purple-300/40 text-xs px-2.5 py-1 rounded-xl text-white" />
+                      {selectedStudents.size > 0 && (
+                        <button onClick={handleBulkDeleteStudents} className="bg-rose-900 text-xs px-2.5 py-1 rounded-xl font-bold">Hapus ({selectedStudents.size})</button>
+                      )}
                     </div>
                   </div>
 
-                  {/* Right Side: Student Import Panel & Class Management (4 cols) */}
-                  <div className="lg:col-span-4 flex flex-col gap-6">
-                    {/* Kelola Kelas Card (Tambah & Hapus Kelas) */}
-                    <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl font-sans text-white">
-                      <h2 className="text-lg font-extrabold text-white font-display flex items-center gap-2 mb-1">
-                        <School className="w-5 h-5 text-amber-300" />
-                        Manajemen Daftar Kelas ({classList.length})
-                      </h2>
-                      <p className="text-xs text-purple-200 mb-4">
-                        Tambah kelas baru atau hapus kelas yang sudah tidak aktif dalam sistem.
-                      </p>
-
-                      {/* Form Tambah Kelas */}
-                      <form onSubmit={handleAddClass} className="space-y-2 mb-4">
-                        <div className="flex flex-col gap-2">
-                          <input
-                            type="text"
-                            value={newClassNameInput}
-                            onChange={(e) => {
-                              setNewClassNameInput(e.target.value);
-                              setAddClassError('');
-                            }}
-                            placeholder="Contoh: X MERDEKA 1"
-                            className="w-full bg-purple-950/90 border-2 border-purple-300/50 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-amber-300 transition placeholder:text-purple-300/40 font-semibold"
-                          />
-                          <button
-                            type="submit"
-                            className="w-full bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 hover:from-amber-300 hover:to-pink-400 text-slate-950 font-black text-xs py-2.5 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 uppercase tracking-wider shadow-md"
-                          >
-                            <PlusCircle className="w-3.5 h-3.5 text-slate-950" /> Tambah Kelas
-                          </button>
-                        </div>
-                        {addClassError && (
-                          <div className="text-[11px] text-rose-300 font-bold">
-                            ⚠️ {addClassError}
-                          </div>
-                        )}
-                      </form>
-
-                      {/* Daftar Badge Kelas Aktif dengan Tombol Hapus */}
-                      <div>
-                        <span className="block text-[10px] font-bold text-amber-300 uppercase tracking-widest mb-2">
-                          Daftar Kelas Aktif (Klik X untuk Hapus)
-                        </span>
-                        <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1">
-                          {classList.map(cls => (
-                            <div key={cls} className="bg-purple-950/90 border border-purple-300/40 rounded-xl px-2.5 py-1 flex items-center gap-1.5 text-xs font-bold text-white hover:border-amber-300 transition">
-                              <span>{cls}</span>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteClass(cls)}
-                                className="text-purple-300 hover:text-rose-300 p-0.5 rounded transition cursor-pointer"
-                                title={`Hapus kelas ${cls}`}
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl flex flex-col justify-between text-white">
-                      <div>
-                        <h2 className="text-lg font-extrabold text-white font-display flex items-center gap-2 mb-1">
-                          <Upload className="w-5 h-5 text-amber-300" />
-                          Impor Akun Murid
-                        </h2>
-                        <p className="text-xs text-purple-200 mb-4 font-sans">
-                          Unggah daftar nama murid Anda dari Excel agar murid terdaftar dan dapat login ke aplikasi.
-                        </p>
-
-                        {/* Target Class Selector */}
-                        <div className="mb-4 space-y-1 font-sans">
-                          <label className="block text-[10px] font-bold text-purple-200 uppercase tracking-widest">
-                            Target Kelas (Jika di Excel Kosong)
-                          </label>
-                          <select
-                            value={studentImportClass}
-                            onChange={(e) => setStudentImportClass(e.target.value)}
-                            className="w-full bg-purple-950/90 border-2 border-purple-300/50 rounded-xl px-3 py-2 text-white outline-none cursor-pointer focus:border-amber-300 transition text-xs font-semibold"
-                          >
-                            {classList.map(cls => (
-                              <option key={cls} value={cls} className="bg-purple-950 text-white">{cls}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="border-2 border-dashed border-purple-300/50 hover:border-amber-300 rounded-2xl p-6 flex flex-col items-center justify-center text-center transition relative bg-purple-950/60">
-                          <input
-                            type="file"
-                            accept=".xlsx, .xls, .csv"
-                            onChange={handleImportStudentsFile}
-                            disabled={studentImportLoading}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:pointer-events-none"
-                          />
-                          <Upload className={`w-8 h-8 text-amber-300 mb-2 ${studentImportLoading ? 'animate-pulse' : ''}`} />
-                          <span className="text-xs font-bold text-white">
-                            {studentImportLoading ? 'Memproses data...' : 'Klik/seret Excel Siswa'}
-                          </span>
-                          <span className="text-[9px] text-purple-200 mt-1">
-                            Format kolom: Nama Siswa, Kode Unik, Kelas, Nomor Absen
-                          </span>
-                        </div>
-
-                        {studentImportSuccess !== null && (
-                          <div className="mt-4 p-3 bg-emerald-950/80 border border-emerald-400/50 text-emerald-300 text-xs rounded-xl font-sans font-semibold">
-                            ✅ Berhasil mengimpor {studentImportSuccess} akun murid baru!
-                          </div>
-                        )}
-
-                        {studentImportError && (
-                          <div className="mt-4 p-3 bg-rose-900/80 border border-rose-400/50 text-rose-200 text-xs rounded-xl font-sans font-semibold">
-                            ⚠️ {studentImportError}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="mt-6 pt-4 border-t border-purple-300/30">
-                        <button
-                          onClick={handleDownloadStudentsTemplate}
-                          className="w-full bg-purple-950/80 hover:bg-purple-900 text-amber-300 border border-purple-300/40 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer font-sans"
-                        >
-                          <Copy className="w-3.5 h-3.5" /> Unduh Template Excel Siswa
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Tambah Murid Manual Card */}
-                    <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl flex flex-col justify-between font-sans text-white">
-                      <div>
-                        <h2 className="text-lg font-extrabold text-white font-display flex items-center gap-2 mb-1">
-                          <PlusCircle className="w-5 h-5 text-amber-300" />
-                          Tambah Murid Manual
-                        </h2>
-                        <p className="text-xs text-purple-200 mb-4">
-                          Masukkan data murid secara individu untuk didaftarkan langsung ke database.
-                        </p>
-
-                        <form onSubmit={handleAddManualStudent} className="space-y-3.5 text-xs text-slate-300">
-                          {/* Nama */}
-                          <div>
-                            <label className="block text-[10px] font-bold text-purple-200 uppercase tracking-widest mb-1">
-                              Nama Lengkap Murid
-                            </label>
-                            <input
-                              type="text"
-                              value={manualStudentName}
-                              onChange={(e) => setManualStudentName(e.target.value)}
-                              placeholder="Nama lengkap..."
-                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-300 transition placeholder:text-purple-300/40"
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            {/* Kelas */}
-                            <div>
-                              <label className="block text-[10px] font-bold text-purple-200 uppercase tracking-widest mb-1">
-                                Kelas
-                              </label>
-                              <select
-                                value={manualStudentClass}
-                                onChange={(e) => setManualStudentClass(e.target.value)}
-                                className="w-full bg-purple-950/90 border-2 border-purple-300/50 rounded-xl px-3 py-2 text-white outline-none cursor-pointer focus:border-amber-300 transition"
-                              >
-                                {classList.map(cls => (
-                                  <option key={cls} value={cls} className="bg-purple-950 text-white">{cls}</option>
-                                ))}
-                              </select>
-                            </div>
-
-                            {/* Nomor Absen */}
-                            <div>
-                              <label className="block text-[10px] font-bold text-purple-200 uppercase tracking-widest mb-1">
-                                Nomor Absen
-                              </label>
-                              <input
-                                type="text"
-                                maxLength={2}
-                                value={manualStudentAbsen}
-                                onChange={(e) => setManualStudentAbsen(e.target.value.replace(/\D/g, ''))}
-                                placeholder="01"
-                                className="w-full bg-purple-950/90 border-2 border-purple-300/50 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-300 transition text-center font-bold placeholder:text-purple-300/40"
-                              />
-                            </div>
-                          </div>
-
-                          {/* NIS / Kode Unik */}
-                          <div>
-                            <label className="block text-[10px] font-bold text-purple-200 uppercase tracking-widest mb-1">
-                              Kode Unik / NIS (Dibuat otomatis jika kosong)
-                            </label>
-                            <input
-                              type="text"
-                              value={manualStudentNis}
-                              onChange={(e) => setManualStudentNis(e.target.value)}
-                              placeholder="Contoh: EQ-8F2K9L atau 212210001"
-                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-300 transition placeholder:text-purple-300/40 font-mono"
-                            />
-                          </div>
-
-                          {/* Alerts */}
-                          {manualStudentSuccess && (
-                            <div className="p-2.5 bg-emerald-950/80 border border-emerald-400/50 text-emerald-300 rounded-xl font-bold">
-                              ✓ Murid berhasil didaftarkan!
-                            </div>
-                          )}
-
-                          {manualStudentError && (
-                            <div className="p-2.5 bg-rose-900/80 border border-rose-400/50 text-rose-200 rounded-xl font-bold">
-                              ⚠️ {manualStudentError}
-                            </div>
-                          )}
-
-                          <button
-                            type="submit"
-                            className="w-full py-3 bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 hover:from-amber-300 hover:to-pink-400 text-slate-950 font-black rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-lg text-xs uppercase tracking-wider font-display"
-                          >
-                            <PlusCircle className="w-4 h-4 text-slate-950" /> Daftarkan Murid
-                          </button>
-                        </form>
-                      </div>
-                    </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="bg-purple-950 text-[10px] text-amber-300 uppercase">
+                          <th className="py-2 px-3 text-center"><input type="checkbox" onChange={() => handleSelectAllStudentsToggle(students)} className="cursor-pointer" /></th>
+                          <th className="py-2 px-3">Absen</th>
+                          <th className="py-2 px-3">Nama</th>
+                          <th className="py-2 px-3">Kelas</th>
+                          <th className="py-2 px-3">Kode NIS</th>
+                          <th className="py-2 px-3 text-center">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-purple-300/20 text-xs">
+                        {students.filter(s => s.student_name.toLowerCase().includes(studentsSearch.toLowerCase())).map((s, idx) => (
+                          <tr key={s.id || idx}>
+                            <td className="py-2 px-3 text-center"><input type="checkbox" checked={selectedStudents.has(s.id!)} onChange={() => handleSelectStudentToggle(s.id!)} className="cursor-pointer" /></td>
+                            <td className="py-2 px-3">{s.attendance_num}</td>
+                            <td className="py-2 px-3 font-bold text-white">{s.student_name}</td>
+                            <td className="py-2 px-3">{s.class_name}</td>
+                            <td className="py-2 px-3 text-amber-300 font-mono">{s.nis}</td>
+                            <td className="py-2 px-3 text-center">
+                              <button onClick={() => handleDeleteStudent(s.id!)} className="text-rose-300 hover:text-white p-1 hover:bg-rose-900/60 rounded transition"><Trash2 className="w-3.5 h-3.5" /></button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
+                </div>
+
+                <div className="lg:col-span-4 space-y-6">
+                  <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl text-white font-sans">
+                    <h3 className="text-xs font-bold uppercase mb-3 text-amber-300">Impor Siswa Excel</h3>
+                    <div className="border-2 border-dashed border-purple-300/40 rounded-xl p-6 flex flex-col items-center justify-center relative bg-purple-950/40">
+                      <input type="file" accept=".xlsx, .xls, .csv" onChange={handleImportStudentsFile} disabled={studentImportLoading} className="absolute inset-0 opacity-0 cursor-pointer" />
+                      <Upload className="w-8 h-8 text-amber-300 mb-2" />
+                      <span className="text-xs font-bold">{studentImportLoading ? 'Mengimpor...' : 'Unggah Excel Siswa'}</span>
+                    </div>
+                    {studentImportSuccess !== null && <p className="text-emerald-400 text-xs font-bold mt-2">✓ Berhasil impor {studentImportSuccess} siswa!</p>}
+                    <button onClick={handleDownloadStudentsTemplate} className="w-full mt-4 bg-purple-950 text-amber-300 text-xs border border-purple-300/40 py-2 rounded-xl font-bold">Template Excel</button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* PAGE 6: KELOLA KELAS */}
+            {activePage === 'classes' && (
+              <motion.div
+                key="page-classes"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="grid grid-cols-1 lg:grid-cols-12 gap-6"
+              >
+                <div className="lg:col-span-8 bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl text-white">
+                  <h3 className="text-md font-bold mb-4 font-display">Kelola Kelas Terdaftar</h3>
+                  <table className="w-full text-left font-sans">
+                    <thead>
+                      <tr className="bg-purple-950 text-[10px] text-amber-300 uppercase">
+                        <th className="py-2.5 px-4 w-12 text-center">No</th>
+                        <th className="py-2.5 px-4">Nama Kelas</th>
+                        <th className="py-2.5 px-4 text-center">Jumlah Murid</th>
+                        <th className="py-2.5 px-4 text-center">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-purple-300/20 text-xs">
+                      {classList.map((cls, idx) => (
+                        <tr key={cls}>
+                          <td className="py-2.5 px-4 text-center">{idx + 1}</td>
+                          <td className="py-2.5 px-4 font-bold">{cls}</td>
+                          <td className="py-2.5 px-4 text-center">{students.filter(s => s.class_name === cls).length} Murid</td>
+                          <td className="py-2.5 px-4 text-center">
+                            <div className="flex justify-center gap-2">
+                              <button onClick={() => { sound.playClick(); setEditingClass({ oldName: cls, newName: cls }); setShowEditClassModal(true); }} className="text-amber-300 text-xs hover:underline font-bold">Rename</button>
+                              <button onClick={() => handleDeleteClass(cls)} className="text-rose-300 hover:text-white p-1 hover:bg-rose-900/60 rounded transition"><Trash2 className="w-3.5 h-3.5" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="lg:col-span-4 bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl text-white font-sans">
+                  <h3 className="text-xs font-bold uppercase mb-3 text-amber-300">Tambah Kelas Baru</h3>
+                  <form onSubmit={handleAddClass} className="space-y-3">
+                    <input type="text" value={newClassNameInput} onChange={(e) => setNewClassNameInput(e.target.value)} placeholder="Contoh: XI MIPA 1" className="w-full bg-purple-950 border border-purple-300/40 rounded-xl p-2.5 text-xs text-white" />
+                    <button type="submit" className="w-full bg-gradient-to-r from-amber-400 to-pink-500 text-slate-950 font-black py-2 rounded-xl text-xs uppercase">Tambah Kelas</button>
+                  </form>
+                </div>
+              </motion.div>
+            )}
+
+            {/* PAGE 7: SETTINGS */}
+            {activePage === 'settings' && (
+              <motion.div
+                key="page-settings"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="grid grid-cols-1 lg:grid-cols-12 gap-6"
+              >
+                <div className="lg:col-span-7 bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl text-white font-sans">
+                  <h3 className="text-md font-bold mb-4 font-display">Pengaturan Supabase Cloud Database</h3>
+                  <form onSubmit={handleSaveConfig} className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-purple-200 mb-1">SUPABASE URL</label>
+                      <input type="text" value={sbUrl} onChange={(e) => setSbUrl(e.target.value)} className="w-full bg-purple-950 border border-purple-300/40 rounded-xl p-2 text-xs text-white" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-purple-200 mb-1">SUPABASE ANON KEY</label>
+                      <textarea value={sbAnonKey} onChange={(e) => setSbAnonKey(e.target.value)} className="w-full bg-purple-950 border border-purple-300/40 rounded-xl p-2 text-[10px] text-white" rows={2} />
+                    </div>
+                    <button type="submit" className="w-full bg-gradient-to-r from-amber-400 to-pink-500 text-slate-950 font-black py-2 rounded-xl text-xs uppercase">Simpan & Hubungkan</button>
+                  </form>
+
+                  <div className="mt-6 pt-4 border-t border-purple-300/20">
+                    <button onClick={async () => {
+                      setIsSyncing(true);
+                      const res = await syncLocalDataToSupabase();
+                      setIsSyncing(false);
+                      if (res.success) alert("Sinkronisasi berhasil!");
+                    }} disabled={isSyncing} className="w-full bg-purple-950 text-amber-300 border border-purple-300/40 py-2 rounded-xl text-xs font-bold">
+                      {isSyncing ? "Menyinkronkan..." : "⚡ Sinkronkan Data"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-5 bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl text-white font-sans">
+                  <h3 className="text-xs font-bold uppercase mb-2">Supabase SQL Schema</h3>
+                  <pre className="bg-purple-950/80 rounded-xl p-3 text-[9px] font-mono overflow-auto h-60">{sqlSchema}</pre>
                 </div>
               </motion.div>
             )}
 
           </AnimatePresence>
         </div>
-      </div>
+      </main>
+
+      {/* MODAL 1: EDIT SOAL POPUP */}
+      <AnimatePresence>
+        {editingQuiz && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-4 text-white">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-gradient-to-br from-purple-900 via-violet-950 to-slate-950 border-2 border-purple-400 rounded-3xl p-6 w-full max-w-xl relative">
+              <button onClick={() => setEditingQuiz(null)} className="absolute right-4 top-4 text-purple-200">X</button>
+              <h3 className="text-base font-bold mb-4">Edit Soal Kuis</h3>
+              
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                await updateQuiz(editingQuiz);
+                setEditingQuiz(null);
+                onRefreshQuizzes();
+              }} className="space-y-4">
+                <textarea value={editingQuiz.question} onChange={(e) => setEditingQuiz({ ...editingQuiz, question: e.target.value })} className="w-full bg-purple-950 border rounded-xl p-2 text-xs" />
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <input type="text" value={editingQuiz.option_a} onChange={(e) => setEditingQuiz({ ...editingQuiz, option_a: e.target.value })} className="bg-purple-950 border rounded p-2" />
+                  <input type="text" value={editingQuiz.option_b} onChange={(e) => setEditingQuiz({ ...editingQuiz, option_b: e.target.value })} className="bg-purple-950 border rounded p-2" />
+                  <input type="text" value={editingQuiz.option_c} onChange={(e) => setEditingQuiz({ ...editingQuiz, option_c: e.target.value })} className="bg-purple-950 border rounded p-2" />
+                  <input type="text" value={editingQuiz.option_d} onChange={(e) => setEditingQuiz({ ...editingQuiz, option_d: e.target.value })} className="bg-purple-950 border rounded p-2" />
+                </div>
+                <button type="submit" className="w-full bg-amber-400 text-slate-950 font-black py-2 rounded-xl text-xs uppercase">Simpan Perubahan</button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL 2: EDIT KELAS MODAL */}
+      <AnimatePresence>
+        {showEditClassModal && editingClass && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-4 text-white">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-gradient-to-br from-purple-900 via-violet-950 to-slate-950 border-2 border-purple-400 rounded-3xl p-6 w-full max-w-md relative">
+              <button onClick={() => { setShowEditClassModal(false); setEditingClass(null); }} className="absolute right-4 top-4 text-purple-200">X</button>
+              <h3 className="text-base font-bold mb-4">Ubah Nama Kelas</h3>
+              
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                await updateClassName(editingClass.oldName, editingClass.newName.trim());
+                setShowEditClassModal(false);
+                setEditingClass(null);
+                await loadClassesData();
+                loadStudents();
+                loadTrackerResults();
+              }} className="space-y-4">
+                <input type="text" value={editingClass.newName} onChange={(e) => setEditingClass({ ...editingClass, newName: e.target.value })} className="w-full bg-purple-950 border rounded-xl p-2.5 text-xs text-white" />
+                <button type="submit" className="w-full bg-amber-400 text-slate-950 font-black py-2 rounded-xl text-xs uppercase">Simpan Nama Baru</button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

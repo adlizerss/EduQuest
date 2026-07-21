@@ -812,6 +812,100 @@ export async function updateQuizCategory(id: string | number, newCategory: strin
   return true;
 }
 
+export async function updateQuiz(quiz: QuizQuestion): Promise<boolean> {
+  const localData = localStorage.getItem('eduquest_quizzes');
+  if (localData) {
+    try {
+      const quizzes: QuizQuestion[] = JSON.parse(localData);
+      const updated = quizzes.map(q => {
+        if (q.id === quiz.id || String(q.id) === String(quiz.id)) {
+          return { ...q, ...quiz };
+        }
+        return q;
+      });
+      localStorage.setItem('eduquest_quizzes', JSON.stringify(updated));
+    } catch (e) {
+      console.error("Error updating local quiz", e);
+    }
+  }
+
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { id, ...quizData } = quiz as any;
+      const { error } = await supabase
+        .from('quizzes')
+        .update(quizData)
+        .eq('id', id);
+      if (error) throw error;
+      return true;
+    } catch (e) {
+      console.warn("Supabase updateQuiz failed:", e);
+    }
+  }
+  return true;
+}
+
+export async function updateClassName(oldName: string, newName: string): Promise<boolean> {
+  const localClasses = localStorage.getItem('eduquest_class_list');
+  if (localClasses) {
+    try {
+      const classes: string[] = JSON.parse(localClasses);
+      const updated = classes.map(c => c === oldName ? newName : c);
+      localStorage.setItem('eduquest_class_list', JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  const localStudents = localStorage.getItem('eduquest_students');
+  if (localStudents) {
+    try {
+      const students: StudentAccount[] = JSON.parse(localStudents);
+      const updated = students.map(s => s.class_name === oldName ? { ...s, class_name: newName } : s);
+      localStorage.setItem('eduquest_students', JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  const localResults = localStorage.getItem('eduquest_student_results');
+  if (localResults) {
+    try {
+      const results: StudentResult[] = JSON.parse(localResults);
+      const updated = results.map(r => r.class_name === oldName ? { ...r, class_name: newName } : r);
+      localStorage.setItem('eduquest_student_results', JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  const localAssignments = localStorage.getItem('eduquest_class_assignments');
+  if (localAssignments) {
+    try {
+      const assignments: ClassAssignment[] = JSON.parse(localAssignments);
+      const updated = assignments.map(a => a.class_name === oldName ? { ...a, class_name: newName } : a);
+      localStorage.setItem('eduquest_class_assignments', JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      await supabase.from('classes').update({ class_name: newName }).eq('class_name', oldName);
+      await supabase.from('students').update({ class_name: newName }).eq('class_name', oldName);
+      await supabase.from('student_results').update({ class_name: newName }).eq('class_name', oldName);
+      await supabase.from('class_assignments').update({ class_name: newName }).eq('class_name', oldName);
+      return true;
+    } catch (e) {
+      console.warn("Supabase updateClassName failed:", e);
+    }
+  }
+  return true;
+}
+
 export async function fetchStudents(): Promise<StudentAccount[]> {
   const supabase = getSupabaseClient();
   if (supabase) {
