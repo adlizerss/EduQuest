@@ -140,7 +140,7 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
       await addStudentResult(finalResult);
       setSubmitSuccess(true);
     } catch (e) {
-      console.error("Gagal menyimpan hasil kuis siswa:", e);
+      console.error("Gagal menyimpan hasil kuis murid:", e);
     } finally {
       setIsSubmitting(false);
     }
@@ -188,7 +188,7 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
               <span className="text-2xl sm:text-3xl font-black text-emerald-400 font-display mt-1 block">{correctCount} / {questions.length}</span>
             </div>
             <div className="bg-slate-950/80 border border-purple-500/20 p-4 rounded-2xl shadow-inner text-center">
-              <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">NAMA SISWA</span>
+              <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">NAMA MURID</span>
               <span className="text-xs sm:text-sm font-extrabold text-white truncate block mt-2">{studentName}</span>
             </div>
             <div className="bg-slate-950/80 border border-purple-500/20 p-4 rounded-2xl shadow-inner text-center">

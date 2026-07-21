@@ -9,39 +9,69 @@
 
 /* Deep Electric Violet Background System matching reference image */
 body {
-  background-color: #0b0518;
+  background-color: #0b041a;
   color: #f1f5f9;
   background-image: 
-    radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.18) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
-    radial-gradient(at 50% 100%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(217, 70, 239, 0.12) 0px, transparent 50%),
-    linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+    radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.25) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.22) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(99, 102, 241, 0.2) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(217, 70, 239, 0.18) 0px, transparent 50%),
+    linear-gradient(rgba(168, 85, 247, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(168, 85, 247, 0.04) 1px, transparent 1px);
   background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 36px 36px, 36px 36px;
   background-attachment: fixed;
   font-family: var(--font-sans);
 }
 
+/* High-contrast Gaming Cards & Boards (Matching reference image) */
+.glass-panel-purple {
+  background: linear-gradient(145deg, rgba(26, 12, 54, 0.94) 0%, rgba(16, 7, 36, 0.96) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(192, 132, 252, 0.35);
+  box-shadow: 0 12px 36px -5px rgba(5, 2, 12, 0.85), 0 0 25px 0 rgba(168, 85, 247, 0.18);
+}
+
+.glass-panel {
+  background: rgba(20, 9, 42, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  box-shadow: 0 8px 28px 0 rgba(5, 2, 12, 0.7);
+}
+
 /* High-end Electric Purple Neon Glow classes */
 .neon-glow-purple {
-  box-shadow: 0 0 30px -5px rgba(147, 51, 234, 0.3), 0 0 15px -3px rgba(168, 85, 247, 0.2);
-  border: 1px solid rgba(168, 85, 247, 0.3);
+  box-shadow: 0 0 30px -3px rgba(147, 51, 234, 0.4), 0 0 15px -2px rgba(168, 85, 247, 0.28);
+  border: 1px solid rgba(192, 132, 252, 0.45);
 }
 
 .neon-glow-violet {
-  box-shadow: 0 0 30px -5px rgba(124, 58, 237, 0.35), 0 0 15px -3px rgba(139, 92, 246, 0.25);
-  border: 1px solid rgba(139, 92, 246, 0.35);
+  box-shadow: 0 0 30px -3px rgba(124, 58, 237, 0.45), 0 0 15px -2px rgba(139, 92, 246, 0.3);
+  border: 1px solid rgba(168, 85, 247, 0.4);
 }
 
 .neon-glow-cyan {
-  box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.25), 0 0 15px -3px rgba(6, 182, 212, 0.15);
-  border: 1px solid rgba(6, 182, 212, 0.3);
+  box-shadow: 0 0 25px -3px rgba(6, 182, 212, 0.35), 0 0 15px -2px rgba(6, 182, 212, 0.2);
+  border: 1px solid rgba(6, 182, 212, 0.4);
 }
 
 .neon-glow-emerald {
-  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25), 0 0 15px -3px rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 25px -3px rgba(16, 185, 129, 0.35), 0 0 15px -2px rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+/* High Contrast Accent Cards matching reference screenshot */
+.contrast-card-blue {
+  background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 50%, #60a5fa 100%);
+  border: 1px solid rgba(147, 197, 253, 0.4);
+  box-shadow: 0 10px 25px -5px rgba(29, 78, 216, 0.5);
+}
+
+.contrast-card-amber {
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fb923c 100%);
+  border: 1px solid rgba(253, 186, 116, 0.4);
+  box-shadow: 0 10px 25px -5px rgba(234, 88, 12, 0.5);
 }
 
 /* Screen shake effect on error */
@@ -55,33 +85,18 @@ body {
   animation: shake 0.4s ease-in-out;
 }
 
-/* Premium Violet Glassmorphism */
-.glass-panel {
-  background: rgba(18, 10, 36, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(168, 85, 247, 0.15);
-}
-
-.glass-panel-purple {
-  background: linear-gradient(135deg, rgba(30, 16, 58, 0.85) 0%, rgba(18, 9, 38, 0.9) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(192, 132, 252, 0.2);
-}
-
 /* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(11, 5, 24, 0.6);
+  background: rgba(11, 5, 24, 0.8);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(168, 85, 247, 0.3);
+  background: rgba(168, 85, 247, 0.4);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(168, 85, 247, 0.6);
+  background: rgba(168, 85, 247, 0.7);
 }
