@@ -878,41 +878,41 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
     return (
       <div className="min-h-screen bg-[#0b0518] flex items-center justify-center p-4 sm:p-6 font-sans text-slate-100 relative overflow-hidden select-none">
         {/* Background decorative purple orbs */}
-        <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-purple-600/20 rounded-full blur-[120px] -z-10" />
-        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-violet-600/15 rounded-full blur-[130px] -z-10" />
+        <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-purple-600/30 rounded-full blur-[120px] -z-10 animate-pulse" />
+        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-violet-600/25 rounded-full blur-[130px] -z-10" />
 
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4 }}
-          className="glass-panel-purple rounded-3xl p-6 sm:p-10 max-w-lg w-full shadow-2xl neon-glow-purple relative overflow-hidden"
+          className="bg-gradient-to-br from-purple-700 via-violet-800 to-indigo-900 border-2 border-purple-400/50 rounded-3xl p-6 sm:p-10 max-w-lg w-full shadow-[0_15px_50px_rgba(147,51,234,0.5)] relative overflow-hidden backdrop-blur-2xl text-white"
         >
           {/* Top card gradient accent */}
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500" />
+          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-pink-400 via-amber-300 to-cyan-400" />
 
           <div className="flex justify-between items-center mb-6 pt-1">
             <button 
               onClick={() => { sound.playClick(); onBack(); }}
-              className="flex items-center gap-2 text-slate-400 hover:text-white transition text-xs sm:text-sm font-extrabold cursor-pointer uppercase tracking-wider font-display"
+              className="flex items-center gap-2 text-purple-200 hover:text-white transition text-xs sm:text-sm font-extrabold cursor-pointer uppercase tracking-wider font-display"
             >
               <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /> Kembali
             </button>
-            <div className="bg-purple-500/15 text-purple-300 border border-purple-400/30 text-xs px-3.5 py-1.5 rounded-full font-black flex items-center gap-1.5 uppercase tracking-wider font-display">
-              <Lock className="w-3.5 h-3.5 text-purple-400" /> Supabase Auth
+            <div className="bg-purple-950/80 text-amber-300 border border-purple-300/40 text-xs px-3.5 py-1.5 rounded-full font-black flex items-center gap-1.5 uppercase tracking-wider font-display shadow-inner">
+              <Lock className="w-3.5 h-3.5 text-amber-300" /> Supabase Auth
             </div>
           </div>
 
           <div className="text-center mb-6">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-purple-500/15 text-purple-300 border border-purple-400/30 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner neon-glow-purple">
-              <Lock className="w-8 h-8 sm:w-10 sm:h-10 text-purple-300" />
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-amber-400/20 text-amber-300 border-2 border-amber-300/50 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Lock className="w-8 h-8 sm:w-10 sm:h-10 text-amber-300" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none uppercase font-display">Supabase Admin Login</h1>
-            <p className="text-slate-300 text-xs sm:text-sm mt-2 font-medium">Masuk menggunakan akun Supabase Authentication Guru.</p>
+            <p className="text-purple-200 text-xs sm:text-sm mt-2 font-medium">Masuk menggunakan akun Supabase Authentication Guru.</p>
           </div>
 
           <form onSubmit={handleAuthSubmit} className="space-y-4">
             <div>
-              <label className="block text-[11px] font-black text-purple-300 uppercase tracking-widest mb-1.5 font-display">
+              <label className="block text-[11px] font-black text-purple-100 uppercase tracking-widest mb-1.5 font-display">
                 Username / Email Guru
               </label>
               <input 
@@ -920,13 +920,13 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                 value={adminUser}
                 onChange={(e) => setAdminUser(e.target.value)}
                 placeholder="Contoh: guru@eduquest.com atau admin"
-                className="w-full bg-slate-950/90 border border-purple-500/30 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30 rounded-2xl px-4 py-3 text-sm font-semibold outline-none text-white transition-all placeholder:text-slate-600 shadow-inner"
+                className="w-full bg-purple-950/80 border-2 border-purple-300/60 focus:border-amber-300 focus:ring-4 focus:ring-purple-400/40 rounded-2xl px-4 py-3 text-sm font-semibold outline-none text-white transition-all placeholder:text-purple-300/40 shadow-inner"
                 autoFocus
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-black text-purple-300 uppercase tracking-widest mb-1.5 font-display">
+              <label className="block text-[11px] font-black text-purple-100 uppercase tracking-widest mb-1.5 font-display">
                 Password Akses
               </label>
               <div className="relative">
@@ -935,12 +935,12 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
                   placeholder="Masukkan password..."
-                  className="w-full bg-slate-950/90 border border-purple-500/30 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30 rounded-2xl pl-4 pr-16 py-3 text-sm font-semibold outline-none text-white transition-all placeholder:text-slate-600 shadow-inner"
+                  className="w-full bg-purple-950/80 border-2 border-purple-300/60 focus:border-amber-300 focus:ring-4 focus:ring-purple-400/40 rounded-2xl pl-4 pr-20 py-3 text-sm font-semibold outline-none text-white transition-all placeholder:text-purple-300/40 shadow-inner"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-purple-400 font-bold hover:text-white transition cursor-pointer"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-amber-300 font-extrabold hover:text-white transition cursor-pointer"
                 >
                   {showPassword ? 'Sembunyi' : 'Lihat'}
                 </button>
@@ -948,8 +948,8 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
             </div>
 
             {authError && (
-              <p className="text-rose-400 text-xs mt-2 font-bold flex items-start gap-1.5 bg-rose-500/15 border border-rose-500/30 p-3 rounded-xl leading-relaxed">
-                <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
+              <p className="text-rose-200 text-xs mt-2 font-bold flex items-start gap-1.5 bg-rose-900/80 border-2 border-rose-400/60 p-3 rounded-xl leading-relaxed shadow-lg">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-rose-300" />
                 <span>{authError}</span>
               </p>
             )}
@@ -957,16 +957,16 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
             <motion.button
               type="submit"
               disabled={isLoggingIn}
-              whileHover={{ scale: 1.02, boxShadow: "0px 10px 25px rgba(147, 51, 234, 0.4)" }}
+              whileHover={{ scale: 1.02, boxShadow: "0px 10px 25px rgba(245, 158, 11, 0.4)" }}
               whileTap={{ scale: 0.97 }}
-              className="w-full bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 text-white font-black py-3.5 px-6 rounded-2xl shadow-xl transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer uppercase tracking-widest text-xs sm:text-sm font-display mt-2"
+              className="w-full bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 hover:from-amber-300 hover:to-pink-400 disabled:opacity-50 text-slate-950 font-black py-4 px-6 rounded-2xl shadow-[0_10px_25px_rgba(245,158,11,0.4)] transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer uppercase tracking-widest text-xs sm:text-sm font-display mt-2"
             >
               {isLoggingIn ? 'Memproses Login...' : 'Masuk Dashboard Guru'}
             </motion.button>
           </form>
 
-          <div className="mt-6 pt-5 border-t border-purple-500/20 text-center">
-            <p className="text-xs text-slate-400 font-medium">
+          <div className="mt-6 pt-5 border-t border-purple-300/30 text-center">
+            <p className="text-xs text-purple-200 font-medium">
               💡 Akun admin/guru dapat dibuat di menu <b>Authentication → Users</b> pada console Cloud Supabase Anda.
             </p>
           </div>
