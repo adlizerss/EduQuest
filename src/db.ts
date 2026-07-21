@@ -547,6 +547,31 @@ export async function syncLocalDataToSupabase(): Promise<{
   let syncedAssignments = 0;
 
   try {
+    // Check if Supabase is completely empty to match reset ground-truth across devices
+    const { data: sbQuizzes } = await supabase.from('quizzes').select('id');
+    const { data: sbClasses } = await supabase.from('classes').select('id');
+    const { data: sbStudents } = await supabase.from('students').select('id');
+
+    const totalSbRecords = (sbQuizzes?.length || 0) + (sbClasses?.length || 0) + (sbStudents?.length || 0);
+
+    if (totalSbRecords === 0) {
+      localStorage.setItem('eduquest_quizzes', JSON.stringify([]));
+      localStorage.setItem('eduquest_class_list', JSON.stringify([]));
+      localStorage.setItem('eduquest_students', JSON.stringify([]));
+      localStorage.setItem('eduquest_student_results', JSON.stringify([]));
+      localStorage.setItem('eduquest_class_assignments', JSON.stringify([]));
+      localStorage.setItem('eduquest_custom_packages', JSON.stringify([]));
+      localStorage.setItem('eduquest_seeded', 'true');
+
+      clearDeletedList('quizzes');
+      clearDeletedList('classes');
+      clearDeletedList('students');
+      clearDeletedList('student_results');
+      clearDeletedList('class_assignments');
+
+      return { syncedClasses: 0, syncedStudents: 0, syncedQuizzes: 0, syncedResults: 0, syncedAssignments: 0, success: true };
+    }
+
     // 1. SYNC CLASSES
     try {
       const deletedClasses = getDeletedList('classes');
