@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, User, Hash, School, Play, Lock, AlertTriangle, Shield, Sparkles, FolderOpen } from 'lucide-react';
+import { BookOpen, User, Hash, School, Play, Lock, AlertTriangle, Shield, Sparkles, FolderOpen, Zap, Trophy, Clock, CheckCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import sound from '../utils/audio';
 import { QuizQuestion, StudentAccount, ClassAssignment } from '../types';
@@ -72,125 +72,133 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
     onStartGame(student_name, attendance_num, class_name, targetCategory);
   };
 
-  const commonClasses = [
-    'X MIPA 1', 'X MIPA 2', 'X IPS 1', 'X IPS 2',
-    'XI MIPA 1', 'XI MIPA 2', 'XI IPS 1', 'XI IPS 2',
-    'XII MIPA 1', 'XII MIPA 2', 'XII IPS 1', 'XII IPS 2',
-  ];
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#0b0518] text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden font-sans select-none">
       
-      {/* Background Decorative Neon Orbs */}
-      <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl -z-10" />
-      <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl -z-10" />
+      {/* Background Decorative Purple Orbs (Reference Image Aesthetic) */}
+      <div className="absolute top-1/6 left-1/5 w-72 sm:w-96 h-72 sm:h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none -z-10 animate-pulse" />
+      <div className="absolute bottom-1/4 right-1/5 w-80 sm:w-[30rem] h-80 sm:h-[30rem] bg-violet-600/15 rounded-full blur-[130px] pointer-events-none -z-10" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-7xl h-96 bg-indigo-500/10 rounded-full blur-[160px] pointer-events-none -z-10" />
 
-      <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+      <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center my-auto py-6">
         
-        {/* Left Side: Game Lore & Info */}
-        <div className="lg:col-span-7 space-y-8">
+        {/* Left Side: Electric Purple Hero Banner & Features */}
+        <div className="lg:col-span-7 space-y-6 sm:space-y-8">
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
             className="space-y-4"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 text-sm font-extrabold uppercase tracking-widest">
-              <Sparkles className="w-4 h-4 animate-pulse" /> EduQuest Kuis RPG
+            <div className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-purple-500/15 border border-purple-400/30 text-purple-300 text-xs sm:text-sm font-extrabold uppercase tracking-widest backdrop-blur-md shadow-lg">
+              <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" /> Platform Kuis Interaktif
             </div>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-white leading-none font-display">
-              Selamat Datang di <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-pink-400">EduQuest</span>
+            
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-white leading-tight font-display">
+              Selamat Datang di <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-violet-300 to-pink-400">EduQuest</span>
             </h1>
-            <p className="text-slate-300 text-lg md:text-xl font-medium leading-relaxed">
-              Platform kuis interaktif serbaguna. Jawab soal secara presisi, dapatkan bonus poin berbasis kecepatan, dan buktikan kemampuan terbaikmu!
+            
+            <p className="text-slate-300 text-base sm:text-lg md:text-xl font-medium leading-relaxed max-w-2xl">
+              Platform kuis interaktif berkecepatan tinggi. Jawab soal presisi 25 detik, kumpulkan poin bonus maksimal, dan jadilah yang terbaik di kelasmu!
             </p>
           </motion.div>
  
-          {/* Gamification Features list */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {/* Gamification Features list with fluid hover cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
             <motion.div 
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-slate-900/70 border border-slate-800/80 p-5 rounded-2xl flex items-center gap-4"
+              transition={{ delay: 0.1, duration: 0.4 }}
+              whileHover={{ scale: 1.02, translateY: -3 }}
+              className="bg-gradient-to-br from-purple-950/50 to-slate-900/80 border border-purple-500/20 p-4 sm:p-5 rounded-2xl flex items-center gap-4 backdrop-blur-xl shadow-xl transition-all"
             >
-              <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-xl text-xl shrink-0">
+              <div className="p-3 bg-purple-500/15 text-purple-300 rounded-xl text-2xl shrink-0 shadow-inner border border-purple-500/20">
                 ⏱️
               </div>
               <div>
-                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Timer 25 Detik</h3>
-                <p className="text-xs text-slate-400 mt-1">Setiap soal berdurasi 25 detik. Berpikir cepat dan tentukan jawaban terbaikmu!</p>
+                <h3 className="text-xs sm:text-sm font-extrabold text-white uppercase tracking-wider font-display">Timer 25 Detik</h3>
+                <p className="text-xs text-slate-400 mt-1 leading-snug">Setiap soal berdurasi 25 detik. Berpikir cepat dan tentukan pilihanmu!</p>
               </div>
             </motion.div>
  
             <motion.div 
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-slate-900/70 border border-slate-800/80 p-5 rounded-2xl flex items-center gap-4"
+              transition={{ delay: 0.2, duration: 0.4 }}
+              whileHover={{ scale: 1.02, translateY: -3 }}
+              className="bg-gradient-to-br from-purple-950/50 to-slate-900/80 border border-purple-500/20 p-4 sm:p-5 rounded-2xl flex items-center gap-4 backdrop-blur-xl shadow-xl transition-all"
             >
-              <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl text-xl shrink-0">
+              <div className="p-3 bg-amber-500/15 text-amber-300 rounded-xl text-2xl shrink-0 shadow-inner border border-amber-500/20">
                 ⚡
               </div>
               <div>
-                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Poin Kecepatan</h3>
-                <p className="text-xs text-slate-400 mt-1">Semakin cepat menjawab dengan benar, semakin besar poin bonus yang didapat!</p>
+                <h3 className="text-xs sm:text-sm font-extrabold text-white uppercase tracking-wider font-display">Poin Kecepatan</h3>
+                <p className="text-xs text-slate-400 mt-1 leading-snug">Semakin cepat menjawab benar, semakin besar poin bonus yang didapat!</p>
               </div>
             </motion.div>
  
             <motion.div 
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-slate-900/70 border border-slate-800/80 p-5 rounded-2xl flex items-center gap-4"
+              transition={{ delay: 0.3, duration: 0.4 }}
+              whileHover={{ scale: 1.02, translateY: -3 }}
+              className="bg-gradient-to-br from-purple-950/50 to-slate-900/80 border border-purple-500/20 p-4 sm:p-5 rounded-2xl flex items-center gap-4 backdrop-blur-xl shadow-xl transition-all"
             >
-              <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl text-xl shrink-0">
+              <div className="p-3 bg-emerald-500/15 text-emerald-300 rounded-xl text-2xl shrink-0 shadow-inner border border-emerald-500/20">
                 🎯
               </div>
               <div>
-                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Rekap Otomatis</h3>
-                <p className="text-xs text-slate-400 mt-1">Hasil perolehan poin langsung terekap otomatis di panel Guru secara real-time.</p>
+                <h3 className="text-xs sm:text-sm font-extrabold text-white uppercase tracking-wider font-display">Rekap Otomatis</h3>
+                <p className="text-xs text-slate-400 mt-1 leading-snug">Hasil perolehan poin langsung terekap di server Guru secara real-time.</p>
               </div>
             </motion.div>
  
             <motion.div 
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-slate-900/70 border border-slate-800/80 p-5 rounded-2xl flex items-center gap-4"
+              transition={{ delay: 0.4, duration: 0.4 }}
+              whileHover={{ scale: 1.02, translateY: -3 }}
+              className="bg-gradient-to-br from-purple-950/50 to-slate-900/80 border border-purple-500/20 p-4 sm:p-5 rounded-2xl flex items-center gap-4 backdrop-blur-xl shadow-xl transition-all"
             >
-              <div className="p-3 bg-pink-500/10 text-pink-400 rounded-xl text-xl shrink-0">
+              <div className="p-3 bg-pink-500/15 text-pink-300 rounded-xl text-2xl shrink-0 shadow-inner border border-pink-500/20">
                 🔑
               </div>
               <div>
-                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Login Kode Unik</h3>
-                <p className="text-xs text-slate-400 mt-1">Masuk kuis dengan mudah & terverifikasi hanya menggunakan Kode Unik resmi dari Guru!</p>
+                <h3 className="text-xs sm:text-sm font-extrabold text-white uppercase tracking-wider font-display">Login Kode Unik</h3>
+                <p className="text-xs text-slate-400 mt-1 leading-snug">Masuk kuis dengan mudah & terverifikasi menggunakan Kode Unik resmi!</p>
               </div>
             </motion.div>
           </div>
         </div>
  
-        {/* Right Side: Registration Form */}
-        <div className="lg:col-span-5">
+        {/* Right Side: Fluid Student Login Card */}
+        <div className="lg:col-span-5 w-full">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl relative neon-glow-cyan"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="glass-panel-purple border border-purple-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl relative neon-glow-purple overflow-hidden"
           >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-extrabold text-white tracking-tight">Mulai Petualangan</h2>
-              <span className="text-xs bg-slate-800 border border-slate-700 px-3 py-1 rounded-full text-cyan-400 font-mono font-bold">
-                {getQuestionCountForCategory(selectedCategory)} SOAL SIAP
+            {/* Top Card Gradient Bar */}
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500" />
+
+            <div className="flex justify-between items-center mb-6 pt-1">
+              <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight font-display flex items-center gap-2">
+                <Zap className="w-5 h-5 text-purple-400" /> Mulai Kuis Murid
+              </h2>
+              <span className="text-[11px] bg-purple-950/80 border border-purple-500/40 px-3 py-1 rounded-full text-purple-300 font-mono font-bold">
+                {getQuestionCountForCategory(selectedCategory)} SOAL
               </span>
             </div>
  
             <form onSubmit={handleSubmit} className="space-y-5">
-                 {/* Input Kode Unik */}
+              {/* Input Kode Unik */}
               <div className="space-y-2">
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">
-                  Kode Unik Murid
+                <label className="block text-xs font-bold text-purple-200 uppercase tracking-widest font-sans">
+                  Masukkan Kode Unik Murid
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-4.5 w-5 h-5 text-slate-400" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-400" />
                   <input
                     type="text"
                     value={uniqueCode}
@@ -199,7 +207,7 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
                       setError('');
                     }}
                     placeholder="Contoh: EQ-8F2K9L"
-                    className="w-full bg-slate-950/90 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 text-lg font-mono font-bold rounded-2xl pl-12 pr-4 py-4 outline-none text-cyan-400 uppercase tracking-wider transition placeholder:text-slate-600"
+                    className="w-full bg-slate-950/90 border border-purple-500/30 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30 text-lg sm:text-xl font-mono font-bold rounded-2xl pl-12 pr-4 py-3.5 sm:py-4 outline-none text-purple-300 uppercase tracking-wider transition-all placeholder:text-slate-600 shadow-inner"
                   />
                 </div>
               </div>
@@ -209,38 +217,39 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
                 <motion.div 
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-cyan-500/10 border border-cyan-500/25 p-4 rounded-2xl space-y-2 font-sans shadow-inner"
+                  transition={{ duration: 0.3 }}
+                  className="bg-purple-950/70 border border-purple-400/40 p-4 rounded-2xl space-y-2.5 font-sans shadow-lg neon-glow-purple"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest block">
-                      ✓ Identitas Murid Terverifikasi
+                    <span className="text-[10px] font-black text-purple-300 uppercase tracking-widest flex items-center gap-1">
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-400" /> Identitas Terverifikasi
                     </span>
-                    <span className="text-[10px] bg-cyan-500/20 text-cyan-300 font-bold px-2 py-0.5 rounded-full font-mono">
+                    <span className="text-[10px] bg-purple-500/30 text-purple-200 font-bold px-2.5 py-0.5 rounded-full font-mono border border-purple-400/30">
                       {foundStudent.nis}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Nama Murid</span>
-                      <span className="font-bold text-white text-sm">{foundStudent.student_name}</span>
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Nama Lengkap</span>
+                      <span className="font-bold text-white text-sm truncate block">{foundStudent.student_name}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Kelas & Absen</span>
-                      <span className="font-bold text-white text-sm">{foundStudent.class_name} (Absen {foundStudent.attendance_num})</span>
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Kelas (Absen)</span>
+                      <span className="font-bold text-purple-300 text-sm truncate block">{foundStudent.class_name} ({foundStudent.attendance_num})</span>
                     </div>
                   </div>
                 </motion.div>
               )}
 
-              {/* CBT Class Assignment Active Status vs Manual Dropdown Fallback */}
+              {/* CBT Assignment Status or Category Selector */}
               {quizCount > 0 && (() => {
                 const targetClassName = foundStudent ? foundStudent.class_name : null;
                 const hasAnyAssignments = assignments && assignments.length > 0;
 
                 if (!foundStudent) {
                   return (
-                    <div className="bg-slate-950/60 border border-slate-800/80 p-4 rounded-2xl text-center text-xs text-slate-400 font-medium">
-                      🔑 Silakan masukkan <span className="text-cyan-400 font-bold">Kode Unik</span> yang diberikan Guru untuk masuk.
+                    <div className="bg-slate-950/70 border border-purple-500/20 p-4 rounded-2xl text-center text-xs text-slate-400 font-medium">
+                      🔑 Silakan masukkan <span className="text-purple-300 font-bold">Kode Unik</span> dari Guru untuk masuk kuis.
                     </div>
                   );
                 }
@@ -249,11 +258,11 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
                   const activeAssignment = assignments.find(a => a.class_name.toLowerCase() === targetClassName.toLowerCase());
                   if (activeAssignment) {
                     return (
-                      <div className="bg-indigo-500/10 border border-indigo-500/20 p-4 rounded-2xl flex items-center gap-3.5 shadow-inner">
-                        <FolderOpen className="w-5 h-5 text-indigo-400 shrink-0 animate-pulse" />
+                      <div className="bg-purple-900/40 border border-purple-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-inner">
+                        <FolderOpen className="w-5 h-5 text-purple-300 shrink-0 animate-pulse" />
                         <div>
-                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block font-sans">
-                            Kuis Terjadwal Aktif (CBT Mode)
+                          <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest block font-sans">
+                            Paket Kuis Aktif (CBT Mode)
                           </span>
                           <span className="text-sm font-extrabold text-white font-sans mt-0.5 block">
                             📁 {activeAssignment.category} ({getQuestionCountForCategory(activeAssignment.category)} Soal)
@@ -263,14 +272,14 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
                     );
                   } else {
                     return (
-                      <div className="bg-rose-500/10 border border-rose-500/25 p-4 rounded-2xl flex items-center gap-3.5 shadow-inner">
+                      <div className="bg-rose-500/10 border border-rose-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-inner">
                         <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
                         <div>
-                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block font-sans">
+                          <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest block font-sans">
                             Status Ujian Kelas
                           </span>
-                          <span className="text-sm font-bold text-rose-400 font-sans mt-0.5 block">
-                            🔴 Belum ada ujian terposting untuk kelas {targetClassName}
+                          <span className="text-xs font-bold text-rose-300 font-sans mt-0.5 block">
+                            🔴 Belum ada ujian aktif diposting untuk kelas {targetClassName}
                           </span>
                         </div>
                       </div>
@@ -279,15 +288,15 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
                 } else {
                   return (
                     <div className="space-y-2">
-                      <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest font-sans">
-                        Pilih Folder / Paket Kuis
+                      <label className="block text-xs font-bold text-purple-200 uppercase tracking-widest font-sans">
+                        Pilih Paket / Folder Soal
                       </label>
                       <div className="relative">
-                        <FolderOpen className="absolute left-4 top-4.5 w-5 h-5 text-slate-400" />
+                        <FolderOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-400" />
                         <select
                           value={selectedCategory}
                           onChange={(e) => setSelectedCategory(e.target.value)}
-                          className="w-full bg-slate-950/90 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 text-base rounded-2xl pl-11 pr-2 py-4 outline-none text-white transition cursor-pointer appearance-none font-bold text-center text-cyan-400"
+                          className="w-full bg-slate-950/90 border border-purple-500/30 focus:border-purple-400 text-base rounded-2xl pl-12 pr-4 py-3.5 outline-none text-purple-300 font-bold transition-all cursor-pointer appearance-none"
                         >
                           <option value="Semua" className="bg-slate-950 text-white">📦 Semua Paket ({quizzes.length} Soal)</option>
                           {categories.map(cat => (
@@ -302,40 +311,44 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
                 }
               })()}
 
-              {/* Warnings & Errors */}
+              {/* Error messages */}
               {error && (
-                <div className="text-sm bg-rose-500/10 border border-rose-500/30 text-rose-400 p-4 rounded-2xl flex items-start gap-2.5 leading-relaxed font-semibold">
+                <div className="text-xs sm:text-sm bg-rose-500/15 border border-rose-500/30 text-rose-300 p-4 rounded-2xl flex items-start gap-2.5 leading-relaxed font-semibold">
                   <AlertTriangle className="w-5 h-5 shrink-0 text-rose-400" />
                   <span>{error}</span>
                 </div>
               )}
 
               {quizCount === 0 && (
-                <div className="text-sm bg-amber-500/10 border border-amber-500/30 text-amber-400 p-4 rounded-2xl flex items-start gap-2.5 leading-relaxed font-semibold">
+                <div className="text-xs sm:text-sm bg-amber-500/15 border border-amber-500/30 text-amber-300 p-4 rounded-2xl flex items-start gap-2.5 leading-relaxed font-semibold">
                   <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400" />
-                  <span>Kuis kosong! Silakan minta Guru mengisi soal kuis di Panel Guru.</span>
+                  <span>Soal kuis masih kosong! Minta Guru untuk menambahkan soal kuis di Panel Admin.</span>
                 </div>
               )}
 
-              {/* Submit Button */}
-              <button
+              {/* Fluid Animated Submit Button matching reference theme */}
+              <motion.button
                 type="submit"
                 disabled={quizCount === 0 || !foundStudent}
-                className="w-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-pink-500 hover:from-cyan-400 hover:to-pink-400 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none text-white font-black py-4.5 px-4 rounded-2xl shadow-xl shadow-cyan-500/10 transition duration-150 flex items-center justify-center gap-2 cursor-pointer mt-4 text-base uppercase tracking-widest"
+                whileHover={{ scale: 1.02, boxShadow: "0px 10px 30px rgba(147, 51, 234, 0.4)" }}
+                whileTap={{ scale: 0.97 }}
+                className="w-full bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-40 disabled:pointer-events-none text-white font-black py-4 px-4 rounded-2xl shadow-xl transition-all duration-150 flex items-center justify-center gap-2.5 cursor-pointer mt-4 text-base uppercase tracking-widest font-display"
               >
-                <Play className="w-5 h-5 fill-white" /> Mulai Petualangan Kuis
-              </button>
+                <Play className="w-5 h-5 fill-white" /> Mulai Kuis Sekarang
+              </motion.button>
             </form>
  
             {/* Quick Link to Teacher Admin */}
-            <div className="mt-6 pt-5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-500 font-medium">
+            <div className="mt-6 pt-5 border-t border-purple-500/20 flex items-center justify-between text-xs text-slate-400 font-medium">
               <span>Khusus Pendidik:</span>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => { sound.playClick(); onGoToAdmin(); }}
-                className="text-cyan-400 hover:text-cyan-300 font-extrabold flex items-center gap-1.5 transition cursor-pointer text-sm"
+                className="text-purple-300 hover:text-purple-200 font-extrabold flex items-center gap-1.5 transition cursor-pointer text-sm"
               >
-                <Lock className="w-4 h-4" /> Panel Guru
-              </button>
+                <Lock className="w-4 h-4 text-purple-400" /> Panel Guru
+              </motion.button>
             </div>
           </motion.div>
         </div>

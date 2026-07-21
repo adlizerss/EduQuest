@@ -779,39 +779,43 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 font-sans text-slate-100 relative overflow-hidden">
-        {/* Background decorative orbs */}
-        <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -z-10" />
+      <div className="min-h-screen bg-[#0b0518] flex items-center justify-center p-4 sm:p-6 font-sans text-slate-100 relative overflow-hidden select-none">
+        {/* Background decorative purple orbs */}
+        <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-purple-600/20 rounded-full blur-[120px] -z-10" />
+        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-violet-600/15 rounded-full blur-[130px] -z-10" />
 
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="glass-panel-heavy rounded-3xl p-8 md:p-10 max-w-lg w-full shadow-2xl neon-glow-indigo relative"
+          transition={{ duration: 0.4 }}
+          className="glass-panel-purple rounded-3xl p-6 sm:p-10 max-w-lg w-full shadow-2xl neon-glow-purple relative overflow-hidden"
         >
-          <div className="flex justify-between items-center mb-8">
+          {/* Top card gradient accent */}
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500" />
+
+          <div className="flex justify-between items-center mb-8 pt-1">
             <button 
               onClick={() => { sound.playClick(); onBack(); }}
-              className="flex items-center gap-2 text-slate-400 hover:text-white transition text-base font-extrabold cursor-pointer uppercase tracking-wider"
+              className="flex items-center gap-2 text-slate-400 hover:text-white transition text-xs sm:text-sm font-extrabold cursor-pointer uppercase tracking-wider font-display"
             >
-              <ArrowLeft className="w-5 h-5" /> Kembali
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /> Kembali
             </button>
-            <div className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs px-3.5 py-1.5 rounded-full font-black flex items-center gap-1.5 uppercase tracking-wider">
-              <Lock className="w-4 h-4" /> Guru Panel
+            <div className="bg-purple-500/15 text-purple-300 border border-purple-400/30 text-xs px-3.5 py-1.5 rounded-full font-black flex items-center gap-1.5 uppercase tracking-wider font-display">
+              <Lock className="w-3.5 h-3.5 text-purple-400" /> Guru Panel
             </div>
           </div>
 
           <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
-              <Lock className="w-10 h-10" />
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-purple-500/15 text-purple-300 border border-purple-400/30 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner neon-glow-purple">
+              <Lock className="w-8 h-8 sm:w-10 sm:h-10 text-purple-300" />
             </div>
-            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-none uppercase font-display">Verifikasi Akses Guru</h1>
-            <p className="text-slate-400 text-base mt-2 font-medium">Masukkan PIN Guru untuk masuk ke dashboard manajemen EduQuest.</p>
+            <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-none uppercase font-display">Verifikasi Akses Guru</h1>
+            <p className="text-slate-300 text-xs sm:text-sm mt-2 font-medium">Masukkan PIN Guru untuk masuk ke dashboard manajemen EduQuest.</p>
           </div>
 
           <form onSubmit={handlePinSubmit} className="space-y-6">
             <div>
-              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
+              <label className="block text-[11px] font-black text-purple-300 uppercase tracking-widest mb-2 font-display text-center">
                 PIN AKSES KEAMANAN
               </label>
               <input 
@@ -820,26 +824,28 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
                 placeholder="PIN"
-                className="w-full text-center tracking-[1em] text-3xl md:text-4xl font-black bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 rounded-2xl px-6 py-4 outline-none text-white transition placeholder:text-slate-800 placeholder:tracking-normal"
+                className="w-full text-center tracking-[0.8em] sm:tracking-[1em] text-2xl sm:text-4xl font-black bg-slate-950/90 border border-purple-500/30 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30 rounded-2xl px-4 py-3.5 sm:py-4 outline-none text-purple-300 transition-all placeholder:text-slate-700 placeholder:tracking-normal font-mono shadow-inner"
                 autoFocus
               />
               {pinError && (
-                <p className="text-rose-400 text-sm mt-3 font-bold flex items-center gap-1.5 bg-rose-500/10 border border-rose-500/20 p-3 rounded-xl">
+                <p className="text-rose-400 text-xs sm:text-sm mt-3 font-bold flex items-center gap-1.5 bg-rose-500/15 border border-rose-500/30 p-3 rounded-xl">
                   ⚠ {pinError}
                 </p>
               )}
             </div>
 
-            <button
+            <motion.button
               type="submit"
-              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 active:scale-[0.98] text-white font-black py-4 px-6 rounded-2xl shadow-lg shadow-indigo-500/25 transition duration-150 flex items-center justify-center gap-2 cursor-pointer uppercase tracking-widest text-base"
+              whileHover={{ scale: 1.02, boxShadow: "0px 10px 25px rgba(147, 51, 234, 0.4)" }}
+              whileTap={{ scale: 0.97 }}
+              className="w-full bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black py-4 px-6 rounded-2xl shadow-xl transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer uppercase tracking-widest text-xs sm:text-sm font-display"
             >
               Masuk Dashboard
-            </button>
+            </motion.button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-slate-800/60 text-center">
-            <span className="text-sm text-slate-400 font-semibold">Petunjuk: Gunakan PIN <b>1919</b> untuk masuk kuis.</span>
+          <div className="mt-8 pt-6 border-t border-purple-500/20 text-center">
+            <span className="text-xs text-slate-400 font-semibold">Petunjuk: Gunakan PIN <b className="text-purple-300 font-mono">1919</b> untuk masuk dashboard.</span>
           </div>
         </motion.div>
       </div>
@@ -847,32 +853,32 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-[#0b0518] text-slate-100 font-sans flex flex-col relative overflow-x-hidden">
       {/* Background Orbs */}
-      <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl -z-10" />
-      <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl -z-10" />
+      <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-purple-600/15 rounded-full blur-[130px] -z-10" />
+      <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-violet-600/15 rounded-full blur-[140px] -z-10" />
 
       {/* Top Header Dashboard */}
-      <header className="glass-panel border-b border-slate-800 sticky top-0 z-10 px-6 py-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <header className="glass-panel-purple border-b border-purple-500/20 sticky top-0 z-20 px-4 sm:px-6 py-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-xl">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-xl shadow-sm">
-            <BookOpen className="w-6 h-6" />
+          <div className="p-2.5 bg-purple-500/15 text-purple-300 border border-purple-400/30 rounded-xl shadow-sm">
+            <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-white font-display">EduQuest Guru Board</h1>
-              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold px-2 py-0.5 rounded-full">
+              <h1 className="text-lg sm:text-xl font-extrabold text-white font-display">EduQuest Guru Board</h1>
+              <span className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-400/30 font-bold px-2.5 py-0.5 rounded-full font-mono">
                 {isSbConnected ? 'Supabase Connected' : 'Local Fallback'}
               </span>
             </div>
-            <p className="text-xs text-slate-400">Interactive Gamified Quiz Platform • Modul Guru Terintegrasi</p>
+            <p className="text-xs text-slate-400">Interactive Quiz Platform • Panel Guru Terintegrasi</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button 
             onClick={() => { sound.playClick(); onBack(); }}
-            className="bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer"
+            className="bg-slate-900/80 hover:bg-slate-850 text-slate-300 hover:text-white border border-purple-500/20 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer"
             title="Kembali ke layar utama tanpa melogout sesi admin"
           >
             <ArrowLeft className="w-4 h-4" /> Kembali
@@ -884,7 +890,7 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
               setIsAuthenticated(false);
               onBack(); 
             }}
-            className="bg-rose-950/40 hover:bg-rose-900/40 text-rose-300 hover:text-rose-200 border border-rose-900/30 hover:border-rose-900/50 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer"
+            className="bg-rose-950/40 hover:bg-rose-900/40 text-rose-300 hover:text-rose-200 border border-rose-900/40 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer"
             title="Keluar dan hapus sesi login admin"
           >
             <LogOut className="w-4 h-4" /> Log Out
@@ -895,49 +901,49 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
       {/* Main Content Body */}
       <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
         
-        {/* Sidebar Nav */}
+        {/* Sidebar Nav with Fluid Tab Buttons */}
         <div className="lg:col-span-1 space-y-4">
-          <div className="glass-panel rounded-2xl border border-slate-800 p-4 space-y-1">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest px-3 mb-2">MENU DASHBOARD</p>
+          <div className="glass-panel-purple rounded-2xl border border-purple-500/20 p-4 space-y-1.5 shadow-xl">
+            <p className="text-[10px] font-black text-purple-300 uppercase tracking-widest px-3 mb-2 font-display">MENU DASHBOARD</p>
             
             <button
               onClick={() => { sound.playClick(); setActiveTab('tracker'); }}
-              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2.5 transition cursor-pointer ${
+              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2.5 transition cursor-pointer font-sans ${
                 activeTab === 'tracker' 
-                  ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' 
-                  : 'text-slate-400 hover:bg-slate-900/60'
+                  ? 'bg-gradient-to-r from-violet-600/30 to-purple-600/30 text-purple-200 border border-purple-400/40 shadow-inner' 
+                  : 'text-slate-400 hover:bg-purple-950/40 hover:text-slate-200'
               }`}
             >
-              <Users className="w-4 h-4" />
+              <Users className="w-4 h-4 text-purple-400" />
               Live Student Tracker
             </button>
 
             <button
               onClick={() => { sound.playClick(); setActiveTab('builder'); }}
-              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2.5 transition cursor-pointer ${
+              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2.5 transition cursor-pointer font-sans ${
                 activeTab === 'builder' 
-                  ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' 
-                  : 'text-slate-400 hover:bg-slate-900/60'
+                  ? 'bg-gradient-to-r from-violet-600/30 to-purple-600/30 text-purple-200 border border-purple-400/40 shadow-inner' 
+                  : 'text-slate-400 hover:bg-purple-950/40 hover:text-slate-200'
               }`}
             >
-              <FileSpreadsheet className="w-4 h-4" />
+              <FileSpreadsheet className="w-4 h-4 text-indigo-400" />
               Quiz Management
-              <span className="ml-auto bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+              <span className="ml-auto bg-purple-950 text-purple-300 border border-purple-500/30 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
                 {allQuizzes.length}
               </span>
             </button>
 
             <button
               onClick={() => { sound.playClick(); setActiveTab('students'); }}
-              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2.5 transition cursor-pointer ${
+              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2.5 transition cursor-pointer font-sans ${
                 activeTab === 'students' 
-                  ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' 
-                  : 'text-slate-400 hover:bg-slate-900/60'
+                  ? 'bg-gradient-to-r from-violet-600/30 to-purple-600/30 text-purple-200 border border-purple-400/40 shadow-inner' 
+                  : 'text-slate-400 hover:bg-purple-950/40 hover:text-slate-200'
               }`}
             >
-              <Users className="w-4 h-4 text-cyan-400" />
+              <Users className="w-4 h-4 text-pink-400" />
               Akun Murid / Siswa
-              <span className="ml-auto bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+              <span className="ml-auto bg-purple-950 text-purple-300 border border-purple-500/30 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
                 {students.length}
               </span>
             </button>

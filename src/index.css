@@ -1,48 +1,50 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Space Grotesk", sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
-/* Custom background grid and styling for Elegant Dark theme */
+/* Deep Electric Violet Background System matching reference image */
 body {
-  background-color: #020617;
-  color: #f8fafc;
+  background-color: #0b0518;
+  color: #f1f5f9;
   background-image: 
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.05) 0px, transparent 50%),
-    linear-gradient(rgba(30, 41, 59, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(30, 41, 59, 0.1) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
+    radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.18) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(217, 70, 239, 0.12) 0px, transparent 50%),
+    linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 36px 36px, 36px 36px;
   background-attachment: fixed;
   font-family: var(--font-sans);
 }
 
-/* High-end Neon Glow classes for RPG elements and Cards */
+/* High-end Electric Purple Neon Glow classes */
+.neon-glow-purple {
+  box-shadow: 0 0 30px -5px rgba(147, 51, 234, 0.3), 0 0 15px -3px rgba(168, 85, 247, 0.2);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.neon-glow-violet {
+  box-shadow: 0 0 30px -5px rgba(124, 58, 237, 0.35), 0 0 15px -3px rgba(139, 92, 246, 0.25);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+}
+
 .neon-glow-cyan {
-  box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.15), 0 0 15px -3px rgba(6, 182, 212, 0.1);
-  border: 1px solid rgba(6, 182, 212, 0.2);
-}
-
-.neon-glow-indigo {
-  box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.15), 0 0 15px -3px rgba(99, 102, 241, 0.1);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-}
-
-.neon-glow-pink {
-  box-shadow: 0 0 25px -5px rgba(236, 72, 153, 0.15), 0 0 15px -3px rgba(236, 72, 153, 0.1);
-  border: 1px solid rgba(236, 72, 153, 0.2);
+  box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.25), 0 0 15px -3px rgba(6, 182, 212, 0.15);
+  border: 1px solid rgba(6, 182, 212, 0.3);
 }
 
 .neon-glow-emerald {
-  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.15), 0 0 15px -3px rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25), 0 0 15px -3px rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-/* Screen shake effect on damage */
+/* Screen shake effect on error */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
@@ -53,33 +55,33 @@ body {
   animation: shake 0.4s ease-in-out;
 }
 
-/* Premium Card Glassmorphism and Hover scaling */
+/* Premium Violet Glassmorphism */
 .glass-panel {
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.glass-panel-heavy {
-  background: rgba(10, 15, 30, 0.85);
+  background: rgba(18, 10, 36, 0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(168, 85, 247, 0.15);
 }
 
-/* Custom scrollbars for professional tracker dashboard */
+.glass-panel-purple {
+  background: linear-gradient(135deg, rgba(30, 16, 58, 0.85) 0%, rgba(18, 9, 38, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(192, 132, 252, 0.2);
+}
+
+/* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(2, 6, 23, 0.4);
+  background: rgba(11, 5, 24, 0.6);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(168, 85, 247, 0.3);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.4);
+  background: rgba(168, 85, 247, 0.6);
 }
