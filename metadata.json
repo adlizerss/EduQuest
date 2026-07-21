@@ -1,6 +1,6 @@
 {
-  "name": "EduQuest: Gamified Quiz RPG",
-  "description": "An interactive, gamified assessments platform featuring an RPG gameplay system (HP, Mana, Skills) for students of any subject, and a live tracking dashboard with Excel/CSV import tools for teachers.",
+  "name": "EduQuest - Kuis Interaktif",
+  "description": "Platform kuis dan pembelajaran interaktif berkecepatan tinggi berbasis gamifikasi.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
