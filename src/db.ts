@@ -187,9 +187,32 @@ function initLocalStorageDB() {
 
 initLocalStorageDB();
 
+// Deletion tracking helpers to ensure deleted items are removed from Supabase and not recreated by bi-directional sync
+function markAsDeleted(table: string, identifier: string | number) {
+  const key = `eduquest_deleted_${table}`;
+  const deletedListRaw = localStorage.getItem(key);
+  const deletedList: string[] = deletedListRaw ? JSON.parse(deletedListRaw) : [];
+  const valStr = String(identifier);
+  if (!deletedList.includes(valStr)) {
+    deletedList.push(valStr);
+    localStorage.setItem(key, JSON.stringify(deletedList));
+  }
+}
+
+function getDeletedList(table: string): string[] {
+  const key = `eduquest_deleted_${table}`;
+  const deletedListRaw = localStorage.getItem(key);
+  return deletedListRaw ? JSON.parse(deletedListRaw) : [];
+}
+
+function clearDeletedList(table: string) {
+  localStorage.removeItem(`eduquest_deleted_${table}`);
+}
+
 /**
  * Bi-directional non-destructive data synchronization between Local Storage & Supabase.
  * Merges missing records across all 5 tables (Classes, Students, Quizzes, Results, Assignments).
+ * Also processes deletion logs first to ensure deleted records are deleted on Supabase and filtered out.
  */
 export async function syncLocalDataToSupabase(): Promise<{
   syncedClasses: number;
@@ -213,9 +236,17 @@ export async function syncLocalDataToSupabase(): Promise<{
   try {
     // 1. SYNC CLASSES
     try {
+      const deletedClasses = getDeletedList('classes');
+      if (deletedClasses.length > 0) {
+        await supabase.from('classes').delete().in('class_name', deletedClasses);
+      }
+
       const { data: sbClasses } = await supabase.from('classes').select('class_name');
       const localClassesRaw = localStorage.getItem('eduquest_class_list');
-      const localClasses: string[] = localClassesRaw ? JSON.parse(localClassesRaw) : DEFAULT_CLASSES;
+      let localClasses: string[] = localClassesRaw ? JSON.parse(localClassesRaw) : DEFAULT_CLASSES;
+
+      localClasses = localClasses.filter(c => !deletedClasses.includes(c));
+      localStorage.setItem('eduquest_class_list', JSON.stringify(localClasses));
 
       const sbClassSet = new Set((sbClasses || []).map(c => c.class_name.toLowerCase().trim()));
       const newClassesToSb: any[] = [];
@@ -237,103 +268,150 @@ export async function syncLocalDataToSupabase(): Promise<{
       if (updatedSbClasses && updatedSbClasses.length > 0) {
         localStorage.setItem('eduquest_class_list', JSON.stringify(updatedSbClasses.map(c => c.class_name)));
       }
+      clearDeletedList('classes');
     } catch (e) {
       console.warn("Sync classes warning:", e);
     }
 
     // 2. SYNC STUDENTS
-    const { data: sbStudents } = await supabase.from('students').select('*');
-    const localStudentsRaw = localStorage.getItem('eduquest_students');
-    const localStudents: StudentAccount[] = localStudentsRaw ? JSON.parse(localStudentsRaw) : [];
-    
-    const sbStudentMap = new Map<string, StudentAccount>();
-    (sbStudents || []).forEach(s => {
-      const key = (s.nis || `${s.student_name}_${s.class_name}`).toLowerCase().trim();
-      sbStudentMap.set(key, s);
-    });
-
-    const newStudentsToSb: any[] = [];
-    localStudents.forEach(ls => {
-      const key = (ls.nis || `${ls.student_name}_${ls.class_name}`).toLowerCase().trim();
-      if (!sbStudentMap.has(key)) {
-        const { id, ...rest } = ls as any;
-        newStudentsToSb.push(rest);
-        sbStudentMap.set(key, ls);
+    try {
+      const deletedStudents = getDeletedList('students');
+      if (deletedStudents.length > 0) {
+        // Convert IDs to number if they are numeric
+        const numericIds = deletedStudents.map(id => isNaN(Number(id)) ? id : Number(id));
+        await supabase.from('students').delete().in('id', numericIds);
       }
-    });
 
-    if (newStudentsToSb.length > 0) {
-      const { error: insertErr } = await supabase.from('students').insert(newStudentsToSb);
-      if (!insertErr) {
-        syncedStudents = newStudentsToSb.length;
+      const { data: sbStudents } = await supabase.from('students').select('*');
+      const localStudentsRaw = localStorage.getItem('eduquest_students');
+      let localStudents: StudentAccount[] = localStudentsRaw ? JSON.parse(localStudentsRaw) : [];
+      
+      localStudents = localStudents.filter(s => !deletedStudents.includes(String(s.id)));
+      localStorage.setItem('eduquest_students', JSON.stringify(localStudents));
+
+      const sbStudentMap = new Map<string, StudentAccount>();
+      (sbStudents || []).forEach(s => {
+        const key = (s.nis || `${s.student_name}_${s.class_name}`).toLowerCase().trim();
+        sbStudentMap.set(key, s);
+      });
+
+      const newStudentsToSb: any[] = [];
+      localStudents.forEach(ls => {
+        const key = (ls.nis || `${ls.student_name}_${ls.class_name}`).toLowerCase().trim();
+        if (!sbStudentMap.has(key)) {
+          const { id, ...rest } = ls as any;
+          newStudentsToSb.push(rest);
+          sbStudentMap.set(key, ls);
+        }
+      });
+
+      if (newStudentsToSb.length > 0) {
+        const { error: insertErr } = await supabase.from('students').insert(newStudentsToSb);
+        if (!insertErr) {
+          syncedStudents = newStudentsToSb.length;
+        }
       }
-    }
 
-    const { data: updatedSbStudents } = await supabase.from('students').select('*').order('student_name', { ascending: true });
-    if (updatedSbStudents && updatedSbStudents.length > 0) {
-      localStorage.setItem('eduquest_students', JSON.stringify(updatedSbStudents));
+      const { data: updatedSbStudents } = await supabase.from('students').select('*').order('student_name', { ascending: true });
+      if (updatedSbStudents) {
+        const filteredSb = updatedSbStudents.filter((s: any) => !deletedStudents.includes(String(s.id)));
+        localStorage.setItem('eduquest_students', JSON.stringify(filteredSb));
+      }
+      clearDeletedList('students');
+    } catch (e) {
+      console.warn("Sync students warning:", e);
     }
 
     // 3. SYNC QUIZZES
-    const { data: sbQuizzes } = await supabase.from('quizzes').select('*');
-    const localQuizzesRaw = localStorage.getItem('eduquest_quizzes');
-    const localQuizzes: QuizQuestion[] = localQuizzesRaw ? JSON.parse(localQuizzesRaw) : [];
-
-    const sbQuizSet = new Set((sbQuizzes || []).map(q => q.question.toLowerCase().trim()));
-    const newQuizzesToSb: any[] = [];
-
-    localQuizzes.forEach(lq => {
-      const key = lq.question.toLowerCase().trim();
-      if (!sbQuizSet.has(key)) {
-        const { id, ...rest } = lq as any;
-        newQuizzesToSb.push(rest);
-        sbQuizSet.add(key);
+    try {
+      const deletedQuizzes = getDeletedList('quizzes');
+      if (deletedQuizzes.length > 0) {
+        const numericIds = deletedQuizzes.map(id => isNaN(Number(id)) ? id : Number(id));
+        await supabase.from('quizzes').delete().in('id', numericIds);
       }
-    });
 
-    if (newQuizzesToSb.length > 0) {
-      const { error: qInsertErr } = await supabase.from('quizzes').insert(newQuizzesToSb);
-      if (!qInsertErr) {
-        syncedQuizzes = newQuizzesToSb.length;
+      const { data: sbQuizzes } = await supabase.from('quizzes').select('*');
+      const localQuizzesRaw = localStorage.getItem('eduquest_quizzes');
+      let localQuizzes: QuizQuestion[] = localQuizzesRaw ? JSON.parse(localQuizzesRaw) : [];
+
+      localQuizzes = localQuizzes.filter(q => !deletedQuizzes.includes(String(q.id)));
+      localStorage.setItem('eduquest_quizzes', JSON.stringify(localQuizzes));
+
+      const sbQuizSet = new Set((sbQuizzes || []).map(q => q.question.toLowerCase().trim()));
+      const newQuizzesToSb: any[] = [];
+
+      localQuizzes.forEach(lq => {
+        const key = lq.question.toLowerCase().trim();
+        if (!sbQuizSet.has(key)) {
+          const { id, ...rest } = lq as any;
+          newQuizzesToSb.push(rest);
+          sbQuizSet.add(key);
+        }
+      });
+
+      if (newQuizzesToSb.length > 0) {
+        const { error: qInsertErr } = await supabase.from('quizzes').insert(newQuizzesToSb);
+        if (!qInsertErr) {
+          syncedQuizzes = newQuizzesToSb.length;
+        }
       }
-    }
 
-    const { data: updatedSbQuizzes } = await supabase.from('quizzes').select('*').order('id', { ascending: true });
-    if (updatedSbQuizzes && updatedSbQuizzes.length > 0) {
-      localStorage.setItem('eduquest_quizzes', JSON.stringify(updatedSbQuizzes));
+      const { data: updatedSbQuizzes } = await supabase.from('quizzes').select('*').order('id', { ascending: true });
+      if (updatedSbQuizzes) {
+        const filteredSb = updatedSbQuizzes.filter((q: any) => !deletedQuizzes.includes(String(q.id)));
+        localStorage.setItem('eduquest_quizzes', JSON.stringify(filteredSb));
+      }
+      clearDeletedList('quizzes');
+    } catch (e) {
+      console.warn("Sync quizzes warning:", e);
     }
 
     // 4. SYNC STUDENT RESULTS
-    const { data: sbResults } = await supabase.from('student_results').select('*');
-    const localResultsRaw = localStorage.getItem('eduquest_student_results');
-    const localResults: StudentResult[] = localResultsRaw ? JSON.parse(localResultsRaw) : [];
-
-    const sbResultMap = new Map<string, StudentResult>();
-    (sbResults || []).forEach(r => {
-      const key = `${r.student_name}_${r.submit_at}`.toLowerCase().trim();
-      sbResultMap.set(key, r);
-    });
-
-    const newResultsToSb: any[] = [];
-    localResults.forEach(lr => {
-      const key = `${lr.student_name}_${lr.submit_at}`.toLowerCase().trim();
-      if (!sbResultMap.has(key)) {
-        const { id, ...rest } = lr as any;
-        newResultsToSb.push(rest);
-        sbResultMap.set(key, lr);
+    try {
+      const deletedResults = getDeletedList('student_results');
+      if (deletedResults.length > 0) {
+        const numericIds = deletedResults.map(id => isNaN(Number(id)) ? id : Number(id));
+        await supabase.from('student_results').delete().in('id', numericIds);
       }
-    });
 
-    if (newResultsToSb.length > 0) {
-      const { error: rInsertErr } = await supabase.from('student_results').insert(newResultsToSb);
-      if (!rInsertErr) {
-        syncedResults = newResultsToSb.length;
+      const { data: sbResults } = await supabase.from('student_results').select('*');
+      const localResultsRaw = localStorage.getItem('eduquest_student_results');
+      let localResults: StudentResult[] = localResultsRaw ? JSON.parse(localResultsRaw) : [];
+
+      localResults = localResults.filter(r => !deletedResults.includes(String(r.id)));
+      localStorage.setItem('eduquest_student_results', JSON.stringify(localResults));
+
+      const sbResultMap = new Map<string, StudentResult>();
+      (sbResults || []).forEach(r => {
+        const key = `${r.student_name}_${r.submit_at}`.toLowerCase().trim();
+        sbResultMap.set(key, r);
+      });
+
+      const newResultsToSb: any[] = [];
+      localResults.forEach(lr => {
+        const key = `${lr.student_name}_${lr.submit_at}`.toLowerCase().trim();
+        if (!sbResultMap.has(key)) {
+          const { id, ...rest } = lr as any;
+          newResultsToSb.push(rest);
+          sbResultMap.set(key, lr);
+        }
+      });
+
+      if (newResultsToSb.length > 0) {
+        const { error: rInsertErr } = await supabase.from('student_results').insert(newResultsToSb);
+        if (!rInsertErr) {
+          syncedResults = newResultsToSb.length;
+        }
       }
-    }
 
-    const { data: updatedSbResults } = await supabase.from('student_results').select('*').order('id', { ascending: false });
-    if (updatedSbResults && updatedSbResults.length > 0) {
-      localStorage.setItem('eduquest_student_results', JSON.stringify(updatedSbResults));
+      const { data: updatedSbResults } = await supabase.from('student_results').select('*').order('id', { ascending: false });
+      if (updatedSbResults) {
+        const filteredSb = updatedSbResults.filter((r: any) => !deletedResults.includes(String(r.id)));
+        localStorage.setItem('eduquest_student_results', JSON.stringify(filteredSb));
+      }
+      clearDeletedList('student_results');
+    } catch (e) {
+      console.warn("Sync results warning:", e);
     }
 
     // 5. SYNC CLASS ASSIGNMENTS
@@ -430,6 +508,8 @@ export async function addClassToDb(className: string): Promise<boolean> {
 }
 
 export async function deleteClassFromDb(className: string): Promise<boolean> {
+  markAsDeleted('classes', className);
+
   const localData = localStorage.getItem('eduquest_class_list');
   if (localData) {
     const currentList: string[] = JSON.parse(localData);
@@ -515,6 +595,8 @@ export async function addQuiz(quiz: QuizQuestion): Promise<QuizQuestion> {
 }
 
 export async function deleteQuiz(id: string | number): Promise<boolean> {
+  markAsDeleted('quizzes', id);
+
   const localData = localStorage.getItem('eduquest_quizzes');
   if (localData) {
     const quizzes: QuizQuestion[] = JSON.parse(localData);
@@ -584,6 +666,8 @@ export async function addStudentResult(result: StudentResult): Promise<StudentRe
 }
 
 export async function deleteStudentResult(id: string | number): Promise<boolean> {
+  markAsDeleted('student_results', id);
+
   const localData = localStorage.getItem('eduquest_student_results');
   if (localData) {
     const results: StudentResult[] = JSON.parse(localData);
@@ -774,6 +858,8 @@ export async function addStudent(student: StudentAccount): Promise<StudentAccoun
 }
 
 export async function deleteStudent(id: string | number): Promise<boolean> {
+  markAsDeleted('students', id);
+
   const localData = localStorage.getItem('eduquest_students');
   if (localData) {
     const students: StudentAccount[] = JSON.parse(localData);
