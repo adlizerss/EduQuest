@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchQuizzes, fetchStudents, fetchClassAssignments, syncLocalDataToSupabase } from './db';
 import { QuizQuestion, StudentAccount, ClassAssignment } from './types';
 import WelcomeScreen from './components/WelcomeScreen';
-import StudentRPG from './components/StudentRPG';
+import QuizPlayground from './components/StudentRPG';
 import AdminPanel from './components/AdminPanel';
 import sound from './utils/audio';
 
@@ -94,7 +94,7 @@ export default function App() {
       )}
 
       {currentScreen === 'game' && studentDetails && (
-        <StudentRPG
+        <QuizPlayground
           studentName={studentDetails.name}
           attendanceNum={studentDetails.attendanceNum}
           className={studentDetails.className}

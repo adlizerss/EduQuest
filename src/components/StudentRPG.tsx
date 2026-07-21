@@ -8,7 +8,7 @@ import { QuizQuestion, StudentResult } from '../types';
 import { addStudentResult } from '../db';
 import sound from '../utils/audio';
 
-interface StudentRPGProps {
+interface QuizPlaygroundProps {
   studentName: string;
   attendanceNum: string;
   className: string;
@@ -16,7 +16,7 @@ interface StudentRPGProps {
   onQuit: () => void;
 }
 
-export default function StudentRPG({ studentName, attendanceNum, className, questions, onQuit }: StudentRPGProps) {
+export default function QuizPlayground({ studentName, attendanceNum, className, questions, onQuit }: QuizPlaygroundProps) {
   // Gameplay State
   const [score, setScore] = useState<number>(0);
   const [correctCount, setCorrectCount] = useState<number>(0);
