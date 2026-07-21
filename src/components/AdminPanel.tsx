@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Database, Trash2, PlusCircle, Copy, CheckCircle, ArrowLeft, 
   Lock, RotateCcw, FileSpreadsheet, Users, BookOpen, Settings, Sparkles, LogOut, Check,
-  Upload, Download, AlertTriangle, Pencil, X, FolderOpen
+  Upload, Download, AlertTriangle, Pencil, X, FolderOpen, School
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
@@ -97,6 +97,51 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
   const [manualStudentNis, setManualStudentNis] = useState('');
   const [manualStudentSuccess, setManualStudentSuccess] = useState(false);
   const [manualStudentError, setManualStudentError] = useState('');
+
+  // Dynamic Class List management state
+  const DEFAULT_CLASSES = [
+    'X MIPA 1', 'X MIPA 2', 'X IPS 1', 'X IPS 2',
+    'XI MIPA 1', 'XI MIPA 2', 'XI IPS 1', 'XI IPS 2',
+    'XII MIPA 1', 'XII MIPA 2', 'XII IPS 1', 'XII IPS 2',
+  ];
+
+  const [classList, setClassList] = useState<string[]>(() => {
+    const saved = localStorage.getItem('eduquest_class_list');
+    return saved ? JSON.parse(saved) : DEFAULT_CLASSES;
+  });
+
+  const [newClassNameInput, setNewClassNameInput] = useState('');
+  const [addClassError, setAddClassError] = useState('');
+
+  const handleAddClass = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = newClassNameInput.trim();
+    if (!trimmed) {
+      setAddClassError('Nama kelas tidak boleh kosong!');
+      sound.playDamage();
+      return;
+    }
+    if (classList.some(c => c.toLowerCase() === trimmed.toLowerCase())) {
+      setAddClassError('Nama kelas sudah ada dalam daftar!');
+      sound.playDamage();
+      return;
+    }
+    const updated = [...classList, trimmed];
+    setClassList(updated);
+    localStorage.setItem('eduquest_class_list', JSON.stringify(updated));
+    setNewClassNameInput('');
+    setAddClassError('');
+    sound.playSpell();
+  };
+
+  const handleDeleteClass = (targetClass: string) => {
+    if (confirm(`Apakah Anda yakin ingin menghapus kelas "${targetClass}"?`)) {
+      const updated = classList.filter(c => c !== targetClass);
+      setClassList(updated);
+      localStorage.setItem('eduquest_class_list', JSON.stringify(updated));
+      sound.playDamage();
+    }
+  };
 
   const handleDownloadTemplate = () => {
     sound.playClick();
@@ -998,23 +1043,14 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                           Pilih Kelas Siswa
                         </label>
                         
-                        {Array.from(new Set(students.map(s => s.class_name))).length > 0 ? (
-                          <select
-                            id="assign-class-select"
-                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer"
-                          >
-                            {Array.from(new Set(students.map(s => s.class_name))).map(cls => (
-                              <option key={cls} value={cls}>{cls}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <input
-                            type="text"
-                            id="assign-class-input"
-                            placeholder="Contoh: X MIPA 1"
-                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none placeholder:text-slate-700"
-                          />
-                        )}
+                        <select
+                          id="assign-class-select"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer"
+                        >
+                          {Array.from(new Set([...classList, ...students.map(s => s.class_name)])).map(cls => (
+                            <option key={cls} value={cls}>{cls}</option>
+                          ))}
+                        </select>
                       </div>
 
                       {/* Pilihan Paket */}
@@ -1861,7 +1897,7 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                             className="bg-slate-950 border border-slate-800 text-xs rounded-xl px-3 py-1.5 outline-none text-cyan-400 font-bold cursor-pointer transition"
                           >
                             <option value="All">Semua Kelas</option>
-                            {Array.from(new Set(students.map(s => s.class_name))).map(cls => (
+                            {Array.from(new Set([...classList, ...students.map(s => s.class_name)])).map(cls => (
                               <option key={cls} value={cls}>{cls}</option>
                             ))}
                           </select>
@@ -1947,8 +1983,67 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                     </div>
                   </div>
 
-                  {/* Right Side: Student Import Panel (4 cols) */}
+                  {/* Right Side: Student Import Panel & Class Management (4 cols) */}
                   <div className="lg:col-span-4 flex flex-col gap-6">
+                    {/* Kelola Kelas Card (Tambah & Hapus Kelas) */}
+                    <div className="glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl font-sans">
+                      <h2 className="text-lg font-bold text-white font-display flex items-center gap-2 mb-1">
+                        <School className="w-5 h-5 text-pink-400" />
+                        Manajemen Daftar Kelas ({classList.length})
+                      </h2>
+                      <p className="text-xs text-slate-400 mb-4">
+                        Tambah kelas baru atau hapus kelas yang sudah tidak aktif dalam sistem.
+                      </p>
+
+                      {/* Form Tambah Kelas */}
+                      <form onSubmit={handleAddClass} className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={newClassNameInput}
+                            onChange={(e) => {
+                              setNewClassNameInput(e.target.value);
+                              setAddClassError('');
+                            }}
+                            placeholder="Contoh: X MERDEKA 1"
+                            className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-pink-500 transition placeholder:text-slate-700 font-semibold"
+                          />
+                          <button
+                            type="submit"
+                            className="bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl transition cursor-pointer flex items-center gap-1 uppercase tracking-wider shrink-0 shadow-md"
+                          >
+                            <PlusCircle className="w-3.5 h-3.5" /> Tambah
+                          </button>
+                        </div>
+                        {addClassError && (
+                          <div className="text-[11px] text-rose-400 font-semibold">
+                            ⚠️ {addClassError}
+                          </div>
+                        )}
+                      </form>
+
+                      {/* Daftar Badge Kelas Aktif dengan Tombol Hapus */}
+                      <div>
+                        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                          Daftar Kelas Aktif (Klik X untuk Hapus)
+                        </span>
+                        <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1">
+                          {classList.map(cls => (
+                            <div key={cls} className="bg-slate-950/90 border border-slate-800 rounded-xl px-2.5 py-1 flex items-center gap-1.5 text-xs font-bold text-slate-200 hover:border-slate-700 transition">
+                              <span>{cls}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteClass(cls)}
+                                className="text-slate-500 hover:text-rose-400 p-0.5 rounded transition cursor-pointer"
+                                title={`Hapus kelas ${cls}`}
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                     <div className="glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl flex flex-col justify-between">
                       <div>
                         <h2 className="text-lg font-bold text-white font-display flex items-center gap-2 mb-1">
@@ -1969,11 +2064,7 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                             onChange={(e) => setStudentImportClass(e.target.value)}
                             className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none cursor-pointer focus:border-cyan-500 transition text-xs font-semibold"
                           >
-                            {[
-                              'X MIPA 1', 'X MIPA 2', 'X IPS 1', 'X IPS 2',
-                              'XI MIPA 1', 'XI MIPA 2', 'XI IPS 1', 'XI IPS 2',
-                              'XII MIPA 1', 'XII MIPA 2', 'XII IPS 1', 'XII IPS 2',
-                            ].map(cls => (
+                            {classList.map(cls => (
                               <option key={cls} value={cls} className="bg-slate-950 text-white">{cls}</option>
                             ))}
                           </select>
@@ -2056,11 +2147,7 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                                 onChange={(e) => setManualStudentClass(e.target.value)}
                                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none cursor-pointer focus:border-indigo-500 transition"
                               >
-                                {[
-                                  'X MIPA 1', 'X MIPA 2', 'X IPS 1', 'X IPS 2',
-                                  'XI MIPA 1', 'XI MIPA 2', 'XI IPS 1', 'XI IPS 2',
-                                  'XII MIPA 1', 'XII MIPA 2', 'XII IPS 1', 'XII IPS 2',
-                                ].map(cls => (
+                                {classList.map(cls => (
                                   <option key={cls} value={cls} className="bg-slate-950 text-white">{cls}</option>
                                 ))}
                               </select>
