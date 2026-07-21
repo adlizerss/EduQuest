@@ -12,7 +12,8 @@ import {
   getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, resetDatabaseToDefault,
   updateCategoryName, updateQuizCategory, fetchStudents, addStudent, deleteStudent,
   assignQuizToClass, removeClassAssignment, syncLocalDataToSupabase,
-  signInTeacher, signOutTeacher, fetchClasses, addClassToDb, deleteClassFromDb
+  signInTeacher, signOutTeacher, fetchClasses, addClassToDb, deleteClassFromDb,
+  deleteStudentResult, deleteAllStudentResults
 } from '../db';
 import sound from '../utils/audio';
 import { generateUniqueCode } from '../utils/codeGenerator';
@@ -1314,6 +1315,24 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                       >
                         🔄 Segarkan
                       </button>
+
+                      {results.length > 0 && (
+                        <button 
+                          onClick={async () => {
+                            if (confirm("Apakah Anda yakin ingin MENGHAPUS SEMUA REKAP NILAI MURID? Semua riwayat poin akan dikosongkan.")) {
+                              sound.playDamage();
+                              const success = await deleteAllStudentResults();
+                              if (success) {
+                                loadTrackerResults();
+                              }
+                            }
+                          }}
+                          className="bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 p-2 px-3 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5"
+                          title="Hapus Semua Hasil Nilai Murid"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Hapus Semua Nilai
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -1322,20 +1341,21 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                     {filteredResults.length === 0 ? (
                       <div className="text-center py-12 px-4">
                         <Users className="w-12 h-12 text-slate-600 mx-auto mb-3 animate-pulse" />
-                        <h3 className="text-sm font-semibold text-slate-400">Belum Ada Rekap Siswa</h3>
+                        <h3 className="text-sm font-semibold text-slate-400">Belum Ada Rekap Murid</h3>
                         <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto font-sans leading-relaxed">
-                          Siswa yang menyelesaikan kuis RPG EduQuest akan otomatis masuk ke daftar ini secara langsung.
+                          Murid yang menyelesaikan kuis EduQuest akan otomatis masuk ke daftar ini secara langsung.
                         </p>
                       </div>
                     ) : (
                       <table className="w-full text-left border-collapse">
                         <thead>
                           <tr className="bg-slate-900/60 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                            <th className="py-3.5 px-5">Nama Siswa</th>
+                            <th className="py-3.5 px-5">Nama Murid</th>
                             <th className="py-3.5 px-4">Kelas & Absen</th>
                             <th className="py-3.5 px-4 text-center">Total Poin</th>
                             <th className="py-3.5 px-4 text-center">Status</th>
                             <th className="py-3.5 px-5">Waktu Submit</th>
+                            <th className="py-3.5 px-4 text-center">Aksi</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800/60 text-xs text-slate-300">
@@ -1363,6 +1383,24 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                   hour: '2-digit',
                                   minute: '2-digit'
                                 })}
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (confirm(`Apakah Anda yakin ingin menghapus skor kuis milik "${result.student_name}"?`)) {
+                                      sound.playDamage();
+                                      const success = await deleteStudentResult(result.id);
+                                      if (success) {
+                                        loadTrackerResults();
+                                      }
+                                    }
+                                  }}
+                                  className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded-lg transition cursor-pointer"
+                                  title="Hapus Nilai Murid Ini"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                               </td>
                             </tr>
                           ))}

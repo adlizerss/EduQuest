@@ -632,6 +632,48 @@ export async function addStudentResult(result: StudentResult): Promise<StudentRe
   return newResult;
 }
 
+export async function deleteStudentResult(id: string | number): Promise<boolean> {
+  const localData = localStorage.getItem('eduquest_student_results');
+  if (localData) {
+    const results: StudentResult[] = JSON.parse(localData);
+    const filtered = results.filter(r => r.id !== id && String(r.id) !== String(id));
+    localStorage.setItem('eduquest_student_results', JSON.stringify(filtered));
+  }
+
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from('student_results')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return true;
+    } catch (e) {
+      console.warn("Supabase deleteStudentResult failed:", e);
+    }
+  }
+  return true;
+}
+
+export async function deleteAllStudentResults(): Promise<boolean> {
+  localStorage.setItem('eduquest_student_results', JSON.stringify([]));
+
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { data } = await supabase.from('student_results').select('id');
+      if (data && data.length > 0) {
+        await supabase.from('student_results').delete().in('id', data.map(d => d.id));
+      }
+      return true;
+    } catch (e) {
+      console.warn("Supabase deleteAllStudentResults failed:", e);
+    }
+  }
+  return true;
+}
+
 export async function updateCategoryName(oldName: string, newName: string): Promise<boolean> {
   const localData = localStorage.getItem('eduquest_quizzes');
   if (localData) {
