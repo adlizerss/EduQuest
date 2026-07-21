@@ -461,11 +461,13 @@ export async function getCurrentTeacherSession() {
 // Ensure local storage tables are initialized
 function initLocalStorageDB() {
   const localQuizzes = localStorage.getItem('eduquest_quizzes');
+  const isSeeded = localStorage.getItem('eduquest_seeded') === 'true';
+
   let isLegacy = false;
   if (localQuizzes) {
     try {
       const parsed = JSON.parse(localQuizzes);
-      if (parsed.length !== 30 || parsed.some((q: any) => q.category === 'Sains & Logika' || q.category === 'Eksplorasi Karakter' || q.category === 'Umum')) {
+      if (parsed.length > 0 && parsed.some((q: any) => q.category === 'Sains & Logika' || q.category === 'Eksplorasi Karakter' || q.category === 'Umum')) {
         isLegacy = true;
       }
     } catch (e) {
@@ -473,7 +475,7 @@ function initLocalStorageDB() {
     }
   }
 
-  if (!localQuizzes || isLegacy) {
+  if (!isSeeded || isLegacy) {
     localStorage.setItem('eduquest_quizzes', JSON.stringify(SEED_QUESTIONS));
     localStorage.setItem('eduquest_custom_packages', JSON.stringify(['Seni Rupa', 'Informatika', 'PKWU']));
     localStorage.setItem('eduquest_class_list', JSON.stringify(DEFAULT_CLASSES));
@@ -485,6 +487,7 @@ function initLocalStorageDB() {
       { class_name: 'XI MIPA 2', category: 'PKWU', assigned_at: new Date().toISOString() }
     ];
     localStorage.setItem('eduquest_class_assignments', JSON.stringify(initialAssignments));
+    localStorage.setItem('eduquest_seeded', 'true');
   }
 
   if (!localStorage.getItem('eduquest_student_results')) {
@@ -1059,6 +1062,7 @@ export async function resetDatabaseToDefault() {
   localStorage.setItem('eduquest_class_assignments', JSON.stringify([]));
   localStorage.setItem('eduquest_class_list', JSON.stringify([]));
   localStorage.setItem('eduquest_custom_packages', JSON.stringify([]));
+  localStorage.setItem('eduquest_seeded', 'true');
   
   const supabase = getSupabaseClient();
   if (supabase) {
