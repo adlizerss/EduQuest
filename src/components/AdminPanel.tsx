@@ -982,26 +982,26 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
       <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-violet-600/15 rounded-full blur-[140px] -z-10" />
 
       {/* Top Header Dashboard */}
-      <header className="glass-panel-purple border-b border-purple-500/20 sticky top-0 z-20 px-4 sm:px-6 py-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-xl">
+      <header className="bg-gradient-to-r from-purple-700 via-violet-800 to-indigo-900 border-b-2 border-purple-400/50 sticky top-0 z-20 px-4 sm:px-6 py-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-2xl text-white">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-purple-500/15 text-purple-300 border border-purple-400/30 rounded-xl shadow-sm">
+          <div className="p-2.5 bg-amber-400/20 text-amber-300 border border-amber-300/40 rounded-xl shadow-inner">
             <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg sm:text-xl font-extrabold text-white font-display">EduQuest Guru Board</h1>
-              <span className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-400/30 font-bold px-2.5 py-0.5 rounded-full font-mono">
+              <span className="text-[10px] bg-purple-950/80 text-amber-300 border border-purple-300/40 font-bold px-2.5 py-0.5 rounded-full font-mono">
                 {isSbConnected ? 'Supabase Connected' : 'Local Fallback'}
               </span>
             </div>
-            <p className="text-xs text-slate-400">Interactive Quiz Platform • Panel Guru Terintegrasi</p>
+            <p className="text-xs text-purple-200">Platform Kuis Interaktif • Panel Guru Terintegrasi</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button 
             onClick={() => { sound.playClick(); onBack(); }}
-            className="bg-slate-900/80 hover:bg-slate-850 text-slate-300 hover:text-white border border-purple-500/20 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer"
+            className="bg-purple-950/80 hover:bg-purple-900/90 text-purple-200 hover:text-white border border-purple-300/40 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-1.5 transition cursor-pointer"
             title="Kembali ke layar utama tanpa melogout sesi admin"
           >
             <ArrowLeft className="w-4 h-4" /> Kembali
@@ -1013,7 +1013,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
               setIsAuthenticated(false);
               onBack(); 
             }}
-            className="bg-rose-950/40 hover:bg-rose-900/40 text-rose-300 hover:text-rose-200 border border-rose-900/40 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer"
+            className="bg-rose-900/80 hover:bg-rose-800 text-rose-100 border border-rose-400/50 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black flex items-center gap-1.5 transition cursor-pointer shadow-md"
             title="Keluar dan hapus sesi login admin"
           >
             <LogOut className="w-4 h-4" /> Log Out
@@ -1026,63 +1026,71 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
         
         {/* Sidebar Nav with Fluid Tab Buttons */}
         <div className="lg:col-span-1 space-y-4">
-          <div className="glass-panel-purple rounded-2xl border border-purple-500/20 p-4 space-y-1.5 shadow-xl">
-            <p className="text-[10px] font-black text-purple-300 uppercase tracking-widest px-3 mb-2 font-display">MENU DASHBOARD</p>
+          <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-5 space-y-2 shadow-2xl text-white">
+            <p className="text-[10px] font-black text-amber-300 uppercase tracking-widest px-3 mb-2 font-display">MENU DASHBOARD</p>
             
             <button
               onClick={() => { sound.playClick(); setActiveTab('tracker'); }}
-              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2.5 transition cursor-pointer font-sans ${
+              className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer font-sans ${
                 activeTab === 'tracker' 
-                  ? 'bg-gradient-to-r from-violet-600/30 to-purple-600/30 text-purple-200 border border-purple-400/40 shadow-inner' 
-                  : 'text-slate-400 hover:bg-purple-950/40 hover:text-slate-200'
+                  ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
+                  : 'text-purple-200 hover:bg-purple-800/50 hover:text-white'
               }`}
             >
-              <Users className="w-4 h-4 text-purple-400" />
+              <Users className={`w-4 h-4 ${activeTab === 'tracker' ? 'text-slate-950' : 'text-amber-300'}`} />
               Live Student Tracker
             </button>
 
             <button
               onClick={() => { sound.playClick(); setActiveTab('builder'); }}
-              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2.5 transition cursor-pointer font-sans ${
+              className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer font-sans ${
                 activeTab === 'builder' 
-                  ? 'bg-gradient-to-r from-violet-600/30 to-purple-600/30 text-purple-200 border border-purple-400/40 shadow-inner' 
-                  : 'text-slate-400 hover:bg-purple-950/40 hover:text-slate-200'
+                  ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
+                  : 'text-purple-200 hover:bg-purple-800/50 hover:text-white'
               }`}
             >
-              <FileSpreadsheet className="w-4 h-4 text-indigo-400" />
+              <FileSpreadsheet className={`w-4 h-4 ${activeTab === 'builder' ? 'text-slate-950' : 'text-cyan-300'}`} />
               Quiz Management
-              <span className="ml-auto bg-purple-950 text-purple-300 border border-purple-500/30 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
+              <span className={`ml-auto border text-[10px] px-2 py-0.5 rounded-full font-mono font-black ${
+                activeTab === 'builder' 
+                  ? 'bg-slate-950 text-amber-300 border-slate-800' 
+                  : 'bg-purple-950 text-amber-300 border-purple-300/40'
+              }`}>
                 {allQuizzes.length}
               </span>
             </button>
 
             <button
               onClick={() => { sound.playClick(); setActiveTab('students'); }}
-              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2.5 transition cursor-pointer font-sans ${
+              className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer font-sans ${
                 activeTab === 'students' 
-                  ? 'bg-gradient-to-r from-violet-600/30 to-purple-600/30 text-purple-200 border border-purple-400/40 shadow-inner' 
-                  : 'text-slate-400 hover:bg-purple-950/40 hover:text-slate-200'
+                  ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
+                  : 'text-purple-200 hover:bg-purple-800/50 hover:text-white'
               }`}
             >
-              <Users className="w-4 h-4 text-pink-400" />
+              <Users className={`w-4 h-4 ${activeTab === 'students' ? 'text-slate-950' : 'text-pink-300'}`} />
               Akun Murid / Siswa
-              <span className="ml-auto bg-purple-950 text-purple-300 border border-purple-500/30 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
+              <span className={`ml-auto border text-[10px] px-2 py-0.5 rounded-full font-mono font-black ${
+                activeTab === 'students' 
+                  ? 'bg-slate-950 text-amber-300 border-slate-800' 
+                  : 'bg-purple-950 text-amber-300 border-purple-300/40'
+              }`}>
                 {students.length}
               </span>
             </button>
           </div>
 
           {/* Database Health Card */}
-          <div className="glass-panel rounded-2xl border border-slate-800 p-4 space-y-3 shadow-sm">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">STATUS DATABASE</h3>
+          <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-5 space-y-3 shadow-2xl text-white">
+            <h3 className="text-xs font-black text-amber-300 uppercase tracking-widest font-display">STATUS DATABASE</h3>
             <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${isSbConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-              <span className="text-xs font-semibold text-slate-200">
+              <div className={`w-3 h-3 rounded-full ${isSbConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+              <span className="text-xs font-extrabold text-white">
                 {isSbConnected ? 'Terkoneksi ke Supabase' : 'Menggunakan Sandbox Lokal'}
               </span>
             </div>
             
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-purple-200 leading-relaxed font-sans font-medium">
               {isSbConnected 
                 ? 'Semua soal, akun murid, dan hasil ujian tersimpan aman & tersinkron di Cloud Supabase.' 
                 : 'Penyimpanan berjalan di Local Storage browser. Data dapat hilang jika Anda membersihkan cache.'
@@ -1090,12 +1098,12 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
             </p>
 
             {syncMessage && (
-              <div className="text-[11px] bg-purple-500/15 border border-purple-500/30 text-purple-200 p-2.5 rounded-xl font-medium leading-relaxed">
+              <div className="text-[11px] bg-purple-950/80 border border-purple-300/40 text-amber-300 p-2.5 rounded-xl font-bold leading-relaxed">
                 {syncMessage}
               </div>
             )}
 
-            <div className="pt-2 border-t border-slate-800/60 flex flex-col gap-2">
+            <div className="pt-2 border-t border-purple-300/30 flex flex-col gap-2">
               <button
                 type="button"
                 disabled={isSyncing}
@@ -1152,84 +1160,82 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
               >
                 {/* Statistics Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="glass-panel rounded-2xl border border-slate-800 p-4 shadow-lg neon-glow-indigo">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">TOTAL SUBMISSION</p>
+                  <div className="bg-gradient-to-br from-blue-600 to-indigo-700 border border-blue-300/40 rounded-3xl p-5 shadow-lg text-white">
+                    <p className="text-xs font-black text-blue-100 uppercase tracking-wider font-display">TOTAL SUBMISSION</p>
                     <div className="flex justify-between items-end mt-2">
-                      <span className="text-3xl font-extrabold text-white font-display">{results.length}</span>
-                      <span className="text-xs text-slate-400 mb-1">Siswa Terdaftar</span>
+                      <span className="text-3xl font-black text-white font-display">{results.length}</span>
+                      <span className="text-xs text-blue-100 font-semibold mb-1">Siswa Terdaftar</span>
                     </div>
                   </div>
-                  <div className="glass-panel rounded-2xl border border-slate-800 p-4 shadow-lg neon-glow-cyan">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">SKOR TERTINGGI</p>
+                  <div className="bg-gradient-to-br from-amber-500 to-orange-600 border border-amber-300/40 rounded-3xl p-5 shadow-lg text-white">
+                    <p className="text-xs font-black text-amber-100 uppercase tracking-wider font-display">SKOR TERTINGGI</p>
                     <div className="flex justify-between items-end mt-2">
-                      <span className="text-3xl font-extrabold text-indigo-400 font-display">
+                      <span className="text-3xl font-black text-white font-display">
                         {results.length > 0 ? Math.max(...results.map(r => r.score)) : 0}
                       </span>
-                      <span className="text-xs text-slate-400 mb-1">Poin Max</span>
+                      <span className="text-xs text-amber-100 font-semibold mb-1">Poin Max</span>
                     </div>
                   </div>
-                  <div className="glass-panel rounded-2xl border border-slate-800 p-4 shadow-lg neon-glow-emerald">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">RATA-RATA SKOR</p>
+                  <div className="bg-gradient-to-br from-emerald-500 to-teal-700 border border-emerald-300/40 rounded-3xl p-5 shadow-lg text-white">
+                    <p className="text-xs font-black text-emerald-100 uppercase tracking-wider font-display">RATA-RATA SKOR</p>
                     <div className="flex justify-between items-end mt-2">
-                      <span className="text-3xl font-extrabold text-emerald-400 font-display">
+                      <span className="text-3xl font-black text-white font-display">
                         {results.length > 0 
                           ? Math.round(results.reduce((acc, r) => acc + r.score, 0) / results.length) 
                           : 0
                         }
                       </span>
-                      <span className="text-xs text-slate-400 mb-1">Rata-rata Kelas</span>
+                      <span className="text-xs text-emerald-100 font-semibold mb-1">Rata-rata Kelas</span>
                     </div>
                   </div>
                 </div>
 
                 {/* CBT CLASS ASSIGNMENT MANAGER */}
-                <div className="glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl -z-10" />
-                  
+                <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl relative overflow-hidden text-white">
                   <div className="flex items-center gap-2 mb-3">
-                    <Sparkles className="w-5 h-5 text-indigo-400 animate-pulse" />
-                    <h3 className="text-md font-bold text-white font-display uppercase tracking-wider">
+                    <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
+                    <h3 className="text-md font-extrabold text-white font-display uppercase tracking-wider">
                       Posting Penugasan Kuis CBT (Ujian Online)
                     </h3>
                   </div>
-                  <p className="text-xs text-slate-400 mb-6 font-sans">
+                  <p className="text-xs text-purple-200 mb-6 font-sans">
                     Tentukan paket kuis yang aktif untuk setiap kelas. Murid di kelas tersebut hanya bisa mengerjakan paket kuis yang Anda posting di sini.
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start font-sans">
                     {/* Form Input Penugasan */}
-                    <div className="md:col-span-4 bg-slate-950/60 p-4 border border-slate-850 rounded-2xl space-y-4">
-                      <h4 className="text-xs font-black text-slate-300 uppercase tracking-widest border-b border-slate-850 pb-2">
+                    <div className="md:col-span-4 bg-purple-950/80 p-4 border border-purple-300/40 rounded-2xl space-y-4">
+                      <h4 className="text-xs font-black text-amber-300 uppercase tracking-widest border-b border-purple-300/30 pb-2">
                         Buat Penugasan Baru
                       </h4>
                       
                       {/* Pilihan Kelas */}
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                        <label className="block text-[10px] font-bold text-purple-200 uppercase tracking-widest mb-1.5">
                           Pilih Kelas Siswa
                         </label>
                         
                         <select
                           id="assign-class-select"
-                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer"
+                          className="w-full bg-purple-900/90 border border-purple-300/40 rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer"
                         >
                           {Array.from(new Set([...classList, ...students.map(s => s.class_name)])).map(cls => (
-                            <option key={cls} value={cls}>{cls}</option>
+                            <option key={cls} value={cls} className="bg-purple-950 text-white">{cls}</option>
                           ))}
                         </select>
                       </div>
 
                       {/* Pilihan Paket */}
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                        <label className="block text-[10px] font-bold text-purple-200 uppercase tracking-widest mb-1.5">
                           Pilih Paket / Folder Kuis
                         </label>
                         <select
                           id="assign-package-select"
-                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer"
+                          className="w-full bg-purple-900/90 border border-purple-300/40 rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer"
                         >
                           {allCategories.map(cat => (
-                            <option key={cat} value={cat}>📁 {cat}</option>
+                            <option key={cat} value={cat} className="bg-purple-950 text-white">📁 {cat}</option>
                           ))}
                         </select>
                       </div>
@@ -1260,7 +1266,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                             alert(`Berhasil memposting kuis "${packageStr}" untuk kelas "${classNameStr}"!`);
                           }
                         }}
-                        className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-indigo-500/10"
+                        className="w-full py-3 bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 font-black text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-lg uppercase tracking-wider"
                       >
                         🚀 Posting Ujian Kelas
                       </button>
@@ -1268,27 +1274,27 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
 
                     {/* Daftar Penugasan Saat Ini */}
                     <div className="md:col-span-8 space-y-3">
-                      <h4 className="text-xs font-black text-slate-300 uppercase tracking-widest border-b border-slate-850 pb-2">
+                      <h4 className="text-xs font-black text-amber-300 uppercase tracking-widest border-b border-purple-300/30 pb-2">
                         Status Posting Ujian Kelas Aktif
                       </h4>
 
                       {assignments.length === 0 ? (
-                        <div className="text-center py-6 text-slate-500 text-xs bg-slate-950/20 border border-slate-850/50 rounded-2xl border-dashed">
+                        <div className="text-center py-6 text-purple-300/70 text-xs bg-purple-950/40 border border-purple-300/30 rounded-2xl border-dashed">
                           Belum ada ujian kelas yang diposting. Murid dapat login bebas (Guest Mode).
                         </div>
                       ) : (
                         <div className="max-h-56 overflow-y-auto space-y-2 pr-1.5">
                           {assignments.map((asg) => (
-                            <div key={asg.class_name} className="flex justify-between items-center bg-slate-950 border border-slate-850 px-4 py-3 rounded-2xl text-xs">
+                            <div key={asg.class_name} className="flex justify-between items-center bg-purple-950/80 border border-purple-300/40 px-4 py-3 rounded-2xl text-xs">
                               <div>
                                 <span className="text-white font-extrabold text-sm block">🏫 {asg.class_name}</span>
-                                <span className="text-slate-400 mt-1 inline-flex items-center gap-1">
-                                  📂 Paket Terposting: <strong className="text-cyan-400 font-bold">{asg.category}</strong>
+                                <span className="text-purple-200 mt-1 inline-flex items-center gap-1">
+                                  📂 Paket Terposting: <strong className="text-amber-300 font-bold">{asg.category}</strong>
                                 </span>
                               </div>
 
                               <div className="flex items-center gap-2">
-                                <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold px-2 py-0.5 rounded-full text-[10px] animate-pulse">
+                                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-bold px-2 py-0.5 rounded-full text-[10px] animate-pulse">
                                   AKTIF
                                 </span>
                                 
@@ -1303,7 +1309,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                       }
                                     }
                                   }}
-                                  className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 rounded-lg transition cursor-pointer"
+                                  className="p-1.5 bg-rose-900/60 hover:bg-rose-800 border border-rose-400/50 text-rose-200 rounded-lg transition cursor-pointer"
                                   title="Tarik Ujian (Unpublish)"
                                 >
                                   <X className="w-3.5 h-3.5" />
@@ -1317,11 +1323,11 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                   </div>
                 </div>
 
-                <div className="glass-panel rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
-                  <div className="p-5 border-b border-slate-800/80 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+                <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl shadow-2xl overflow-hidden text-white">
+                  <div className="p-5 border-b border-purple-300/30 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
                     <div>
-                      <h2 className="text-lg font-bold text-white font-display">Live Student Tracker Dashboard</h2>
-                      <p className="text-xs text-slate-400">Pantau perolehan nilai, sisa HP RPG, dan profil gaya belajar siswa secara real-time.</p>
+                      <h2 className="text-lg font-extrabold text-white font-display">Live Student Tracker Dashboard</h2>
+                      <p className="text-xs text-purple-200">Pantau perolehan nilai, sisa HP RPG, dan profil gaya belajar siswa secara real-time.</p>
                     </div>
 
                     <div className="flex flex-wrap gap-2 w-full md:w-auto">
@@ -1330,22 +1336,22 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                         placeholder="Cari siswa atau peran..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="bg-slate-950 border border-slate-800 text-sm px-3 py-1.5 rounded-lg outline-none text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 flex-1 md:w-48 placeholder:text-slate-600"
+                        className="bg-purple-950/90 border-2 border-purple-300/50 text-sm px-3 py-1.5 rounded-xl outline-none text-white focus:border-amber-300 flex-1 md:w-48 placeholder:text-purple-300/40 transition"
                       />
 
                       <select
                         value={classFilter}
                         onChange={(e) => setClassFilter(e.target.value)}
-                        className="bg-slate-950 border border-slate-800 text-sm px-3 py-1.5 rounded-lg outline-none text-white cursor-pointer"
+                        className="bg-purple-950/90 border-2 border-purple-300/50 text-sm px-3 py-1.5 rounded-xl outline-none text-amber-300 font-bold cursor-pointer transition"
                       >
-                        <option value="All">Semua Kelas</option>
+                        <option value="All" className="bg-purple-950 text-white">Semua Kelas</option>
                         {classes.map(cls => (
-                          <option key={cls} value={cls}>{cls}</option>
+                          <option key={cls} value={cls} className="bg-purple-950 text-white">{cls}</option>
                         ))}
                       </select>
                       <button 
                         onClick={() => { sound.playClick(); loadTrackerResults(); }}
-                        className="bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/25 p-2 px-3 rounded-lg text-xs font-bold transition cursor-pointer"
+                        className="bg-purple-900/80 hover:bg-purple-800 text-amber-300 border border-purple-300/40 p-2 px-3 rounded-xl text-xs font-black transition cursor-pointer"
                         title="Segarkan Rekap Data"
                       >
                         🔄 Segarkan
@@ -1362,7 +1368,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                               }
                             }
                           }}
-                          className="bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 p-2 px-3 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5"
+                          className="bg-rose-900/80 text-rose-100 hover:bg-rose-800 border border-rose-400/50 p-2 px-3 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 shadow-md"
                           title="Hapus Semua Hasil Nilai Murid"
                         >
                           <Trash2 className="w-3.5 h-3.5" /> Hapus Semua Nilai
@@ -1375,16 +1381,16 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                   <div className="overflow-x-auto">
                     {filteredResults.length === 0 ? (
                       <div className="text-center py-12 px-4">
-                        <Users className="w-12 h-12 text-slate-600 mx-auto mb-3 animate-pulse" />
-                        <h3 className="text-sm font-semibold text-slate-400">Belum Ada Rekap Murid</h3>
-                        <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto font-sans leading-relaxed">
+                        <Users className="w-12 h-12 text-purple-300 mx-auto mb-3 animate-pulse" />
+                        <h3 className="text-sm font-bold text-white">Belum Ada Rekap Murid</h3>
+                        <p className="text-xs text-purple-200 mt-1 max-w-xs mx-auto font-sans leading-relaxed">
                           Murid yang menyelesaikan kuis EduQuest akan otomatis masuk ke daftar ini secara langsung.
                         </p>
                       </div>
                     ) : (
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="bg-slate-900/60 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                          <tr className="bg-purple-950/90 border-b border-purple-300/30 text-[11px] font-bold text-amber-300 uppercase tracking-wider">
                             <th className="py-3.5 px-5">Nama Murid</th>
                             <th className="py-3.5 px-4">Kelas & Absen</th>
                             <th className="py-3.5 px-4 text-center">Total Poin</th>
@@ -1393,24 +1399,24 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                             <th className="py-3.5 px-4 text-center">Aksi</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800/60 text-xs text-slate-300">
+                        <tbody className="divide-y divide-purple-300/20 text-xs text-purple-100 font-sans">
                           {filteredResults.map((result, idx) => (
-                            <tr key={result.id || idx} className="hover:bg-slate-900/30 transition-colors">
-                              <td className="py-3 px-5 font-semibold text-white">{result.student_name}</td>
+                            <tr key={result.id || idx} className="hover:bg-purple-900/40 transition-colors">
+                              <td className="py-3 px-5 font-bold text-white">{result.student_name}</td>
                               <td className="py-3 px-4">
-                                <span className="bg-slate-800 text-slate-300 font-medium px-2 py-0.5 rounded-md text-[11px] border border-slate-700/50">
+                                <span className="bg-purple-950 text-amber-300 font-extrabold px-2 py-0.5 rounded-md text-[11px] border border-purple-300/40">
                                   {result.class_name}
                                 </span>
                               </td>
                               <td className="py-3 px-4 text-center">
-                                <span className="text-base font-black text-amber-400 font-display">{result.score} Poin</span>
+                                <span className="text-base font-black text-amber-300 font-display">{result.score} Poin</span>
                               </td>
                               <td className="py-3 px-4 text-center">
-                                <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                <span className="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
                                   ✓ Selesai
                                 </span>
                               </td>
-                              <td className="py-3 px-5 text-slate-400 font-mono">
+                              <td className="py-3 px-5 text-purple-200 font-mono">
                                 {new Date(result.submit_at).toLocaleString('id-ID', {
                                   day: '2-digit',
                                   month: 'short',
@@ -1431,7 +1437,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                       }
                                     }
                                   }}
-                                  className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded-lg transition cursor-pointer"
+                                  className="p-1.5 bg-rose-900/60 hover:bg-rose-800 border border-rose-400/50 text-rose-200 hover:text-white rounded-lg transition cursor-pointer"
                                   title="Hapus Nilai Murid Ini"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -1457,15 +1463,15 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                 className="space-y-6"
               >
                 {/* TOP SECTION: KARTU FOLDER PAKET KUIS (GRID CARDS) */}
-                <div className="glass-panel-purple rounded-3xl border border-purple-500/30 p-6 shadow-2xl space-y-4 relative overflow-hidden neon-glow-purple">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-purple-500/20">
+                <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl space-y-4 relative overflow-hidden text-white">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-purple-300/30">
                     <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-purple-500/20 text-purple-300 border border-purple-400/30 rounded-2xl shadow-inner">
+                      <div className="p-2.5 bg-amber-400/20 text-amber-300 border border-amber-300/40 rounded-2xl shadow-inner shrink-0">
                         <FolderOpen className="w-6 h-6" />
                       </div>
                       <div>
-                        <h2 className="text-xl font-black text-white font-display">Folder & Paket Kuis Ujian</h2>
-                        <p className="text-xs text-purple-300/80 font-medium">Kelola paket kuis, ubah nama folder, dan posting langsung ke kelas target.</p>
+                        <h2 className="text-xl font-extrabold text-white font-display">Folder & Paket Kuis Ujian</h2>
+                        <p className="text-xs text-purple-200 font-medium">Kelola paket kuis, ubah nama folder, dan posting langsung ke kelas target.</p>
                       </div>
                     </div>
 
@@ -1482,15 +1488,15 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                           setQuestionCategory(trimmed);
                         }
                       }}
-                      className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-black px-4 py-2.5 rounded-2xl text-xs flex items-center gap-2 transition cursor-pointer shadow-lg font-display uppercase tracking-wider shrink-0"
+                      className="bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 hover:from-amber-300 hover:to-pink-400 text-slate-950 font-black px-4 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-lg font-display uppercase tracking-wider shrink-0 whitespace-nowrap"
                     >
-                      <PlusCircle className="w-4 h-4" /> ➕ Buat Folder Baru
+                      <PlusCircle className="w-4 h-4 text-slate-950" /> Buat Folder Baru
                     </button>
                   </div>
 
                   {/* Folder Cards Grid */}
                   {allCategories.length === 0 ? (
-                    <div className="text-center py-8 text-purple-300/70 text-xs bg-slate-950/40 border border-purple-500/20 rounded-2xl border-dashed">
+                    <div className="text-center py-8 text-purple-200 text-xs bg-purple-950/40 border border-purple-300/30 rounded-2xl border-dashed">
                       📂 Belum ada folder paket kuis. Klik <b>"+ Buat Folder Baru"</b> di atas atau buat soal pertama Anda.
                     </div>
                   ) : (
@@ -1506,22 +1512,22 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                             whileHover={{ y: -2, scale: 1.01 }}
                             className={`p-4.5 rounded-2xl border transition-all duration-200 flex flex-col justify-between space-y-3 relative overflow-hidden ${
                               isSelectedFilter 
-                                ? 'bg-purple-950/90 border-2 border-purple-400 shadow-xl neon-glow-purple' 
-                                : 'bg-slate-950/80 border-purple-500/25 hover:border-purple-400/50 hover:bg-slate-900/90 shadow-md'
+                                ? 'bg-gradient-to-br from-purple-800 to-indigo-900 border-2 border-amber-300 shadow-xl' 
+                                : 'bg-purple-950/80 border-purple-300/30 hover:border-purple-300/60 shadow-md'
                             }`}
                           >
                             {/* Top Accent Gradient Bar */}
-                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-violet-400" />
+                            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-pink-400 via-amber-300 to-cyan-400" />
 
                             <div className="space-y-2">
                               <div className="flex items-start justify-between gap-2 pt-1">
-                                <div className="flex items-center gap-2.5">
-                                  <span className="p-2 bg-purple-500/20 text-purple-300 border border-purple-400/30 rounded-xl shrink-0">
-                                    <FolderOpen className="w-4 h-4 text-purple-300" />
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <span className="p-2 bg-amber-400/20 text-amber-300 border border-amber-300/40 rounded-xl shrink-0">
+                                    <FolderOpen className="w-4 h-4 text-amber-300" />
                                   </span>
-                                  <div>
-                                    <h3 className="text-base font-black text-white font-display truncate max-w-[150px]">{cat}</h3>
-                                    <span className="text-[11px] text-purple-300 font-extrabold font-mono">
+                                  <div className="min-w-0">
+                                    <h3 className="text-base font-black text-white font-display truncate">{cat}</h3>
+                                    <span className="text-[11px] text-amber-300 font-extrabold font-mono block">
                                       {catQuestions.length} Soal Terdaftar
                                     </span>
                                   </div>
@@ -1531,7 +1537,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                   <button
                                     type="button"
                                     onClick={() => handleRenameCategory(cat)}
-                                    className="p-1.5 bg-slate-900 hover:bg-purple-900/60 text-purple-300 hover:text-white border border-purple-500/30 rounded-lg text-xs font-bold transition cursor-pointer"
+                                    className="p-1.5 bg-purple-900/80 hover:bg-purple-800 text-purple-200 hover:text-white border border-purple-300/40 rounded-lg text-xs font-bold transition cursor-pointer"
                                     title="Ubah Nama Folder Ini"
                                   >
                                     <Pencil className="w-3.5 h-3.5" />
@@ -1539,7 +1545,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                   <button
                                     type="button"
                                     onClick={() => handleDeleteCategory(cat)}
-                                    className="p-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 hover:text-white border border-rose-500/30 rounded-lg text-xs font-bold transition cursor-pointer"
+                                    className="p-1.5 bg-rose-900/60 hover:bg-rose-800 text-rose-200 hover:text-white border border-rose-400/40 rounded-lg text-xs font-bold transition cursor-pointer"
                                     title="Hapus Folder & Seluruh Soal"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -1551,15 +1557,15 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                               <div className="pt-1">
                                 {assignedToClasses.length > 0 ? (
                                   <div className="flex flex-wrap items-center gap-1.5">
-                                    <span className="text-[10px] text-slate-400 font-bold uppercase">Posting di:</span>
+                                    <span className="text-[10px] text-purple-200 font-bold uppercase">Posting di:</span>
                                     {assignedToClasses.map(cName => (
-                                      <span key={cName} className="text-[10px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-black px-2 py-0.5 rounded-full font-mono">
+                                      <span key={cName} className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-black px-2 py-0.5 rounded-full font-mono">
                                         🏫 {cName}
                                       </span>
                                     ))}
                                   </div>
                                 ) : (
-                                  <span className="text-[10px] text-slate-500 font-semibold italic block">
+                                  <span className="text-[10px] text-purple-300/70 font-semibold italic block">
                                     Belum diposting ke kelas tertentu
                                   </span>
                                 )}
@@ -1567,7 +1573,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                             </div>
 
                             {/* Bottom Actions Row */}
-                            <div className="pt-3 border-t border-purple-500/20 flex items-center justify-between gap-2">
+                            <div className="pt-3 border-t border-purple-300/30 flex items-center justify-between gap-2">
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1576,8 +1582,8 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                 }}
                                 className={`text-xs px-3 py-1.5 rounded-xl font-extrabold transition cursor-pointer flex items-center gap-1 ${
                                   isSelectedFilter 
-                                    ? 'bg-purple-500/30 text-purple-200 border border-purple-400/40' 
-                                    : 'bg-slate-900 hover:bg-purple-950 text-slate-300 border border-purple-500/20'
+                                    ? 'bg-amber-400 text-slate-950 font-black' 
+                                    : 'bg-purple-900/80 hover:bg-purple-800 text-purple-200 border border-purple-300/30'
                                 }`}
                               >
                                 👁️ {isSelectedFilter ? 'Semua Soal' : 'Lihat Soal'}
@@ -1597,7 +1603,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                     }
                                   }
                                 }}
-                                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs transition cursor-pointer shadow-md flex items-center gap-1"
+                                className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black px-3 py-1.5 rounded-xl text-xs transition cursor-pointer shadow-md flex items-center gap-1"
                               >
                                 🚀 Posting
                               </button>
@@ -1613,32 +1619,32 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
                   
                   {/* Left Column: Form Builder (7 cols) */}
-                  <div className="lg:col-span-7 glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl flex flex-col justify-between">
+                  <div className="lg:col-span-7 bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl flex flex-col justify-between text-white">
                     <div>
-                      <h2 className="text-lg font-bold text-white font-display flex items-center gap-2 mb-1">
-                        <PlusCircle className="w-5 h-5 text-indigo-400" />
+                      <h2 className="text-lg font-extrabold text-white font-display flex items-center gap-2 mb-1">
+                        <PlusCircle className="w-5 h-5 text-amber-300" />
                         Tambah Soal Kuis Baru Dinamis
                       </h2>
-                      <p className="text-xs text-slate-400 mb-6 font-sans">
+                      <p className="text-xs text-purple-200 mb-6 font-sans">
                         Soal yang ditambahkan akan langsung dimasukkan ke dalam daftar ujian siswa secara real-time.
                       </p>
 
                       <form onSubmit={handleAddQuestion} className="space-y-4">
                         {formError && (
-                          <p className="text-rose-400 bg-rose-500/10 border border-rose-500/20 text-xs p-3 rounded-xl font-medium">
+                          <p className="text-rose-200 bg-rose-900/80 border border-rose-400/50 text-xs p-3 rounded-xl font-bold">
                             ⚠ {formError}
                           </p>
                         )}
                         {formSuccess && (
-                          <p className="text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 text-xs p-3 rounded-xl font-semibold flex items-center gap-1.5">
-                            <CheckCircle className="w-4 h-4" /> Soal berhasil ditambahkan ke database!
+                          <p className="text-emerald-300 bg-emerald-950/80 border border-emerald-400/50 text-xs p-3 rounded-xl font-extrabold flex items-center gap-1.5">
+                            <CheckCircle className="w-4 h-4 text-emerald-300" /> Soal berhasil ditambahkan ke database!
                           </p>
                         )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans">
                           {/* Teks Soal */}
                           <div className="md:col-span-2">
-                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
+                            <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1.5">
                               Teks / Pertanyaan Kuis
                             </label>
                             <textarea
@@ -1646,13 +1652,13 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                               value={questionText}
                               onChange={(e) => setQuestionText(e.target.value)}
                               placeholder="Contoh: Manakah yang merupakan contoh pengolahan data yang valid?"
-                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 outline-none text-white transition placeholder:text-slate-700 resize-none"
+                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-4 py-3 text-sm outline-none text-white transition placeholder:text-purple-300/40 resize-none shadow-inner"
                             />
                           </div>
 
                           {/* Folder / Paket Kuis */}
                           <div className="md:col-span-2">
-                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5 flex justify-between items-center">
+                            <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1.5 flex justify-between items-center">
                               <span>📂 Pilih Paket Kuis</span>
                               <button
                                 type="button"
@@ -1671,18 +1677,18 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                     setQuestionCategory(trimmed);
                                   }
                                 }}
-                                className="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold transition flex items-center gap-1 cursor-pointer"
+                                className="text-[11px] text-amber-300 hover:text-white font-extrabold transition flex items-center gap-1 cursor-pointer"
                               >
-                                ➕ Buat Paket Baru
+                                Buat Paket Baru
                               </button>
                             </label>
                             <select
                               value={questionCategory}
                               onChange={(e) => setQuestionCategory(e.target.value)}
-                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 outline-none text-white transition cursor-pointer"
+                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-4 py-2.5 text-sm outline-none text-white transition cursor-pointer"
                             >
                               {allCategories.map(cat => (
-                                <option key={cat} value={cat}>
+                                <option key={cat} value={cat} className="bg-purple-950 text-white">
                                   📁 {cat}
                                 </option>
                               ))}
@@ -1691,7 +1697,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
 
                           {/* Opsi A */}
                           <div>
-                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
+                            <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1.5">
                               Pilihan A (Perencana / Strategi)
                             </label>
                             <input
@@ -1699,13 +1705,13 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                               value={optA}
                               onChange={(e) => setOptA(e.target.value)}
                               placeholder="Pilihan Jawaban A"
-                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 outline-none text-white transition placeholder:text-slate-700"
+                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-4 py-2.5 text-sm outline-none text-white transition placeholder:text-purple-300/40"
                             />
                           </div>
 
                           {/* Opsi B */}
                           <div>
-                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
+                            <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1.5">
                               Pilihan B (Kreator / Pelaksana)
                             </label>
                             <input
@@ -1713,13 +1719,13 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                               value={optB}
                               onChange={(e) => setOptB(e.target.value)}
                               placeholder="Pilihan Jawaban B"
-                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 outline-none text-white transition placeholder:text-slate-700"
+                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-4 py-2.5 text-sm outline-none text-white transition placeholder:text-purple-300/40"
                             />
                           </div>
 
                           {/* Opsi C */}
                           <div>
-                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
+                            <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1.5">
                               Pilihan C (Komunikator / Presenter)
                             </label>
                             <input
@@ -1727,13 +1733,13 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                               value={optC}
                               onChange={(e) => setOptC(e.target.value)}
                               placeholder="Pilihan Jawaban C"
-                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 outline-none text-white transition placeholder:text-slate-700"
+                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-4 py-2.5 text-sm outline-none text-white transition placeholder:text-purple-300/40"
                             />
                           </div>
 
                           {/* Opsi D */}
                           <div>
-                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
+                            <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1.5">
                               Pilihan D (Koordinator Tim)
                             </label>
                             <input
@@ -1741,39 +1747,39 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                               value={optD}
                               onChange={(e) => setOptD(e.target.value)}
                               placeholder="Pilihan Jawaban D"
-                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 outline-none text-white transition placeholder:text-slate-700"
+                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-4 py-2.5 text-sm outline-none text-white transition placeholder:text-purple-300/40"
                             />
                           </div>
 
                           {/* Dropdown Kunci Jawaban */}
                           <div>
-                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
+                            <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1.5">
                               Kunci Jawaban Benar
                             </label>
                             <select
                               value={correctAnswer}
                               onChange={(e) => setCorrectAnswer(e.target.value as any)}
-                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 outline-none text-white transition cursor-pointer appearance-none text-center font-bold"
+                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-4 py-2.5 text-sm outline-none text-white transition cursor-pointer text-center font-bold"
                             >
-                              <option value="A" className="bg-slate-950">Pilihan A</option>
-                              <option value="B" className="bg-slate-950">Pilihan B</option>
-                              <option value="C" className="bg-slate-950">Pilihan C</option>
-                              <option value="D" className="bg-slate-950">Pilihan D</option>
+                              <option value="A" className="bg-purple-950 text-white">Pilihan A</option>
+                              <option value="B" className="bg-purple-950 text-white">Pilihan B</option>
+                              <option value="C" className="bg-purple-950 text-white">Pilihan C</option>
+                              <option value="D" className="bg-purple-950 text-white">Pilihan D</option>
                             </select>
                           </div>
 
                           {/* Dropdown Tipe Soal */}
                           <div>
-                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
+                            <label className="block text-xs font-bold text-purple-200 uppercase tracking-wide mb-1.5">
                               Tipe / Jenis Soal
                             </label>
                             <select
                               value={questionType}
                               onChange={(e) => setQuestionType(e.target.value as any)}
-                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 outline-none text-white transition cursor-pointer appearance-none text-center font-semibold"
+                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-4 py-2.5 text-sm outline-none text-white transition cursor-pointer text-center font-semibold"
                             >
-                              <option value="cognitive" className="bg-slate-950">Soal Utama (Kognitif / Ujian)</option>
-                              <option value="interest" className="bg-slate-950">Eksplorasi (Menilai Profil Karakter)</option>
+                              <option value="cognitive" className="bg-purple-950 text-white">Soal Utama (Kognitif / Ujian)</option>
+                              <option value="interest" className="bg-purple-950 text-white">Eksplorasi (Menilai Profil Karakter)</option>
                             </select>
                           </div>
                         </div>
@@ -1781,9 +1787,9 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                         <div className="flex justify-end pt-3">
                           <button
                             type="submit"
-                            className="bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-semibold py-2.5 px-6 rounded-xl shadow-lg shadow-indigo-500/10 transition flex items-center gap-1.5 cursor-pointer text-sm"
+                            className="bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 hover:from-amber-300 hover:to-pink-400 text-slate-950 font-black py-3 px-6 rounded-2xl shadow-lg transition flex items-center gap-1.5 cursor-pointer text-xs uppercase tracking-wider font-display"
                           >
-                            <PlusCircle className="w-4 h-4" /> Simpan Soal Kuis
+                            <PlusCircle className="w-4 h-4 text-slate-950" /> Simpan Soal Kuis
                           </button>
                         </div>
                       </form>
@@ -1793,29 +1799,29 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                   {/* Right Column: Bulk Import & Packages (5 cols) */}
                   <div className="lg:col-span-5 flex flex-col gap-6">
                     {/* Impor Massal Card */}
-                    <div className="glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl flex flex-col justify-between">
+                    <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl flex flex-col justify-between text-white">
                       <div>
-                        <h2 className="text-lg font-bold text-white font-display flex items-center gap-2 mb-1">
-                          <FileSpreadsheet className="w-5 h-5 text-cyan-400" />
+                        <h2 className="text-lg font-extrabold text-white font-display flex items-center gap-2 mb-1">
+                          <FileSpreadsheet className="w-5 h-5 text-cyan-300" />
                           Impor Massal (Excel / CSV)
                         </h2>
-                        <p className="text-xs text-slate-400 mb-4 font-sans">
+                        <p className="text-xs text-purple-200 mb-4 font-sans">
                           Unggah file Excel atau CSV berisi daftar soal untuk dimasukkan ke database kuis sekaligus.
                         </p>
 
                         {/* Target Package Selection Override */}
                         <div className="mb-4 font-sans">
-                          <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5 flex justify-between items-center">
+                          <label className="block text-[11px] font-bold text-purple-200 uppercase tracking-wide mb-1.5 flex justify-between items-center">
                             <span>🎯 Masukkan Ke Paket / Folder:</span>
                           </label>
                           <select
                             value={importTargetPackage}
                             onChange={(e) => setImportTargetPackage(e.target.value)}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:border-cyan-500 outline-none text-white cursor-pointer transition"
+                            className="w-full bg-purple-950/90 border-2 border-purple-300/50 focus:border-amber-300 rounded-xl px-3 py-2 text-xs outline-none text-white cursor-pointer transition"
                           >
-                            <option value="excel" className="text-white bg-slate-950">📄 Gunakan Kategori di Kolom Excel (Default)</option>
+                            <option value="excel" className="text-white bg-purple-950">📄 Gunakan Kategori di Kolom Excel (Default)</option>
                             {allCategories.map(cat => (
-                              <option key={cat} value={cat} className="text-white bg-slate-950">
+                              <option key={cat} value={cat} className="text-white bg-purple-950">
                                 📁 Paksa Masuk Ke: {cat}
                               </option>
                             ))}
@@ -1823,7 +1829,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                         </div>
 
                         {/* Drop Zone File Upload */}
-                        <div className="border-2 border-dashed border-slate-800 hover:border-cyan-500/50 rounded-2xl p-8 flex flex-col items-center justify-center text-center transition relative bg-slate-950/40">
+                        <div className="border-2 border-dashed border-purple-300/50 hover:border-amber-300 rounded-2xl p-8 flex flex-col items-center justify-center text-center transition relative bg-purple-950/60">
                           <input
                             type="file"
                             accept=".xlsx, .xls, .csv"
@@ -1831,19 +1837,19 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                             disabled={importLoading}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:pointer-events-none"
                           />
-                          <Upload className={`w-10 h-10 text-cyan-400 mb-3 ${importLoading ? 'animate-pulse' : ''}`} />
+                          <Upload className={`w-10 h-10 text-amber-300 mb-3 ${importLoading ? 'animate-pulse' : ''}`} />
                           <span className="text-sm font-extrabold text-white">
                             {importLoading ? 'Membaca data file...' : 'Klik atau seret file ke sini'}
                           </span>
-                          <span className="text-[10px] text-slate-500 mt-1">
+                          <span className="text-[10px] text-purple-200 mt-1">
                             Mendukung berkas berekstensi .xlsx, .xls, .csv
                           </span>
                         </div>
 
                         {/* Info / Warnings */}
                         {importSuccessCount !== null && (
-                          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex items-start gap-2.5 text-xs text-emerald-400 mt-4 leading-relaxed font-sans font-medium">
-                            <CheckCircle className="w-5 h-5 shrink-0 text-emerald-400" />
+                          <div className="bg-emerald-950/80 border border-emerald-400/50 rounded-xl p-4 flex items-start gap-2.5 text-xs text-emerald-300 mt-4 leading-relaxed font-sans font-medium">
+                            <CheckCircle className="w-5 h-5 shrink-0 text-emerald-300" />
                             <div>
                               <span className="font-extrabold block mb-0.5">Berhasil Mengimpor!</span>
                               Dimuat sebanyak <b>{importSuccessCount}</b> soal baru ke dalam kuis.
@@ -1852,8 +1858,8 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                         )}
 
                         {importError && (
-                          <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 flex items-start gap-2.5 text-xs text-rose-400 mt-4 leading-relaxed font-sans font-medium">
-                            <AlertTriangle className="w-5 h-5 shrink-0 text-rose-400" />
+                          <div className="bg-rose-900/80 border border-rose-400/50 rounded-xl p-4 flex items-start gap-2.5 text-xs text-rose-200 mt-4 leading-relaxed font-sans font-medium">
+                            <AlertTriangle className="w-5 h-5 shrink-0 text-rose-300" />
                             <div>
                               <span className="font-extrabold block mb-0.5">Gagal Mengimpor!</span>
                               {importError}
@@ -1862,9 +1868,9 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                         )}
                       </div>
 
-                      <div className="pt-6 border-t border-slate-800/60 mt-6 space-y-3.5">
-                        <div className="flex items-start gap-2.5 text-xs text-slate-400 leading-relaxed font-sans">
-                          <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                      <div className="pt-6 border-t border-purple-300/30 mt-6 space-y-3.5">
+                        <div className="flex items-start gap-2.5 text-xs text-purple-200 leading-relaxed font-sans">
+                          <Sparkles className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
                           <span>
                             Gunakan tombol di bawah untuk mengunduh berkas template Excel yang sudah terstruktur agar proses impor berjalan lancar tanpa error.
                           </span>
@@ -1873,22 +1879,22 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                         <button
                           type="button"
                           onClick={handleDownloadTemplate}
-                          className="w-full flex items-center justify-center gap-2 py-3 bg-slate-900 hover:bg-slate-850 active:scale-[0.98] border border-slate-800 text-slate-300 hover:text-white font-black rounded-xl text-xs uppercase tracking-wider transition cursor-pointer"
+                          className="w-full flex items-center justify-center gap-2 py-3 bg-purple-950/80 hover:bg-purple-900 text-amber-300 border border-purple-300/40 font-black rounded-xl text-xs uppercase tracking-wider transition cursor-pointer shadow-md"
                         >
-                          <Download className="w-4 h-4 text-cyan-400" />
+                          <Download className="w-4 h-4 text-amber-300" />
                           Unduh Template Excel (.xlsx)
                         </button>
                       </div>
                     </div>
 
                     {/* Kelola Paket Kuis Card */}
-                    <div className="glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl flex flex-col justify-between">
+                    <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl flex flex-col justify-between text-white">
                       <div>
-                        <h2 className="text-lg font-bold text-white font-display flex items-center gap-2 mb-1">
-                          <FolderOpen className="w-5 h-5 text-indigo-400" />
+                        <h2 className="text-lg font-extrabold text-white font-display flex items-center gap-2 mb-1">
+                          <FolderOpen className="w-5 h-5 text-amber-300" />
                           Kelola Paket Kuis
                         </h2>
-                        <p className="text-xs text-slate-400 mb-4 font-sans">
+                        <p className="text-xs text-purple-200 mb-4 font-sans">
                           Buat paket kuis terlebih dahulu untuk memisahkan mapel atau topik kuis sebelum menambahkan soal.
                         </p>
 
@@ -1900,7 +1906,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                               placeholder="Nama paket baru (misal: IPA Paket A)"
                               value={newPackageName}
                               onChange={(e) => setNewPackageName(e.target.value)}
-                              className="bg-slate-950 border border-slate-800 text-xs rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none flex-1 transition"
+                              className="bg-purple-950/90 border-2 border-purple-300/50 text-xs rounded-xl px-3 py-2 text-white focus:border-amber-300 outline-none flex-1 transition"
                             />
                             <button
                               type="button"
@@ -1917,17 +1923,17 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                 localStorage.setItem('eduquest_custom_packages', JSON.stringify(updated));
                                 setNewPackageName('');
                               }}
-                              className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition cursor-pointer"
+                              className="px-4 py-2 bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 text-xs font-black rounded-xl transition cursor-pointer shadow-md uppercase tracking-wider"
                             >
                               Buat Paket
                             </button>
                           </div>
 
                           {/* List of Custom Packages */}
-                          <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1 border border-slate-900 rounded-xl p-2 bg-slate-950/40">
+                          <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1 border border-purple-300/30 rounded-xl p-2 bg-purple-950/60">
                             {customPackages.map((pkg, idx) => (
-                              <div key={pkg || idx} className="flex justify-between items-center bg-slate-950/80 px-3 py-1.5 rounded-lg border border-slate-900 text-xs">
-                                <span className="text-slate-300 font-medium">📁 {pkg}</span>
+                              <div key={pkg || idx} className="flex justify-between items-center bg-purple-900/80 px-3 py-1.5 rounded-lg border border-purple-300/40 text-xs">
+                                <span className="text-white font-bold">📁 {pkg}</span>
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -1938,7 +1944,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                       localStorage.setItem('eduquest_custom_packages', JSON.stringify(updated));
                                     }
                                   }}
-                                  className="text-slate-500 hover:text-rose-400 transition"
+                                  className="text-purple-300 hover:text-rose-300 transition"
                                   title="Hapus Paket"
                                 >
                                   <X className="w-3.5 h-3.5" />
@@ -1953,13 +1959,13 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                 </div>
 
                 {/* Question List Table */}
-                <div className="glass-panel rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
-                  <div className="p-5 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl shadow-2xl overflow-hidden text-white">
+                  <div className="p-5 border-b border-purple-300/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <h3 className="text-md font-bold text-white font-display">
+                      <h3 className="text-md font-extrabold text-white font-display">
                         Daftar Soal Kuis Saat Ini ({allQuizzes.length} Soal)
                       </h3>
-                      <p className="text-xs text-slate-400 mt-0.5 font-sans">
+                      <p className="text-xs text-purple-200 mt-0.5 font-sans">
                         Siswa akan menjawab seluruh daftar kuis di bawah ini secara acak atau sesuai urutan ID.
                       </p>
                     </div>
@@ -1972,7 +1978,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                             <button
                               type="button"
                               onClick={handleBulkDelete}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 hover:text-rose-300 rounded-xl text-xs font-bold transition cursor-pointer"
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-900/60 hover:bg-rose-800 border border-rose-400/50 text-rose-200 hover:text-white rounded-xl text-xs font-bold transition cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                               <span>Hapus ({selectedQuizzes.size})</span>
@@ -1999,11 +2005,11 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                 }
                                 e.target.value = "";
                               }}
-                              className="bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs rounded-xl px-2.5 py-1.5 text-indigo-400 font-bold transition cursor-pointer outline-none"
+                              className="bg-purple-950/90 border-2 border-purple-300/50 text-xs rounded-xl px-2.5 py-1.5 text-amber-300 font-bold transition cursor-pointer outline-none"
                             >
-                              <option value="" disabled>📁 Pindahkan ke...</option>
+                              <option value="" disabled className="bg-purple-950 text-white">📁 Pindahkan ke...</option>
                               {allCategories.map(cat => (
-                                <option key={cat} value={cat} className="text-white bg-slate-950">
+                                <option key={cat} value={cat} className="text-white bg-purple-950">
                                   📁 {cat}
                                 </option>
                               ))}
@@ -2012,18 +2018,18 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                         )}
 
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-slate-400 font-bold whitespace-nowrap">Filter Folder:</span>
+                          <span className="text-xs text-purple-200 font-bold whitespace-nowrap">Filter Folder:</span>
                           <select
                             value={adminCategoryFilter}
                             onChange={(e) => {
                               setAdminCategoryFilter(e.target.value);
                               setIsRenamingFolder(false);
                             }}
-                            className="bg-slate-950 border border-slate-800 text-xs rounded-xl px-3 py-1.5 outline-none text-cyan-400 font-bold transition cursor-pointer appearance-none text-center"
+                            className="bg-purple-950/90 border-2 border-purple-300/50 text-xs rounded-xl px-3 py-1.5 outline-none text-amber-300 font-bold transition cursor-pointer appearance-none text-center"
                           >
-                            <option value="Semua" className="bg-slate-950 text-white">📁 Semua Folder</option>
+                            <option value="Semua" className="bg-purple-950 text-white">📁 Semua Folder</option>
                             {allCategories.map(cat => (
-                              <option key={cat} value={cat} className="bg-slate-950 text-white">
+                              <option key={cat} value={cat} className="bg-purple-950 text-white">
                                 📁 {cat}
                               </option>
                             ))}
@@ -2041,10 +2047,10 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                   setRenameError('');
                                   sound.playClick();
                                 }}
-                                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 hover:text-cyan-400 hover:border-cyan-500/30 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap"
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-purple-950/90 hover:bg-purple-900 border border-purple-300/40 text-amber-300 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap"
                                 title="Edit nama folder ini"
                               >
-                                <Pencil className="w-3.5 h-3.5 text-cyan-400" />
+                                <Pencil className="w-3.5 h-3.5 text-amber-300" />
                                 <span>Ubah Nama Folder</span>
                               </button>
                             ) : (
@@ -2055,12 +2061,12 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                     value={newFolderName}
                                     onChange={(e) => setNewFolderName(e.target.value)}
                                     placeholder="Nama folder baru..."
-                                    className="bg-slate-950 border border-slate-800 text-xs rounded-xl px-2.5 py-1.5 text-white focus:border-cyan-500 outline-none w-36 sm:w-48 transition"
+                                    className="bg-purple-950/90 border-2 border-purple-300/50 text-xs rounded-xl px-2.5 py-1.5 text-white focus:border-amber-300 outline-none w-36 sm:w-48 transition"
                                   />
                                   <button
                                     type="button"
                                     onClick={handleRenameFolder}
-                                    className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 rounded-lg transition cursor-pointer"
+                                    className="p-1.5 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-400/50 text-emerald-300 rounded-lg transition cursor-pointer"
                                     title="Simpan"
                                   >
                                     <Check className="w-3.5 h-3.5" />
@@ -2072,14 +2078,14 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                       setRenameError('');
                                       sound.playClick();
                                     }}
-                                    className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg transition cursor-pointer"
+                                    className="p-1.5 bg-purple-900/80 hover:bg-purple-800 text-purple-200 hover:text-white rounded-lg transition cursor-pointer"
                                     title="Batal"
                                   >
                                     <X className="w-3.5 h-3.5" />
                                   </button>
                                 </div>
                                 {renameError && (
-                                  <span className="text-[10px] text-rose-400 font-bold font-sans">{renameError}</span>
+                                  <span className="text-[10px] text-rose-300 font-bold font-sans">{renameError}</span>
                                 )}
                               </div>
                             )}
@@ -2092,14 +2098,14 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                   <div className="overflow-x-auto">
                     {allQuizzes.length === 0 ? (
                       <div className="text-center py-10 font-sans">
-                        <BookOpen className="w-12 h-12 text-slate-700 mx-auto mb-2 animate-bounce" />
-                        <p className="text-sm font-semibold text-slate-400">Kuis Belum Siap / Kosong</p>
-                        <p className="text-xs text-slate-500">Tambahkan soal baru melalui form di atas.</p>
+                        <BookOpen className="w-12 h-12 text-purple-300 mx-auto mb-2 animate-bounce" />
+                        <p className="text-sm font-bold text-white">Kuis Belum Siap / Kosong</p>
+                        <p className="text-xs text-purple-200">Tambahkan soal baru melalui form di atas.</p>
                       </div>
                     ) : (
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="bg-slate-900/60 border-b border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                          <tr className="bg-purple-950/90 border-b border-purple-300/30 text-[10px] font-bold text-amber-300 uppercase tracking-wider">
                             <th className="py-3 px-4 w-10 text-center">
                               <input
                                 type="checkbox"
@@ -2108,7 +2114,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                   allQuizzes.filter(q => adminCategoryFilter === 'Semua' || (q.category || 'Umum') === adminCategoryFilter).every(q => selectedQuizzes.has(q.id!))
                                 }
                                 onChange={handleSelectAllToggle}
-                                className="w-3.5 h-3.5 rounded border-slate-800 bg-slate-950 focus:ring-1 focus:ring-indigo-500 text-indigo-500 cursor-pointer"
+                                className="w-3.5 h-3.5 rounded border-purple-400 bg-purple-950 focus:ring-1 focus:ring-amber-300 text-amber-400 cursor-pointer"
                               />
                             </th>
                             <th className="py-3 px-5 w-12 text-center">No</th>
@@ -2118,28 +2124,28 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                             <th className="py-3 px-4 w-24 text-center">Aksi</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800/60 text-xs text-slate-300">
+                        <tbody className="divide-y divide-purple-300/20 text-xs text-purple-100 font-sans">
                           {allQuizzes
                             .filter(q => adminCategoryFilter === 'Semua' || (q.category || 'Umum') === adminCategoryFilter)
                             .map((quiz, index) => (
-                              <tr key={quiz.id ? `quiz-${quiz.id}` : `quiz-txt-${quiz.question}-${index}`} className="hover:bg-slate-900/30 transition">
+                              <tr key={quiz.id ? `quiz-${quiz.id}` : `quiz-txt-${quiz.question}-${index}`} className="hover:bg-purple-900/40 transition">
                                 <td className="py-3 px-4 text-center">
                                   <input
                                     type="checkbox"
                                     checked={selectedQuizzes.has(quiz.id!)}
                                     onChange={() => handleSelectQuizToggle(quiz.id!)}
-                                    className="w-3.5 h-3.5 rounded border-slate-800 bg-slate-950 focus:ring-1 focus:ring-indigo-500 text-indigo-500 cursor-pointer"
+                                    className="w-3.5 h-3.5 rounded border-purple-400 bg-purple-950 focus:ring-1 focus:ring-amber-300 text-amber-400 cursor-pointer"
                                   />
                                 </td>
-                                <td className="py-3 px-5 text-center font-bold text-slate-500">{index + 1}</td>
+                                <td className="py-3 px-5 text-center font-black text-amber-300">{index + 1}</td>
                                 <td className="py-3 px-4">
                                   <div className="flex items-center gap-2 mb-1.5">
-                                    <span className="bg-indigo-950 text-indigo-300 border border-indigo-900/40 px-2 py-0.5 rounded text-[10px] font-extrabold flex items-center gap-1 uppercase tracking-wider">
+                                    <span className="bg-purple-950 text-amber-300 border border-purple-300/40 px-2 py-0.5 rounded text-[10px] font-extrabold flex items-center gap-1 uppercase tracking-wider">
                                       📁 {quiz.category || 'Umum'}
                                     </span>
                                   </div>
-                                  <p className="font-semibold text-white line-clamp-2">{quiz.question}</p>
-                                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-1.5 text-[11px] text-slate-400 font-sans">
+                                  <p className="font-bold text-white line-clamp-2">{quiz.question}</p>
+                                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-1.5 text-[11px] text-purple-200 font-sans">
                                     <span><b>A:</b> {quiz.option_a}</span>
                                     <span><b>B:</b> {quiz.option_b}</span>
                                     <span><b>C:</b> {quiz.option_c}</span>
@@ -2149,21 +2155,21 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                 <td className="py-3 px-4">
                                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                                     quiz.type === 'cognitive' 
-                                      ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' 
-                                      : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40' 
+                                      : 'bg-purple-500/20 text-purple-300 border border-purple-400/40'
                                   }`}>
                                     {quiz.type === 'cognitive' ? 'Kognitif' : 'Minat'}
                                   </span>
                                 </td>
                                 <td className="py-3 px-4">
-                                  <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-extrabold px-2.5 py-0.5 rounded-md text-xs">
+                                  <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-extrabold px-2.5 py-0.5 rounded-md text-xs">
                                     Opsi {quiz.correct_answer}
                                   </span>
                                 </td>
                                 <td className="py-3 px-4 text-center">
                                   <button
                                     onClick={() => handleDeleteQuestion(quiz.id!)}
-                                    className="text-rose-400 hover:text-rose-300 p-2 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
+                                    className="text-rose-300 hover:text-white p-2 hover:bg-rose-900/60 rounded-lg transition cursor-pointer"
                                     title="Hapus Soal"
                                   >
                                     <Trash2 className="w-4.5 h-4.5" />
@@ -2191,13 +2197,13 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                   {/* Left Side: Student List Table (8 cols) */}
                   <div className="lg:col-span-8 flex flex-col gap-6">
-                    <div className="glass-panel rounded-2xl border border-slate-800 shadow-xl overflow-hidden font-display">
-                      <div className="p-5 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl shadow-2xl overflow-hidden font-display text-white">
+                      <div className="p-5 border-b border-purple-300/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
-                          <h3 className="text-md font-bold text-white">
+                          <h3 className="text-md font-extrabold text-white">
                             Daftar Akun Murid Terdaftar ({students.length} Siswa)
                           </h3>
-                          <p className="text-xs text-slate-400 mt-0.5 font-sans">
+                          <p className="text-xs text-purple-200 mt-0.5 font-sans">
                             Hanya murid yang terdaftar di bawah ini yang dapat masuk ke petualangan kuis.
                           </p>
                         </div>
@@ -2207,7 +2213,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                             <button
                               type="button"
                               onClick={handleBulkDeleteStudents}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 hover:text-rose-300 rounded-xl text-xs font-bold transition cursor-pointer"
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-900/60 hover:bg-rose-800 border border-rose-400/50 text-rose-200 hover:text-white rounded-xl text-xs font-bold transition cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                               <span>Hapus ({selectedStudents.size})</span>
@@ -2219,17 +2225,17 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                             placeholder="Cari nama / kelas..."
                             value={studentsSearch}
                             onChange={(e) => setStudentsSearch(e.target.value)}
-                            className="bg-slate-950 border border-slate-800 text-xs rounded-xl px-3 py-1.5 text-white outline-none w-40 placeholder:text-slate-600 focus:border-indigo-500 transition font-sans"
+                            className="bg-purple-950/90 border-2 border-purple-300/50 text-xs rounded-xl px-3 py-1.5 text-white outline-none w-40 placeholder:text-purple-300/40 focus:border-amber-300 transition font-sans"
                           />
 
                           <select
                             value={studentsClassFilter}
                             onChange={(e) => setStudentsClassFilter(e.target.value)}
-                            className="bg-slate-950 border border-slate-800 text-xs rounded-xl px-3 py-1.5 outline-none text-cyan-400 font-bold cursor-pointer transition"
+                            className="bg-purple-950/90 border-2 border-purple-300/50 text-xs rounded-xl px-3 py-1.5 outline-none text-amber-300 font-bold cursor-pointer transition"
                           >
-                            <option value="All">Semua Kelas</option>
+                            <option value="All" className="bg-purple-950 text-white">Semua Kelas</option>
                             {Array.from(new Set([...classList, ...students.map(s => s.class_name)])).map(cls => (
-                              <option key={cls} value={cls}>{cls}</option>
+                              <option key={cls} value={cls} className="bg-purple-950 text-white">{cls}</option>
                             ))}
                           </select>
                         </div>
@@ -2238,9 +2244,9 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                       <div className="overflow-x-auto">
                         {students.length === 0 ? (
                           <div className="text-center py-10 font-sans">
-                            <Users className="w-12 h-12 text-slate-700 mx-auto mb-2 animate-pulse" />
-                            <p className="text-sm font-semibold text-slate-400">Belum Ada Akun Murid</p>
-                            <p className="text-xs text-slate-500 mt-1">Gunakan panel kanan untuk mengimpor daftar murid dari Excel.</p>
+                            <Users className="w-12 h-12 text-purple-300 mx-auto mb-2 animate-pulse" />
+                            <p className="text-sm font-bold text-white">Belum Ada Akun Murid</p>
+                            <p className="text-xs text-purple-200 mt-1">Gunakan panel kanan untuk mengimpor daftar murid dari Excel.</p>
                           </div>
                         ) : (() => {
                           const visibleStudents = students.filter(s => {
@@ -2254,13 +2260,13 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                           return (
                             <table className="w-full text-left border-collapse">
                               <thead>
-                                <tr className="bg-slate-900/60 border-b border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                <tr className="bg-purple-950/90 border-b border-purple-300/30 text-[10px] font-bold text-amber-300 uppercase tracking-wider">
                                   <th className="py-3 px-4 w-10 text-center">
                                     <input
                                       type="checkbox"
                                       checked={visibleStudents.length > 0 && visibleStudents.every(s => selectedStudents.has(s.id!))}
                                       onChange={() => handleSelectAllStudentsToggle(visibleStudents)}
-                                      className="w-3.5 h-3.5 rounded border-slate-800 bg-slate-950 focus:ring-1 focus:ring-indigo-500 text-indigo-500 cursor-pointer"
+                                      className="w-3.5 h-3.5 rounded border-purple-400 bg-purple-950 focus:ring-1 focus:ring-amber-300 text-amber-400 cursor-pointer"
                                     />
                                   </th>
                                   <th className="py-3 px-4 w-12 text-center">Absen</th>
@@ -2270,35 +2276,35 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                   <th className="py-3 px-4 w-20 text-center">Aksi</th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-slate-800/60 text-xs text-slate-300 font-sans">
+                              <tbody className="divide-y divide-purple-300/20 text-xs text-purple-100 font-sans">
                                 {visibleStudents.map((s, index) => (
-                                  <tr key={s.id ? `student-${s.id}` : `student-idx-${index}`} className="hover:bg-slate-900/30 transition">
+                                  <tr key={s.id ? `student-${s.id}` : `student-idx-${index}`} className="hover:bg-purple-900/40 transition">
                                     <td className="py-2.5 px-4 text-center">
                                       <input
                                         type="checkbox"
                                         checked={selectedStudents.has(s.id!)}
                                         onChange={() => handleSelectStudentToggle(s.id!)}
-                                        className="w-3.5 h-3.5 rounded border-slate-800 bg-slate-950 focus:ring-1 focus:ring-indigo-500 text-indigo-500 cursor-pointer"
+                                        className="w-3.5 h-3.5 rounded border-purple-400 bg-purple-950 focus:ring-1 focus:ring-amber-300 text-amber-400 cursor-pointer"
                                       />
                                     </td>
-                                    <td className="py-2.5 px-4 text-center font-bold text-slate-500">
+                                    <td className="py-2.5 px-4 text-center font-black text-amber-300">
                                       {s.attendance_num}
                                     </td>
-                                    <td className="py-2.5 px-4 font-semibold text-white">
+                                    <td className="py-2.5 px-4 font-bold text-white">
                                       {s.student_name}
                                     </td>
-                                    <td className="py-2.5 px-4 font-semibold text-slate-300">
+                                    <td className="py-2.5 px-4 font-bold text-purple-200">
                                       {s.class_name}
                                     </td>
-                                    <td className="py-2.5 px-4 font-mono font-bold text-cyan-400">
-                                      <span className="bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded text-[11px]">
+                                    <td className="py-2.5 px-4 font-mono font-bold text-amber-300">
+                                      <span className="bg-amber-400/20 border border-amber-300/40 px-2 py-0.5 rounded text-[11px]">
                                         {s.nis || '-'}
                                       </span>
                                     </td>
                                     <td className="py-2.5 px-4 text-center">
                                       <button
                                         onClick={() => handleDeleteStudent(s.id!)}
-                                        className="text-rose-400 hover:text-rose-300 p-1.5 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
+                                        className="text-rose-300 hover:text-white p-1.5 hover:bg-rose-900/60 rounded-lg transition cursor-pointer"
                                         title="Hapus Murid"
                                       >
                                         <Trash2 className="w-4 h-4" />
@@ -2317,12 +2323,12 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                   {/* Right Side: Student Import Panel & Class Management (4 cols) */}
                   <div className="lg:col-span-4 flex flex-col gap-6">
                     {/* Kelola Kelas Card (Tambah & Hapus Kelas) */}
-                    <div className="glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl font-sans">
-                      <h2 className="text-lg font-bold text-white font-display flex items-center gap-2 mb-1">
-                        <School className="w-5 h-5 text-pink-400" />
+                    <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl font-sans text-white">
+                      <h2 className="text-lg font-extrabold text-white font-display flex items-center gap-2 mb-1">
+                        <School className="w-5 h-5 text-amber-300" />
                         Manajemen Daftar Kelas ({classList.length})
                       </h2>
-                      <p className="text-xs text-slate-400 mb-4">
+                      <p className="text-xs text-purple-200 mb-4">
                         Tambah kelas baru atau hapus kelas yang sudah tidak aktif dalam sistem.
                       </p>
 
@@ -2337,17 +2343,17 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                               setAddClassError('');
                             }}
                             placeholder="Contoh: X MERDEKA 1"
-                            className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-pink-500 transition placeholder:text-slate-700 font-semibold"
+                            className="flex-1 bg-purple-950/90 border-2 border-purple-300/50 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-300 transition placeholder:text-purple-300/40 font-semibold"
                           />
                           <button
                             type="submit"
-                            className="bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl transition cursor-pointer flex items-center gap-1 uppercase tracking-wider shrink-0 shadow-md"
+                            className="bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 hover:from-amber-300 hover:to-pink-400 text-slate-950 font-black text-xs px-3.5 py-2 rounded-xl transition cursor-pointer flex items-center gap-1 uppercase tracking-wider shrink-0 shadow-md whitespace-nowrap"
                           >
-                            <PlusCircle className="w-3.5 h-3.5" /> Tambah
+                            <PlusCircle className="w-3.5 h-3.5 text-slate-950" /> Tambah
                           </button>
                         </div>
                         {addClassError && (
-                          <div className="text-[11px] text-rose-400 font-semibold">
+                          <div className="text-[11px] text-rose-300 font-bold">
                             ⚠️ {addClassError}
                           </div>
                         )}
@@ -2355,17 +2361,17 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
 
                       {/* Daftar Badge Kelas Aktif dengan Tombol Hapus */}
                       <div>
-                        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                        <span className="block text-[10px] font-bold text-amber-300 uppercase tracking-widest mb-2">
                           Daftar Kelas Aktif (Klik X untuk Hapus)
                         </span>
                         <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1">
                           {classList.map(cls => (
-                            <div key={cls} className="bg-slate-950/90 border border-slate-800 rounded-xl px-2.5 py-1 flex items-center gap-1.5 text-xs font-bold text-slate-200 hover:border-slate-700 transition">
+                            <div key={cls} className="bg-purple-950/90 border border-purple-300/40 rounded-xl px-2.5 py-1 flex items-center gap-1.5 text-xs font-bold text-white hover:border-amber-300 transition">
                               <span>{cls}</span>
                               <button
                                 type="button"
                                 onClick={() => handleDeleteClass(cls)}
-                                className="text-slate-500 hover:text-rose-400 p-0.5 rounded transition cursor-pointer"
+                                className="text-purple-300 hover:text-rose-300 p-0.5 rounded transition cursor-pointer"
                                 title={`Hapus kelas ${cls}`}
                               >
                                 <X className="w-3.5 h-3.5" />
@@ -2375,33 +2381,33 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                         </div>
                       </div>
                     </div>
-                    <div className="glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl flex flex-col justify-between">
+                    <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl flex flex-col justify-between text-white">
                       <div>
-                        <h2 className="text-lg font-bold text-white font-display flex items-center gap-2 mb-1">
-                          <Upload className="w-5 h-5 text-cyan-400" />
+                        <h2 className="text-lg font-extrabold text-white font-display flex items-center gap-2 mb-1">
+                          <Upload className="w-5 h-5 text-amber-300" />
                           Impor Akun Murid
                         </h2>
-                        <p className="text-xs text-slate-400 mb-4 font-sans">
+                        <p className="text-xs text-purple-200 mb-4 font-sans">
                           Unggah daftar nama murid Anda dari Excel agar murid terdaftar dan dapat login ke aplikasi.
                         </p>
 
                         {/* Target Class Selector */}
                         <div className="mb-4 space-y-1 font-sans">
-                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                          <label className="block text-[10px] font-bold text-purple-200 uppercase tracking-widest">
                             Target Kelas (Jika di Excel Kosong)
                           </label>
                           <select
                             value={studentImportClass}
                             onChange={(e) => setStudentImportClass(e.target.value)}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none cursor-pointer focus:border-cyan-500 transition text-xs font-semibold"
+                            className="w-full bg-purple-950/90 border-2 border-purple-300/50 rounded-xl px-3 py-2 text-white outline-none cursor-pointer focus:border-amber-300 transition text-xs font-semibold"
                           >
                             {classList.map(cls => (
-                              <option key={cls} value={cls} className="bg-slate-950 text-white">{cls}</option>
+                              <option key={cls} value={cls} className="bg-purple-950 text-white">{cls}</option>
                             ))}
                           </select>
                         </div>
 
-                        <div className="border-2 border-dashed border-slate-800 hover:border-cyan-500/50 rounded-2xl p-6 flex flex-col items-center justify-center text-center transition relative bg-slate-950/40">
+                        <div className="border-2 border-dashed border-purple-300/50 hover:border-amber-300 rounded-2xl p-6 flex flex-col items-center justify-center text-center transition relative bg-purple-950/60">
                           <input
                             type="file"
                             accept=".xlsx, .xls, .csv"
@@ -2409,32 +2415,32 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                             disabled={studentImportLoading}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:pointer-events-none"
                           />
-                          <Upload className={`w-8 h-8 text-cyan-400 mb-2 ${studentImportLoading ? 'animate-pulse' : ''}`} />
+                          <Upload className={`w-8 h-8 text-amber-300 mb-2 ${studentImportLoading ? 'animate-pulse' : ''}`} />
                           <span className="text-xs font-bold text-white">
                             {studentImportLoading ? 'Memproses data...' : 'Klik/seret Excel Siswa'}
                           </span>
-                          <span className="text-[9px] text-slate-500 mt-1">
+                          <span className="text-[9px] text-purple-200 mt-1">
                             Format kolom: Nama Siswa, Kode Unik, Kelas, Nomor Absen
                           </span>
                         </div>
 
                         {studentImportSuccess !== null && (
-                          <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl font-sans font-semibold">
+                          <div className="mt-4 p-3 bg-emerald-950/80 border border-emerald-400/50 text-emerald-300 text-xs rounded-xl font-sans font-semibold">
                             ✅ Berhasil mengimpor {studentImportSuccess} akun murid baru!
                           </div>
                         )}
 
                         {studentImportError && (
-                          <div className="mt-4 p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-xl font-sans font-semibold">
+                          <div className="mt-4 p-3 bg-rose-900/80 border border-rose-400/50 text-rose-200 text-xs rounded-xl font-sans font-semibold">
                             ⚠️ {studentImportError}
                           </div>
                         )}
                       </div>
 
-                      <div className="mt-6 pt-4 border-t border-slate-800/60">
+                      <div className="mt-6 pt-4 border-t border-purple-300/30">
                         <button
                           onClick={handleDownloadStudentsTemplate}
-                          className="w-full bg-slate-900 hover:bg-slate-850 text-slate-300 border border-slate-800 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer font-sans"
+                          className="w-full bg-purple-950/80 hover:bg-purple-900 text-amber-300 border border-purple-300/40 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer font-sans"
                         >
                           <Copy className="w-3.5 h-3.5" /> Unduh Template Excel Siswa
                         </button>
@@ -2442,20 +2448,20 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                     </div>
 
                     {/* Tambah Murid Manual Card */}
-                    <div className="glass-panel rounded-2xl border border-slate-800 p-6 shadow-xl flex flex-col justify-between font-sans">
+                    <div className="bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl flex flex-col justify-between font-sans text-white">
                       <div>
-                        <h2 className="text-lg font-bold text-white font-display flex items-center gap-2 mb-1">
-                          <PlusCircle className="w-5 h-5 text-indigo-400" />
+                        <h2 className="text-lg font-extrabold text-white font-display flex items-center gap-2 mb-1">
+                          <PlusCircle className="w-5 h-5 text-amber-300" />
                           Tambah Murid Manual
                         </h2>
-                        <p className="text-xs text-slate-400 mb-4">
+                        <p className="text-xs text-purple-200 mb-4">
                           Masukkan data murid secara individu untuk didaftarkan langsung ke database.
                         </p>
 
                         <form onSubmit={handleAddManualStudent} className="space-y-3.5 text-xs text-slate-300">
                           {/* Nama */}
                           <div>
-                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                            <label className="block text-[10px] font-bold text-purple-200 uppercase tracking-widest mb-1">
                               Nama Lengkap Murid
                             </label>
                             <input
@@ -2463,30 +2469,30 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                               value={manualStudentName}
                               onChange={(e) => setManualStudentName(e.target.value)}
                               placeholder="Nama lengkap..."
-                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-indigo-500 transition placeholder:text-slate-800"
+                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-300 transition placeholder:text-purple-300/40"
                             />
                           </div>
 
                           <div className="grid grid-cols-2 gap-3">
                             {/* Kelas */}
                             <div>
-                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                              <label className="block text-[10px] font-bold text-purple-200 uppercase tracking-widest mb-1">
                                 Kelas
                               </label>
                               <select
                                 value={manualStudentClass}
                                 onChange={(e) => setManualStudentClass(e.target.value)}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none cursor-pointer focus:border-indigo-500 transition"
+                                className="w-full bg-purple-950/90 border-2 border-purple-300/50 rounded-xl px-3 py-2 text-white outline-none cursor-pointer focus:border-amber-300 transition"
                               >
                                 {classList.map(cls => (
-                                  <option key={cls} value={cls} className="bg-slate-950 text-white">{cls}</option>
+                                  <option key={cls} value={cls} className="bg-purple-950 text-white">{cls}</option>
                                 ))}
                               </select>
                             </div>
 
                             {/* Nomor Absen */}
                             <div>
-                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                              <label className="block text-[10px] font-bold text-purple-200 uppercase tracking-widest mb-1">
                                 Nomor Absen
                               </label>
                               <input
@@ -2495,14 +2501,14 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                 value={manualStudentAbsen}
                                 onChange={(e) => setManualStudentAbsen(e.target.value.replace(/\D/g, ''))}
                                 placeholder="01"
-                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-indigo-500 transition text-center font-bold placeholder:text-slate-800"
+                                className="w-full bg-purple-950/90 border-2 border-purple-300/50 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-300 transition text-center font-bold placeholder:text-purple-300/40"
                               />
                             </div>
                           </div>
 
                           {/* NIS / Kode Unik */}
                           <div>
-                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                            <label className="block text-[10px] font-bold text-purple-200 uppercase tracking-widest mb-1">
                               Kode Unik / NIS (Dibuat otomatis jika kosong)
                             </label>
                             <input
@@ -2510,28 +2516,28 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                               value={manualStudentNis}
                               onChange={(e) => setManualStudentNis(e.target.value)}
                               placeholder="Contoh: EQ-8F2K9L atau 212210001"
-                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-indigo-500 transition placeholder:text-slate-800 font-mono"
+                              className="w-full bg-purple-950/90 border-2 border-purple-300/50 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-300 transition placeholder:text-purple-300/40 font-mono"
                             />
                           </div>
 
                           {/* Alerts */}
                           {manualStudentSuccess && (
-                            <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl font-bold">
+                            <div className="p-2.5 bg-emerald-950/80 border border-emerald-400/50 text-emerald-300 rounded-xl font-bold">
                               ✓ Murid berhasil didaftarkan!
                             </div>
                           )}
 
                           {manualStudentError && (
-                            <div className="p-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl font-bold">
+                            <div className="p-2.5 bg-rose-900/80 border border-rose-400/50 text-rose-200 rounded-xl font-bold">
                               ⚠️ {manualStudentError}
                             </div>
                           )}
 
                           <button
                             type="submit"
-                            className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-indigo-500/10 text-xs uppercase tracking-wider"
+                            className="w-full py-3 bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 hover:from-amber-300 hover:to-pink-400 text-slate-950 font-black rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-lg text-xs uppercase tracking-wider font-display"
                           >
-                            <PlusCircle className="w-4 h-4" /> Daftarkan Murid
+                            <PlusCircle className="w-4 h-4 text-slate-950" /> Daftarkan Murid
                           </button>
                         </form>
                       </div>
