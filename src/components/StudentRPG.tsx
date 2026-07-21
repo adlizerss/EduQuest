@@ -38,6 +38,10 @@ export default function QuizPlayground({ studentName, attendanceNum, className, 
   // Game completed state
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
 
+  const [interestSelections, setInterestSelections] = useState<('A' | 'B' | 'C' | 'D')[]>([]);
+  const [cognitiveCorrectCount, setCognitiveCorrectCount] = useState<number>(0);
+  const [cognitiveTotalCount, setCognitiveTotalCount] = useState<number>(0);
+
   const currentQuestion = questions[currentIdx];
 
   const handleTimeOut = () => {
@@ -45,6 +49,9 @@ export default function QuizPlayground({ studentName, attendanceNum, className, 
     sound.playDamage();
     setIsAnswered(true);
     setSelectedAnswer(null);
+    if (currentQuestion.type === 'cognitive') {
+      setCognitiveTotalCount(prev => prev + 1);
+    }
     showCombatEvent("⏰ WAKTU HABIS! (+0 Poin)", "text-amber-400 font-extrabold");
   };
 
@@ -88,6 +95,7 @@ export default function QuizPlayground({ studentName, attendanceNum, className, 
     const isCognitive = currentQuestion.type === 'cognitive';
 
     if (isCognitive) {
+      setCognitiveTotalCount(prev => prev + 1);
       const isCorrect = opt === currentQuestion.correct_answer;
       if (isCorrect) {
         sound.playCorrect();
@@ -95,6 +103,7 @@ export default function QuizPlayground({ studentName, attendanceNum, className, 
         const earnedScore = 50 + timeBonus;
         setScore(prev => prev + earnedScore);
         setCorrectCount(prev => prev + 1);
+        setCognitiveCorrectCount(prev => prev + 1);
         showCombatEvent(`+${earnedScore} POIN! (Bonus Waktu: ${timeLeft}s)`, "text-emerald-400 font-extrabold");
       } else {
         sound.playDamage();
@@ -108,6 +117,7 @@ export default function QuizPlayground({ studentName, attendanceNum, className, 
       const earnedScore = 50 + timeBonus;
       setScore(prev => prev + earnedScore);
       setCorrectCount(prev => prev + 1);
+      setInterestSelections(prev => [...prev, opt]);
       showCombatEvent(`+${earnedScore} POIN! (Eksplorasi Minat)`, "text-purple-300 font-extrabold");
     }
   };
@@ -127,12 +137,43 @@ export default function QuizPlayground({ studentName, attendanceNum, className, 
   const saveGameResult = async () => {
     setIsSubmitting(true);
     
+    // Calculate dominant interest role
+    const counts = { A: 0, B: 0, C: 0, D: 0 };
+    interestSelections.forEach(c => {
+      if (c === 'A' || c === 'B' || c === 'C' || c === 'D') {
+        counts[c]++;
+      }
+    });
+
+    let dominantRole = "Active Learner";
+    let maxVal = 0;
+
+    if (counts.A > maxVal) { dominantRole = "Planner"; maxVal = counts.A; }
+    if (counts.B > maxVal) { dominantRole = "Creator"; maxVal = counts.B; }
+    if (counts.C > maxVal) { dominantRole = "Communicator"; maxVal = counts.C; }
+    if (counts.D > maxVal) { dominantRole = "Coordinator"; maxVal = counts.D; }
+
+    // Calculate cognitive level
+    let cognitiveLevel = "Cukup";
+    if (cognitiveTotalCount > 0) {
+      const accuracy = (cognitiveCorrectCount / cognitiveTotalCount) * 100;
+      if (accuracy >= 80) {
+        cognitiveLevel = "Sangat Baik";
+      } else if (accuracy < 50) {
+        cognitiveLevel = "Perlu Bimbingan";
+      }
+    } else {
+      cognitiveLevel = "Sangat Baik";
+    }
+
+    const finalRoleStr = `${dominantRole} | ${cognitiveLevel}`;
+    
     const finalResult: StudentResult = {
       student_name: studentName,
       class_name: `${className} (Absen ${attendanceNum})`,
       score: score,
       remaining_hp: 100,
-      role: "Siswa Active Learner",
+      role: finalRoleStr,
       submit_at: new Date().toISOString()
     };
 

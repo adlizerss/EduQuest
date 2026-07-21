@@ -71,9 +71,12 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
   const [sbAnonKey, setSbAnonKey] = useState('');
   const [isSbConnected, setIsSbConnected] = useState(false);
   const [configCopied, setConfigCopied] = useState(false);
-  const [sqlCopied, setSqlCopied] = useState(false);
-
   // Import Excel/CSV State
+  const [showGroupModal, setShowGroupModal] = useState<boolean>(false);
+  const [groupCount, setGroupCount] = useState<number>(4);
+  const [groupTargetClass, setGroupTargetClass] = useState<string>('All');
+  const [generatedGroups, setGeneratedGroups] = useState<{ name: string; students: StudentResult[] }[]>([]);
+
   const [importLoading, setImportLoading] = useState(false);
   const [importSuccessCount, setImportSuccessCount] = useState<number | null>(null);
   const [importError, setImportError] = useState<string>('');
@@ -166,6 +169,110 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
       await loadClassesData();
       sound.playDamage();
     }
+  };
+
+  const handleGenerateGroups = () => {
+    sound.playSpell();
+    
+    const classResults = results.filter(r => {
+      if (groupTargetClass === 'All') return true;
+      return r.class_name.toLowerCase().startsWith(groupTargetClass.toLowerCase());
+    });
+    
+    if (classResults.length === 0) {
+      alert(`Tidak ada data hasil kuis untuk kelas ${groupTargetClass}!`);
+      return;
+    }
+    
+    const studentsWithProfile = classResults.map(r => {
+      const parts = (r.role || "Active Learner").split(" | ");
+      return {
+        ...r,
+        dominantRole: parts[0] || "Active Learner",
+        cognitive: parts[1] || "Cukup"
+      };
+    });
+    
+    const high = studentsWithProfile.filter(s => s.cognitive === "Sangat Baik");
+    const med = studentsWithProfile.filter(s => s.cognitive === "Cukup");
+    const low = studentsWithProfile.filter(s => s.cognitive === "Perlu Bimbingan");
+    
+    const sortByScore = (arr: typeof studentsWithProfile) => [...arr].sort((a, b) => b.score - a.score);
+    const sorted = [...sortByScore(high), ...sortByScore(med), ...sortByScore(low)];
+    
+    const groups = Array.from({ length: groupCount }, (_, idx) => ({
+      name: `Kelompok ${idx + 1}`,
+      students: [] as StudentResult[]
+    }));
+    
+    let reverse = false;
+    let gIdx = 0;
+    
+    sorted.forEach(student => {
+      groups[gIdx].students.push(student);
+      
+      if (reverse) {
+        gIdx--;
+        if (gIdx < 0) {
+          gIdx = 0;
+          reverse = false;
+        }
+      } else {
+        gIdx++;
+        if (gIdx >= groupCount) {
+          gIdx = groupCount - 1;
+          reverse = true;
+        }
+      }
+    });
+    
+    setGeneratedGroups(groups);
+  };
+
+  const handleExportGroupsToExcel = () => {
+    if (generatedGroups.length === 0) return;
+    sound.playClick();
+    
+    const rows = [
+      ["Daftar Kelompok Belajar EduQuest"],
+      [`Kelas: ${groupTargetClass}`],
+      [],
+      ["Kelompok", "Nama Siswa", "Minat (Role)", "Kemampuan Kognitif", "Skor Kuis"]
+    ];
+    
+    generatedGroups.forEach(group => {
+      group.students.forEach(s => {
+        const parts = (s.role || "Active Learner").split(" | ");
+        rows.push([
+          group.name,
+          s.student_name,
+          parts[0] || "Active Learner",
+          parts[1] || "Cukup",
+          String(s.score)
+        ]);
+      });
+      rows.push([]);
+    });
+    
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Kelompok Belajar");
+    XLSX.writeFile(wb, `Kelompok_Belajar_${groupTargetClass}.xlsx`);
+  };
+
+  const handleCopyGroupsToClipboard = () => {
+    sound.playClick();
+    let text = `=== DAFTAR KELOMPOK BELAJAR ${groupTargetClass.toUpperCase()} ===\n\n`;
+    generatedGroups.forEach(group => {
+      text += `* ${group.name} *\n`;
+      group.students.forEach((s, idx) => {
+        const parts = (s.role || "Active Learner").split(" | ");
+        text += `${idx + 1}. ${s.student_name} (${parts[0]} - Kognitif: ${parts[1]}) [Skor: ${s.score}]\n`;
+      });
+      text += `\n`;
+    });
+    navigator.clipboard.writeText(text);
+    alert("Daftar kelompok berhasil disalin ke clipboard!");
   };
 
   const handleDownloadTemplate = () => {
@@ -1272,6 +1379,18 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
 
                     <div className="flex gap-2">
                       <button 
+                        onClick={() => {
+                          sound.playClick();
+                          setGroupTargetClass(classFilter !== 'All' ? classFilter : (classList[0] || 'All'));
+                          setGeneratedGroups([]);
+                          setShowGroupModal(true);
+                        }}
+                        className="bg-gradient-to-r from-amber-400 to-pink-500 hover:from-amber-300 hover:to-pink-400 text-slate-950 font-black p-2 px-3 rounded-xl text-xs flex items-center gap-1.5 transition cursor-pointer shadow-lg mr-2"
+                      >
+                        <Zap className="w-3.5 h-3.5 text-slate-950" />
+                        Bagi Kelompok Seimbang
+                      </button>
+                      <button 
                         onClick={() => { sound.playClick(); loadTrackerResults(); }}
                         className="bg-purple-900/80 hover:bg-purple-800 text-amber-300 border border-purple-300/40 p-2 px-3 rounded-xl text-xs font-black transition cursor-pointer"
                       >
@@ -1303,32 +1422,60 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                             <th className="py-3 px-5">Nama Murid</th>
                             <th className="py-3 px-4">Kelas</th>
                             <th className="py-3 px-4 text-center">Skor</th>
+                            <th className="py-3 px-4 text-center">Minat (Role)</th>
+                            <th className="py-3 px-4 text-center">Akurasi Kognitif</th>
                             <th className="py-3 px-5">Waktu Submit</th>
                             <th className="py-3 px-4 text-center">Aksi</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-purple-300/20 text-xs">
-                          {filteredResults.map((result, idx) => (
-                            <tr key={result.id || idx} className="hover:bg-purple-900/40 transition">
-                              <td className="py-3 px-5 font-bold text-white">{result.student_name}</td>
-                              <td className="py-3 px-4"><span className="bg-purple-950 px-2 py-0.5 rounded border border-purple-300/30">{result.class_name}</span></td>
-                              <td className="py-3 px-4 text-center font-black text-amber-300">{result.score}</td>
-                              <td className="py-3 px-5 font-mono text-purple-200">{new Date(result.submit_at).toLocaleDateString()}</td>
-                              <td className="py-3 px-4 text-center">
-                                <button
-                                  onClick={async () => {
-                                    if (confirm(`Hapus skor ${result.student_name}?`)) {
-                                      await deleteStudentResult(result.id);
-                                      loadTrackerResults();
-                                    }
-                                  }}
-                                  className="text-rose-300 hover:text-white"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
+                          {filteredResults.map((result, idx) => {
+                            const roleParts = (result.role || "Active Learner").split(" | ");
+                            const dominantRole = roleParts[0] || "Active Learner";
+                            const cognitiveLevel = roleParts[1] || "Cukup";
+
+                            return (
+                              <tr key={result.id || idx} className="hover:bg-purple-900/40 transition">
+                                <td className="py-3 px-5 font-bold text-white">{result.student_name}</td>
+                                <td className="py-3 px-4"><span className="bg-purple-950 px-2 py-0.5 rounded border border-purple-300/30">{result.class_name}</span></td>
+                                <td className="py-3 px-4 text-center font-black text-amber-300">{result.score}</td>
+                                <td className="py-3 px-4 text-center">
+                                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                                    dominantRole === 'Planner' ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/40' :
+                                    dominantRole === 'Creator' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40' :
+                                    dominantRole === 'Communicator' ? 'bg-pink-500/20 text-pink-300 border-pink-400/40' :
+                                    dominantRole === 'Coordinator' ? 'bg-amber-500/20 text-amber-300 border-amber-400/40' :
+                                    'bg-purple-500/20 text-purple-300 border-purple-400/40'
+                                  }`}>
+                                    {dominantRole}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                                    cognitiveLevel === 'Sangat Baik' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40' :
+                                    cognitiveLevel === 'Perlu Bimbingan' ? 'bg-rose-500/20 text-rose-300 border-rose-400/40' :
+                                    'bg-amber-500/20 text-amber-300 border-amber-400/40'
+                                  }`}>
+                                    {cognitiveLevel}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-5 font-mono text-purple-200">{new Date(result.submit_at).toLocaleDateString()}</td>
+                                <td className="py-3 px-4 text-center">
+                                  <button
+                                    onClick={async () => {
+                                      if (confirm(`Hapus skor ${result.student_name}?`)) {
+                                        await deleteStudentResult(result.id);
+                                        loadTrackerResults();
+                                      }
+                                    }}
+                                    className="text-rose-300 hover:text-white"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     )}
@@ -1951,6 +2098,152 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                 <input type="text" value={editingClass.newName} onChange={(e) => setEditingClass({ ...editingClass, newName: e.target.value })} className="w-full bg-purple-950 border rounded-xl p-2.5 text-xs text-white" />
                 <button type="submit" className="w-full bg-amber-400 text-slate-950 font-black py-2 rounded-xl text-xs uppercase">Simpan Nama Baru</button>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL 3: GROUP GENERATOR MODAL */}
+      <AnimatePresence>
+        {showGroupModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-4 text-white overflow-y-auto">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.95, opacity: 0 }} 
+              className="bg-gradient-to-br from-purple-900 via-violet-950 to-slate-950 border-2 border-purple-400 rounded-3xl p-6 w-full max-w-4xl relative my-8"
+            >
+              <button 
+                onClick={() => { sound.playClick(); setShowGroupModal(false); }} 
+                className="absolute right-4 top-4 text-purple-200 hover:text-white font-extrabold text-sm"
+              >
+                X
+              </button>
+              
+              <div className="mb-6">
+                <h3 className="text-lg font-black text-amber-300 font-display flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-amber-300" /> Generator Kelompok Seimbang (Asesmen Diagnostik)
+                </h3>
+                <p className="text-xs text-purple-200 mt-1 font-sans">
+                  Sistem akan membagi murid secara heterogen berdasarkan tingkat kemampuan kognitif dan keberagaman minat peran.
+                </p>
+              </div>
+
+              {/* Controls */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 font-sans text-xs">
+                <div>
+                  <label className="block text-[10px] font-bold text-purple-200 uppercase tracking-wider mb-1">Target Kelas</label>
+                  <select 
+                    value={groupTargetClass} 
+                    onChange={(e) => { sound.playClick(); setGroupTargetClass(e.target.value); }} 
+                    className="w-full bg-purple-950 border border-purple-300/40 rounded-xl p-2.5 text-white outline-none"
+                  >
+                    <option value="All">Semua Kelas</option>
+                    {classList.map(cls => (
+                      <option key={cls} value={cls}>{cls}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-purple-200 uppercase tracking-wider mb-1">Jumlah Kelompok</label>
+                  <input 
+                    type="number" 
+                    min={2} 
+                    max={20} 
+                    value={groupCount} 
+                    onChange={(e) => setGroupCount(Math.max(2, parseInt(e.target.value) || 2))} 
+                    className="w-full bg-purple-950 border border-purple-300/40 rounded-xl p-2 text-white outline-none text-center font-bold"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button 
+                    onClick={handleGenerateGroups}
+                    className="w-full bg-gradient-to-r from-amber-400 to-pink-500 text-slate-950 font-black py-2.5 rounded-xl uppercase tracking-wider shadow-lg hover:from-amber-300 hover:to-pink-400 transition cursor-pointer text-xs"
+                  >
+                    Mulai Bagi Kelompok
+                  </button>
+                </div>
+              </div>
+
+              {/* Results Preview */}
+              {generatedGroups.length > 0 && (
+                <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2 border-t border-purple-300/20 pt-4 font-sans">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">Hasil Pembagian Kelompok:</span>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={handleCopyGroupsToClipboard}
+                        className="bg-purple-950 border border-purple-300/40 hover:bg-purple-900 text-purple-200 text-xs px-3 py-1.5 rounded-xl font-bold transition cursor-pointer"
+                      >
+                        📋 Salin Daftar
+                      </button>
+                      <button 
+                        onClick={handleExportGroupsToExcel}
+                        className="bg-emerald-900 hover:bg-emerald-800 text-emerald-100 text-xs px-3 py-1.5 rounded-xl font-bold transition cursor-pointer border border-emerald-400/40"
+                      >
+                        📄 Ekspor Excel
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {generatedGroups.map((group, gIdx) => {
+                      const rolesInGroup = new Set();
+                      group.students.forEach(s => {
+                        const parts = (s.role || "Active Learner").split(" | ");
+                        rolesInGroup.add(parts[0] || "Active Learner");
+                      });
+                      const diversityPct = Math.round((rolesInGroup.size / 4) * 100);
+
+                      return (
+                        <div key={gIdx} className="bg-purple-950/70 border border-purple-300/30 rounded-2xl p-4 shadow-md space-y-3">
+                          <div className="flex justify-between items-center border-b border-purple-300/20 pb-2">
+                            <span className="text-xs font-black text-amber-300 uppercase tracking-wider">{group.name}</span>
+                            <span className="text-[10px] bg-purple-900 px-2 py-0.5 rounded-full border border-purple-300/30 text-purple-200 font-bold" title="Keragaman Peran/Minat Siswa">
+                              Keragaman Peran: {rolesInGroup.size}/4 ({diversityPct}%)
+                            </span>
+                          </div>
+
+                          <div className="space-y-2">
+                            {group.students.map((student, sIdx) => {
+                              const parts = (student.role || "Active Learner").split(" | ");
+                              const sRole = parts[0] || "Active Learner";
+                              const sLevel = parts[1] || "Cukup";
+
+                              return (
+                                <div key={sIdx} className="flex items-center justify-between bg-purple-950/40 p-2 rounded-xl text-xs border border-purple-300/10">
+                                  <div>
+                                    <span className="font-bold text-white block">{student.student_name}</span>
+                                    <span className="text-[10px] text-purple-300 block font-medium">{student.class_name.split(" ")[0]}</span>
+                                  </div>
+                                  <div className="flex gap-1.5 items-center">
+                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
+                                      sRole === 'Planner' ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/40' :
+                                      sRole === 'Creator' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40' :
+                                      sRole === 'Communicator' ? 'bg-pink-500/20 text-pink-300 border-pink-400/40' :
+                                      sRole === 'Coordinator' ? 'bg-amber-500/20 text-amber-300 border-amber-400/40' :
+                                      'bg-purple-500/20 text-purple-300 border-purple-400/40'
+                                    }`}>
+                                      {sRole}
+                                    </span>
+                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
+                                      sLevel === 'Sangat Baik' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40' :
+                                      sLevel === 'Perlu Bimbingan' ? 'bg-rose-500/20 text-rose-300 border-rose-400/40' :
+                                      'bg-amber-500/20 text-amber-300 border-amber-400/40'
+                                    }`}>
+                                      {sLevel}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </motion.div>
           </div>
         )}
