@@ -101,7 +101,7 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
               Selamat Datang di <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-pink-400">EduQuest</span>
             </h1>
             <p className="text-slate-300 text-lg md:text-xl font-medium leading-relaxed">
-              Platform kuis interaktif serbaguna. Jawab soal strategis dari Guru, gunakan jurus bertahan, lindungi HP karaktermu, dan temukan profil gaya belajarmu!
+              Platform kuis interaktif serbaguna. Jawab soal secara presisi, dapatkan bonus poin berbasis kecepatan, dan buktikan kemampuan terbaikmu!
             </p>
           </motion.div>
  
@@ -113,12 +113,12 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
               transition={{ delay: 0.1 }}
               className="bg-slate-900/70 border border-slate-800/80 p-5 rounded-2xl flex items-center gap-4"
             >
-              <div className="p-3 bg-rose-500/10 text-rose-400 rounded-xl text-xl shrink-0">
-                ❤️
+              <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-xl text-xl shrink-0">
+                ⏱️
               </div>
               <div>
-                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Sistem HP (Nyawa)</h3>
-                <p className="text-xs text-slate-400 mt-1">Salah menjawab mengurangi -25 HP. Jaga agar tidak mencapai 0!</p>
+                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Timer 25 Detik</h3>
+                <p className="text-xs text-slate-400 mt-1">Setiap soal berdurasi 25 detik. Berpikir cepat dan tentukan jawaban terbaikmu!</p>
               </div>
             </motion.div>
  
@@ -128,12 +128,12 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
               transition={{ delay: 0.2 }}
               className="bg-slate-900/70 border border-slate-800/80 p-5 rounded-2xl flex items-center gap-4"
             >
-              <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl text-xl shrink-0">
+              <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl text-xl shrink-0">
                 ⚡
               </div>
               <div>
-                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Mana (MP)</h3>
-                <p className="text-xs text-slate-400 mt-1">Jawaban benar memberi +20 Mana untuk mengeluarkan Jurus Sakti!</p>
+                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Poin Kecepatan</h3>
+                <p className="text-xs text-slate-400 mt-1">Semakin cepat menjawab dengan benar, semakin besar poin bonus yang didapat!</p>
               </div>
             </motion.div>
  
@@ -143,12 +143,12 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
               transition={{ delay: 0.3 }}
               className="bg-slate-900/70 border border-slate-800/80 p-5 rounded-2xl flex items-center gap-4"
             >
-              <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-xl text-xl shrink-0">
-                🔮
+              <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl text-xl shrink-0">
+                🎯
               </div>
               <div>
-                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Jurus Sakti</h3>
-                <p className="text-xs text-slate-400 mt-1">Gunakan "Bagi Dua" atau "Perisai Kognitif" agar kebal dari damage.</p>
+                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Rekap Otomatis</h3>
+                <p className="text-xs text-slate-400 mt-1">Hasil perolehan poin langsung terekap otomatis di panel Guru secara real-time.</p>
               </div>
             </motion.div>
  
@@ -159,11 +159,11 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
               className="bg-slate-900/70 border border-slate-800/80 p-5 rounded-2xl flex items-center gap-4"
             >
               <div className="p-3 bg-pink-500/10 text-pink-400 rounded-xl text-xl shrink-0">
-                🏅
+                🔑
               </div>
               <div>
-                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Karakter & Peran</h3>
-                <p className="text-xs text-slate-400 mt-1">Dapatkan hasil tipe personalitas & gaya kontribusimu di akhir kuis secara instan!</p>
+                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Login Kode Unik</h3>
+                <p className="text-xs text-slate-400 mt-1">Masuk kuis dengan mudah & terverifikasi hanya menggunakan Kode Unik resmi dari Guru!</p>
               </div>
             </motion.div>
           </div>

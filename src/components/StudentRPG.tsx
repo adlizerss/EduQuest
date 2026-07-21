@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Heart, Zap, Shield, Sparkles, Award, RotateCcw, ArrowRight, CheckCircle, 
-  XCircle, Trophy, BookOpen, User, Hash, School, AlertCircle
+  Sparkles, Award, RotateCcw, ArrowRight, CheckCircle, 
+  XCircle, Trophy, BookOpen, User, Hash, School, AlertCircle, Clock, Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { QuizQuestion, StudentResult, RPGState } from '../types';
+import { QuizQuestion, StudentResult } from '../types';
 import { addStudentResult } from '../db';
 import sound from '../utils/audio';
 
@@ -17,71 +17,42 @@ interface StudentRPGProps {
 }
 
 export default function StudentRPG({ studentName, attendanceNum, className, questions, onQuit }: StudentRPGProps) {
-  // RPG State
-  const [hp, setHp] = useState<number>(100);
-  const [mp, setMp] = useState<number>(0);
-  const [shieldActive, setShieldActive] = useState<boolean>(false);
+  // Gameplay State
   const [score, setScore] = useState<number>(0);
+  const [correctCount, setCorrectCount] = useState<number>(0);
   const [currentIdx, setCurrentIdx] = useState<number>(0);
-  const [timeLeft, setTimeLeft] = useState<number>(15);
+  const [timeLeft, setTimeLeft] = useState<number>(25);
   
   // Interaction State
   const [selectedAnswer, setSelectedAnswer] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
   const [isAnswered, setIsAnswered] = useState<boolean>(false);
-  const [eliminatedOptions, setEliminatedOptions] = useState<('A' | 'B' | 'C' | 'D')[]>([]);
   const [shakeScreen, setShakeScreen] = useState<boolean>(false);
   
-  // Float text for combat events (+20 Mana, -25 HP, Shield block)
+  // Floating Event Feedback Text
   const [combatEvent, setCombatEvent] = useState<{ text: string; color: string; id: number } | null>(null);
-  
-  // Track interest questionnaire answers
-  const [interestVotes, setInterestVotes] = useState<{ A: number; B: number; C: number; D: number }>({
-    A: 0, B: 0, C: 0, D: 0
-  });
 
   // Track results submission
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitSuccess, setSubmitSuccess] = useState<boolean>(false);
 
-  // Game over state
+  // Game completed state
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
 
   const currentQuestion = questions[currentIdx];
-
-  // Auto end game if HP is 0
-  useEffect(() => {
-    if (hp <= 0) {
-      triggerGameOver(false);
-    }
-  }, [hp]);
 
   const handleTimeOut = () => {
     if (isAnswered) return;
     sound.playDamage();
     setIsAnswered(true);
     setSelectedAnswer(null);
-
-    if (currentQuestion.type === 'cognitive') {
-      if (shieldActive) {
-        sound.playShield();
-        setShieldActive(false);
-        showCombatEvent("WAKTU HABIS! Perisai Menahan Damage", "text-cyan-400 font-extrabold");
-      } else {
-        setHp(prev => Math.max(0, prev - 25));
-        setShakeScreen(true);
-        showCombatEvent("WAKTU HABIS! -25 HP (Damage)", "text-rose-500 font-extrabold");
-        setTimeout(() => setShakeScreen(false), 500);
-      }
-    } else {
-      showCombatEvent("WAKTU HABIS! (Eksplorasi)", "text-amber-400 font-extrabold");
-    }
+    showCombatEvent("⏰ WAKTU HABIS! (+0 Poin)", "text-amber-400 font-extrabold");
   };
 
-  // Countdown Timer Effect (15 seconds per question)
+  // Countdown Timer Effect (25 seconds per question)
   useEffect(() => {
     if (isAnswered || isGameOver) return;
     
-    setTimeLeft(15);
+    setTimeLeft(25);
     
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -100,63 +71,15 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
   const triggerGameOver = (isSuccess: boolean) => {
     setIsGameOver(true);
     sound.playGameOver(isSuccess);
-    // Auto-save results when game ends
-    saveGameResult(isSuccess);
+    saveGameResult();
   };
 
   const showCombatEvent = (text: string, color: string) => {
     setCombatEvent({ text, color, id: Date.now() });
   };
 
-  // Use Spell: Bagi Dua (Cost: 40 MP)
-  const castBagiDua = () => {
-    if (mp < 40) {
-      sound.playDamage();
-      showCombatEvent("MANA TIDAK CUKUP!", "text-cyan-400");
-      return;
-    }
-    if (isAnswered) return;
-    if (currentQuestion.type === 'interest') {
-      showCombatEvent("SOAL MINAT - JAWABAN BEBAS!", "text-amber-400");
-      return;
-    }
-
-    sound.playSpell();
-    setMp(prev => prev - 40);
-    showCombatEvent("JURUS BAGI DUA! -40 MP", "text-pink-400");
-
-    // Logic: find 2 wrong options that are not the correct answer, and not already eliminated
-    const correctAnswer = currentQuestion.correct_answer;
-    const options: ('A' | 'B' | 'C' | 'D')[] = ['A', 'B', 'C', 'D'];
-    const wrongOptions = options.filter(opt => opt !== correctAnswer);
-    
-    // Shuffle wrong options and pick 2 to eliminate
-    const shuffledWrong = [...wrongOptions].sort(() => Math.random() - 0.5);
-    const toEliminate = shuffledWrong.slice(0, 2);
-    setEliminatedOptions(toEliminate);
-  };
-
-  // Use Spell: Perisai Kognitif (Cost: 30 MP)
-  const castPerisai = () => {
-    if (mp < 30) {
-      sound.playDamage();
-      showCombatEvent("MANA TIDAK CUKUP!", "text-cyan-400");
-      return;
-    }
-    if (shieldActive) {
-      showCombatEvent("PERISAI SUDAH AKTIF!", "text-yellow-400");
-      return;
-    }
-
-    sound.playShield();
-    setMp(prev => prev - 30);
-    setShieldActive(true);
-    showCombatEvent("PERISAI AKTIF! -30 MP", "text-emerald-400");
-  };
-
   const handleOptionClick = (opt: 'A' | 'B' | 'C' | 'D') => {
     if (isAnswered) return;
-    if (eliminatedOptions.includes(opt)) return;
 
     sound.playClick();
     setSelectedAnswer(opt);
@@ -168,37 +91,24 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
       const isCorrect = opt === currentQuestion.correct_answer;
       if (isCorrect) {
         sound.playCorrect();
-        const earnedScore = 10 + timeLeft;
+        const timeBonus = timeLeft * 10;
+        const earnedScore = 50 + timeBonus;
         setScore(prev => prev + earnedScore);
-        setMp(prev => Math.min(100, prev + 20));
-        showCombatEvent(`+${earnedScore} Skor! (Bonus Detik: +${timeLeft})`, "text-emerald-400 font-extrabold");
+        setCorrectCount(prev => prev + 1);
+        showCombatEvent(`+${earnedScore} POIN! (Bonus Waktu: ${timeLeft}s)`, "text-emerald-400 font-extrabold");
       } else {
-        // Incorrect answer
-        if (shieldActive) {
-          sound.playShield();
-          setShieldActive(false); // consume shield
-          showCombatEvent("PERISAI MENAHAN DAMAGE!", "text-cyan-400");
-        } else {
-          sound.playDamage();
-          setHp(prev => Math.max(0, prev - 25));
-          setShakeScreen(true);
-          showCombatEvent("-25 HP (Damage)", "text-rose-500");
-          setTimeout(() => setShakeScreen(false), 4000);
-        }
+        sound.playDamage();
+        setShakeScreen(true);
+        showCombatEvent("JAWABAN SALAH! (+0 Poin)", "text-rose-500 font-extrabold");
+        setTimeout(() => setShakeScreen(false), 500);
       }
     } else {
-      // Interest survey type: All answers are correct, and they map to wirausaha roles
       sound.playCorrect();
-      const earnedScore = 10 + timeLeft;
+      const timeBonus = timeLeft * 10;
+      const earnedScore = 50 + timeBonus;
       setScore(prev => prev + earnedScore);
-      setMp(prev => Math.min(100, prev + 20));
-      showCombatEvent(`+${earnedScore} Skor! (Eksplorasi)`, "text-purple-400 font-extrabold");
-      
-      // Track the selected choice for final role calculation
-      setInterestVotes(prev => ({
-        ...prev,
-        [opt]: prev[opt] + 1
-      }));
+      setCorrectCount(prev => prev + 1);
+      showCombatEvent(`+${earnedScore} POIN! (Eksplorasi Minat)`, "text-purple-400 font-extrabold");
     }
   };
 
@@ -206,84 +116,23 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
     sound.playClick();
     if (currentIdx < questions.length - 1) {
       setCurrentIdx(prev => prev + 1);
-      // Reset interaction states
       setSelectedAnswer(null);
       setIsAnswered(false);
-      setEliminatedOptions([]);
     } else {
-      // Last question finished
       triggerGameOver(true);
     }
   };
 
-  // Determine Persona Role
-  const calculatePersona = () => {
-    const { A, B, C, D } = interestVotes;
-    const maxVal = Math.max(A, B, C, D);
-    
-    if (maxVal === 0) {
-      // Fallback if no interest questions were answered
-      return {
-        role: "Inovator Muda Serba Bisa (Generalist)",
-        icon: "✨",
-        color: "from-amber-400 to-orange-500",
-        description: "Anda memiliki profil seimbang dalam berbagai aspek pengerjaan tim! Anda adalah pembelajar cepat yang berpotensi memimpin inovasi secara fleksibel.",
-        strengths: "Beradaptasi dengan cepat, berwawasan luas, kolaboratif.",
-        tip: "Fokuslah mendalami satu keterampilan spesifik yang paling Anda sukai untuk mengasah keahlian utama Anda."
-      };
-    }
-
-    if (maxVal === A) {
-      return {
-        role: "Perencana Strategis (Strategic Planner)",
-        icon: "📝",
-        color: "from-indigo-500 to-cyan-500",
-        description: "Anda sangat kuat dalam menyusun perencanaan taktis, menganalisis peluang, merinci struktur anggaran atau data, dan merancang visi jangka panjang.",
-        strengths: "Berpikir logis, jago perencanaan, visioner, pandai membaca peluang.",
-        tip: "Latihlah untuk mengeksekusi ide-ide Anda ke dalam bentuk nyata, bukan hanya di atas konsep rancangan!"
-      };
-    } else if (maxVal === B) {
-      return {
-        role: "Kreator & Pelaksana (Creator / Maker)",
-        icon: "🛠️",
-        color: "from-emerald-500 to-teal-500",
-        description: "Anda menyukai pengerjaan karya nyata, eksperimen teknis, merancang keluaran berkualitas tinggi, dan tekun dalam mengutamakan detail fungsional.",
-        strengths: "Fokus pada detail karya, memiliki keterampilan teknis yang tinggi, tekun dalam proses pengerjaan.",
-        tip: "Ingatlah untuk belajar membagikan ide dan mengomunikasikan karya hebat Anda agar orang lain memahami nilainya!"
-      };
-    } else if (maxVal === C) {
-      return {
-        role: "Komunikator & Presenter (Communicator Specialist)",
-        icon: "📢",
-        color: "from-pink-500 to-rose-500",
-        description: "Anda memiliki kemampuan komunikasi yang tajam. Anda ahli dalam membuat narasi kreatif, merancang presentasi memikat, dan meyakinkan tim atau publik.",
-        strengths: "Kemampuan komunikasi persuasif, melek cara presentasi modern, sangat memahami audiens.",
-        tip: "Perdalam juga pemahaman teknis atau data dasar agar presentasi Anda didukung landasan argumen yang kuat!"
-      };
-    } else {
-      return {
-        role: "Koordinator Tim (Operations Coordinator)",
-        icon: "👑",
-        color: "from-amber-500 to-yellow-500",
-        description: "Anda adalah pemimpin alami. Anda unggul dalam mengatur alur kerja kelompok, mendelegasikan peran secara adil, serta memastikan kualitas hasil berjalan lancar.",
-        strengths: "Kepemimpinan tegas, manajemen tim yang rapi, disiplin, berorientasi pada kualitas bersama.",
-        tip: "Berikan ruang bagi rekan tim Anda untuk berkreasi secara fleksibel agar iklim kerja kelompok tetap menyenangkan!"
-      };
-    }
-  };
-
-  const persona = calculatePersona();
-
-  // Save game result to Supabase / Local Storage
-  const saveGameResult = async (isSuccess: boolean) => {
+  // Save game result to database / localStorage
+  const saveGameResult = async () => {
     setIsSubmitting(true);
     
     const finalResult: StudentResult = {
       student_name: studentName,
-      class_name: `${className} (${attendanceNum})`,
+      class_name: `${className} (Absen ${attendanceNum})`,
       score: score,
-      remaining_hp: hp,
-      role: persona.role,
+      remaining_hp: 100,
+      role: "Siswa Active Learner",
       submit_at: new Date().toISOString()
     };
 
@@ -297,9 +146,8 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
     }
   };
 
-  // Rendering Game Over Screen
+  // Rendering Game Completion Screen
   if (isGameOver) {
-    const isVictory = hp > 0;
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6 relative font-sans overflow-y-auto">
         <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl -z-10" />
@@ -312,36 +160,27 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
         >
           {/* Badge Status */}
           <div className="mx-auto mb-6 inline-block">
-            {isVictory ? (
-              <div className="w-24 h-24 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full flex items-center justify-center text-5xl shadow-lg neon-glow-emerald animate-bounce">
-                🏆
-              </div>
-            ) : (
-              <div className="w-24 h-24 bg-rose-500/10 text-rose-400 border border-rose-500/30 rounded-full flex items-center justify-center text-5xl shadow-lg neon-glow-pink">
-                💀
-              </div>
-            )}
+            <div className="w-24 h-24 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full flex items-center justify-center text-5xl shadow-lg neon-glow-emerald animate-bounce">
+              🏆
+            </div>
           </div>
 
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black font-display text-white tracking-tight leading-none uppercase">
-            {isVictory ? "MISI SELESAI!" : "GAME OVER!"}
+            KUIS SELESAI!
           </h1>
           <p className="text-slate-400 text-base md:text-lg mt-2 font-medium">
-            {isVictory 
-              ? "Hebat! Kamu berhasil menyelesaikan seluruh tantangan kuis." 
-              : "HP kamu habis! Tetap semangat belajar dan coba lagi nanti."
-            }
+            Selamat! Kamu telah menyelesaikan seluruh soal kuis EduQuest.
           </p>
 
           {/* Stats Bento Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-5 my-8">
             <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl shadow-inner">
-              <span className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">SKOR AKHIR</span>
-              <span className="text-3xl md:text-4xl font-black text-cyan-400 font-display mt-1 block">{score} Pt</span>
+              <span className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">TOTAL POIN</span>
+              <span className="text-3xl md:text-4xl font-black text-cyan-400 font-display mt-1 block">{score} Poin</span>
             </div>
             <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl shadow-inner">
-              <span className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">SISA HP</span>
-              <span className="text-3xl md:text-4xl font-black text-rose-400 font-display mt-1 block">{hp} HP</span>
+              <span className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">JAWABAN BENAR</span>
+              <span className="text-3xl md:text-4xl font-black text-emerald-400 font-display mt-1 block">{correctCount} / {questions.length}</span>
             </div>
             <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl shadow-inner">
               <span className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">NAMA SISWA</span>
@@ -353,39 +192,15 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
             </div>
           </div>
 
-          {/* Persona Card */}
-          <div className={`bg-gradient-to-r ${persona.color} p-0.5 rounded-3xl my-8 shadow-2xl`}>
-            <div className="bg-slate-950/95 rounded-[22px] p-8 text-left space-y-5">
-              <div className="flex items-center gap-4">
-                <span className="text-4xl shrink-0">{persona.icon}</span>
-                <div>
-                  <span className="text-xs font-black text-slate-400 uppercase tracking-widest block">PERSONALITAS & PERAN TIM</span>
-                  <h3 className="text-xl md:text-2xl font-black text-white mt-0.5">{persona.role}</h3>
-                </div>
-              </div>
-
-              <p className="text-slate-300 text-sm md:text-base leading-relaxed font-medium">{persona.description}</p>
-              
-              <div className="border-t border-slate-800 pt-4 space-y-3">
-                <p className="text-sm text-slate-300 font-medium">
-                  <span className="text-emerald-400 font-extrabold">Kekuatan Utama: </span> {persona.strengths}
-                </p>
-                <p className="text-sm text-slate-300 font-medium">
-                  <span className="text-amber-400 font-extrabold">Tips Sukses: </span> {persona.tip}
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* Auto submit report indicator */}
           <div className="text-sm py-3 px-5 bg-slate-950 border border-slate-800 rounded-2xl inline-flex items-center gap-2 mb-8 font-semibold shadow-inner">
             {isSubmitting ? (
               <span className="text-slate-400 animate-pulse flex items-center gap-1.5">
-                ⏳ Melaporkan rekap nilai ke server guru...
+                ⏳ Melaporkan perolehan poin ke server guru...
               </span>
             ) : submitSuccess ? (
               <span className="text-emerald-400 font-extrabold flex items-center gap-1.5">
-                ✓ Laporan nilai berhasil tersimpan di database Guru!
+                ✓ Hasil poin berhasil terekap otomatis di database Guru!
               </span>
             ) : (
               <span className="text-rose-400 font-extrabold">
@@ -394,11 +209,11 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
             )}
           </div>
 
-          {/* Action buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          {/* Action button */}
+          <div className="flex justify-center">
             <button
               onClick={() => { sound.playClick(); onQuit(); }}
-              className="bg-slate-850 hover:bg-slate-800 text-slate-200 font-black py-4 px-8 rounded-2xl text-base tracking-widest cursor-pointer transition flex items-center justify-center gap-2 shadow-lg"
+              className="bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-black py-4 px-8 rounded-2xl text-base tracking-widest cursor-pointer transition flex items-center justify-center gap-2 shadow-lg uppercase"
             >
               <RotateCcw className="w-5 h-5" /> KEMBALI KE MENU UTAMA
             </button>
@@ -415,7 +230,7 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
       <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl -z-10" />
       <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl -z-10" />
 
-      {/* Floating Combat Text Component */}
+      {/* Floating Score Event Text */}
       <AnimatePresence>
         {combatEvent && (
           <motion.div
@@ -431,7 +246,7 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
         )}
       </AnimatePresence>
 
-      {/* Top HUD Panel */}
+      {/* Top HUD Header */}
       <header className="max-w-5xl w-full mx-auto bg-slate-900/80 border border-slate-800/80 rounded-3xl p-6 flex flex-wrap gap-6 items-center justify-between mb-6 shadow-2xl">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-gradient-to-tr from-cyan-500 to-indigo-600 rounded-2xl flex items-center justify-center font-black text-white text-lg shadow-lg shadow-cyan-500/30 shrink-0">
@@ -443,51 +258,13 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
           </div>
         </div>
 
-        {/* HP, Mana, and Shield indicators */}
-        <div className="flex flex-wrap items-center gap-6">
-          
-          {/* Health Point (HP) */}
-          <div className="space-y-1.5 w-36 sm:w-48">
-            <div className="flex justify-between text-xs font-black text-slate-300 tracking-wider">
-              <span className="flex items-center gap-1">❤️ NYAWA (HP)</span>
-              <span className={hp <= 25 ? "text-rose-400 animate-pulse font-black text-sm" : "text-white font-black"}>{hp} / 100</span>
-            </div>
-            <div className="w-full bg-slate-950 h-4 border border-slate-800 rounded-full overflow-hidden p-0.5 shadow-inner">
-              <div 
-                className={`h-full rounded-full transition-all duration-300 ${
-                  hp > 50 
-                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' 
-                    : hp > 25 
-                    ? 'bg-gradient-to-r from-amber-500 to-amber-400' 
-                    : 'bg-gradient-to-r from-rose-600 to-rose-400 animate-pulse'
-                }`}
-                style={{ width: `${hp}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Mana Point (MP) */}
-          <div className="space-y-1.5 w-36 sm:w-48">
-            <div className="flex justify-between text-xs font-black text-slate-300 tracking-wider">
-              <span className="flex items-center gap-1">⚡ TENAGA (MANA)</span>
-              <span className="text-cyan-400 font-black">{mp} / 100</span>
-            </div>
-            <div className="w-full bg-slate-950 h-4 border border-slate-800 rounded-full overflow-hidden p-0.5 shadow-inner">
-              <div 
-                className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-indigo-400 transition-all duration-300"
-                style={{ width: `${mp}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Shield Status Indicator */}
-          <div className="flex items-center justify-center">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-              shieldActive 
-                ? 'bg-emerald-500/20 text-emerald-400 border-2 border-emerald-500/50 neon-glow-emerald animate-pulse' 
-                : 'bg-slate-950 text-slate-600 border border-slate-800'
-            }`}>
-              <Shield className={`w-5 h-5 ${shieldActive ? 'animate-bounce' : ''}`} />
+        {/* Total Points Display */}
+        <div className="flex items-center gap-6">
+          <div className="bg-slate-950 border border-slate-800 px-5 py-2.5 rounded-2xl flex items-center gap-3 shadow-inner">
+            <Zap className="w-6 h-6 text-amber-400 animate-bounce" />
+            <div>
+              <span className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">TOTAL POIN</span>
+              <span className="text-xl font-black text-amber-400 font-display">{score} Poin</span>
             </div>
           </div>
         </div>
@@ -516,16 +293,17 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
               </span>
             </div>
 
-            {/* Timer Countdown Display */}
+            {/* 25-Second Countdown Timer Display */}
             {!isAnswered ? (
               <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-cyan-400" />
                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-mono">⌛ WAKTU:</span>
-                <span className={`font-black font-display text-xs px-2.5 py-1 rounded-lg border transition duration-150 flex items-center gap-1 ${
-                  timeLeft > 10 
+                <span className={`font-black font-display text-sm px-3 py-1 rounded-lg border transition duration-150 flex items-center gap-1 ${
+                  timeLeft > 15 
                     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                    : timeLeft > 4 
+                    : timeLeft > 7 
                     ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse' 
-                    : 'bg-rose-500/20 text-rose-400 border-rose-500/30 text-sm font-black'
+                    : 'bg-rose-500/20 text-rose-400 border-rose-500/30 font-black'
                 }`}>
                   {timeLeft} Detik
                 </span>
@@ -539,16 +317,16 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
 
           {/* Timer Progress Bar */}
           {!isAnswered && (
-            <div className="w-full bg-slate-950 h-1.5 border border-slate-800 rounded-full overflow-hidden relative -mt-4 mb-6 shadow-inner">
+            <div className="w-full bg-slate-950 h-2 border border-slate-800 rounded-full overflow-hidden relative -mt-4 mb-6 shadow-inner">
               <div 
                 className={`h-full rounded-full transition-all duration-1000 ${
-                  timeLeft > 10 
+                  timeLeft > 15 
                     ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' 
-                    : timeLeft > 4 
+                    : timeLeft > 7 
                     ? 'bg-gradient-to-r from-amber-500 to-amber-400 animate-pulse' 
                     : 'bg-gradient-to-r from-rose-600 to-rose-400 animate-pulse'
                 }`}
-                style={{ width: `${(timeLeft / 15) * 100}%` }}
+                style={{ width: `${(timeLeft / 25) * 100}%` }}
               />
             </div>
           )}
@@ -560,7 +338,7 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
             </h1>
             {currentQuestion.type === 'interest' && (
               <p className="text-xs text-amber-400/90 font-bold italic mt-3">
-                * Kuis Eksplorasi Minat: Pilih opsi yang paling menggambarkan dirimu! (Tidak ada jawaban salah)
+                * Kuis Eksplorasi Minat: Pilih opsi yang paling menggambarkan dirimu!
               </p>
             )}
           </div>
@@ -568,7 +346,6 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
           {/* Options Grid */}
           <div className="space-y-4">
             {(['A', 'B', 'C', 'D'] as const).map((opt) => {
-              const isOptionEliminated = eliminatedOptions.includes(opt);
               const optionText = opt === 'A' ? currentQuestion.option_a :
                                  opt === 'B' ? currentQuestion.option_b :
                                  opt === 'C' ? currentQuestion.option_c :
@@ -592,7 +369,6 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
                     buttonStyle = "border-slate-950 bg-slate-950/20 text-slate-600 opacity-30";
                   }
                 } else {
-                  // Interest: option chosen glows magenta/purple, other are translucent
                   if (isSelected) {
                     buttonStyle = "border-2 border-purple-500 bg-purple-500/20 text-purple-300 font-black";
                     iconFeedback = <Sparkles className="w-5 h-5 text-purple-400 shrink-0" />;
@@ -600,17 +376,6 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
                     buttonStyle = "border-slate-950 bg-slate-950/20 text-slate-600 opacity-30";
                   }
                 }
-              }
-
-              if (isOptionEliminated) {
-                return (
-                  <div 
-                    key={opt}
-                    className="w-full border border-dashed border-slate-900/50 p-5 rounded-2xl text-left text-sm text-slate-600 line-through select-none cursor-not-allowed opacity-30"
-                  >
-                    Opsi {opt} (Dieliminasi Jurus Bagi Dua)
-                  </div>
-                );
               }
 
               return (
@@ -651,62 +416,57 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
           </div>
         </section>
 
-        {/* Right Section: Magic Spells (Jurus RPG) */}
+        {/* Right Section: Speed Scoring Rules Card */}
         <section className="col-span-1 lg:col-span-4 bg-slate-900/80 border border-slate-800 rounded-3xl p-6 flex flex-col justify-between shadow-2xl">
           <div className="space-y-5">
             <div className="pb-4 border-b border-slate-800/60">
               <h2 className="text-base font-black text-white font-display flex items-center gap-2 uppercase tracking-widest">
-                🔮 Jurus Sihir Bertahan
+                ⚡ Sistem Poin Kecepatan
               </h2>
-              <p className="text-xs text-slate-400 font-medium mt-1">Gunakan poin Mana (MP) untuk melancarkan jurus bertahan hidup.</p>
+              <p className="text-xs text-slate-400 font-medium mt-1">
+                Semakin cepat Anda menjawab dengan benar, semakin banyak poin yang didapatkan!
+              </p>
             </div>
 
-            {/* Spell 1: Bagi Dua */}
-            <div className="bg-slate-950 border border-slate-850 p-5 rounded-2xl space-y-3.5 shadow-inner">
-              <div className="flex justify-between items-start gap-2">
-                <div>
-                  <h3 className="text-sm font-extrabold text-white flex items-center gap-1.5">
-                    🪄 Jurus "Bagi Dua"
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed font-medium">
-                    Menghilangkan 2 pilihan jawaban salah pada soal kognitif aktif.
-                  </p>
-                </div>
-                <span className="bg-pink-500/10 text-pink-400 font-black px-2.5 py-1 border border-pink-500/20 rounded-lg text-xs uppercase shrink-0">
-                  40 MP
-                </span>
+            {/* Point Bonus Card */}
+            <div className="bg-slate-950 border border-slate-850 p-5 rounded-2xl space-y-3 shadow-inner font-sans">
+              <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest">Rumus Poin:</h3>
+              <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs font-mono text-slate-200">
+                Poin = 50 Base + (Sisa Detik × 10)
               </div>
-              <button
-                onClick={castBagiDua}
-                disabled={mp < 40 || isAnswered || currentQuestion.type === 'interest'}
-                className="w-full py-3 bg-gradient-to-r from-pink-500/20 to-pink-600/20 hover:from-pink-500/30 hover:to-pink-600/30 text-pink-400 hover:text-pink-300 font-black text-xs md:text-sm rounded-xl border border-pink-500/30 disabled:opacity-40 disabled:pointer-events-none transition flex items-center justify-center gap-2 cursor-pointer uppercase tracking-widest"
-              >
-                Launch "Bagi Dua"
-              </button>
+              <ul className="text-xs text-slate-400 space-y-2 font-medium">
+                <li className="flex items-center justify-between">
+                  <span>⏱️ Jawab di detik 25:</span>
+                  <span className="font-bold text-emerald-400">300 Poin</span>
+                </li>
+                <li className="flex items-center justify-between">
+                  <span>⏱️ Jawab di detik 15:</span>
+                  <span className="font-bold text-cyan-400">200 Poin</span>
+                </li>
+                <li className="flex items-center justify-between">
+                  <span>⏱️ Jawab di detik 5:</span>
+                  <span className="font-bold text-amber-400">100 Poin</span>
+                </li>
+                <li className="flex items-center justify-between">
+                  <span>❌ Salah / Waktu Habis:</span>
+                  <span className="font-bold text-rose-400">0 Poin</span>
+                </li>
+              </ul>
             </div>
 
-            {/* Spell 2: Perisai Kognitif */}
-            <div className="bg-slate-950 border border-slate-850 p-5 rounded-2xl space-y-3.5 shadow-inner">
-              <div className="flex justify-between items-start gap-2">
-                <div>
-                  <h3 className="text-sm font-extrabold text-white flex items-center gap-1.5">
-                    🛡️ "Perisai Kognitif"
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed font-medium">
-                    Melindungi HP dari pengurangan sebesar -25 jika pilihan Anda salah berikutnya.
-                  </p>
+            {/* Current Quiz Progress Stats */}
+            <div className="bg-slate-950 border border-slate-850 p-5 rounded-2xl space-y-3 shadow-inner font-sans">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Statistik Pengerjaan</h3>
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                  <span className="text-slate-500 block font-bold text-[10px]">TOTAL POIN</span>
+                  <span className="text-lg font-black text-amber-400 mt-0.5 block">{score}</span>
                 </div>
-                <span className="bg-emerald-500/10 text-emerald-400 font-black px-2.5 py-1 border border-emerald-500/20 rounded-lg text-xs uppercase shrink-0">
-                  30 MP
-                </span>
+                <div className="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                  <span className="text-slate-500 block font-bold text-[10px]">JAWABAN BENAR</span>
+                  <span className="text-lg font-black text-emerald-400 mt-0.5 block">{correctCount}</span>
+                </div>
               </div>
-              <button
-                onClick={castPerisai}
-                disabled={mp < 30 || shieldActive || isAnswered}
-                className="w-full py-3 bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 hover:from-emerald-500/30 hover:to-emerald-600/30 text-emerald-400 hover:text-emerald-300 font-black text-xs md:text-sm rounded-xl border border-emerald-500/30 disabled:opacity-40 disabled:pointer-events-none transition flex items-center justify-center gap-2 cursor-pointer uppercase tracking-widest"
-              >
-                Launch "Perisai"
-              </button>
             </div>
           </div>
 
@@ -714,7 +474,7 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
           <div className="bg-slate-950/80 border border-slate-850 p-4 rounded-2xl flex items-start gap-3 text-xs text-slate-400 leading-relaxed font-medium mt-5">
             <AlertCircle className="w-5 h-5 shrink-0 text-cyan-400 mt-0.5" />
             <span>
-              <b>Tips:</b> Kumpulkan poin Mana tambahan dengan menjawab soal kognitif secara berturut-turut!
+              <b>Tips:</b> Baca soal dengan teliti dan pilih jawaban secepat mungkin untuk memaksimalkan total poin Anda!
             </span>
           </div>
         </section>
@@ -722,7 +482,7 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
 
       {/* Footer Back trigger */}
       <footer className="max-w-5xl w-full mx-auto flex justify-between text-xs sm:text-sm text-slate-500 px-2 font-medium">
-        <span>EduQuest RPG © 2026</span>
+        <span>EduQuest © 2026</span>
         <button 
           onClick={() => { sound.playClick(); onQuit(); }}
           className="text-slate-400 hover:text-white font-extrabold transition cursor-pointer flex items-center gap-1 uppercase tracking-wider"

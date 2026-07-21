@@ -1202,11 +1202,10 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                         <thead>
                           <tr className="bg-slate-900/60 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                             <th className="py-3.5 px-5">Nama Siswa</th>
-                            <th className="py-3.5 px-4">Kelas</th>
-                            <th className="py-3.5 px-4 text-center">Skor Akhir</th>
-                            <th className="py-3.5 px-4">Sisa HP RPG</th>
-                            <th className="py-3.5 px-4">Karakter / Gaya Belajar</th>
-                            <th className="py-3.5 px-5">Waktu Selesai</th>
+                            <th className="py-3.5 px-4">Kelas & Absen</th>
+                            <th className="py-3.5 px-4 text-center">Total Poin</th>
+                            <th className="py-3.5 px-4 text-center">Status</th>
+                            <th className="py-3.5 px-5">Waktu Submit</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800/60 text-xs text-slate-300">
@@ -1219,42 +1218,18 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                                 </span>
                               </td>
                               <td className="py-3 px-4 text-center">
-                                <span className="text-sm font-extrabold text-cyan-400">{result.score}</span>
+                                <span className="text-base font-black text-amber-400 font-display">{result.score} Poin</span>
                               </td>
-                              <td className="py-3 px-4">
-                                <div className="flex items-center gap-1.5">
-                                  <div className="w-16 bg-slate-950 h-2 rounded-full overflow-hidden p-0.5 border border-slate-800">
-                                    <div 
-                                      className={`h-full rounded-full ${
-                                        result.remaining_hp > 50 
-                                          ? 'bg-emerald-500' 
-                                          : result.remaining_hp > 25 
-                                          ? 'bg-amber-500' 
-                                          : 'bg-rose-500'
-                                      }`}
-                                      style={{ width: `${result.remaining_hp}%` }}
-                                    />
-                                  </div>
-                                  <span className="font-bold text-slate-400">{result.remaining_hp} HP</span>
-                                </div>
-                              </td>
-                              <td className="py-3 px-4">
-                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                                  result.role.includes('Planner') 
-                                    ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' 
-                                    : (result.role.includes('Producer') || result.role.includes('Creator')) 
-                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                    : (result.role.includes('Marketer') || result.role.includes('Communicator'))
-                                    ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20'
-                                    : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                                }`}>
-                                  ✨ {result.role}
+                              <td className="py-3 px-4 text-center">
+                                <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                  ✓ Selesai
                                 </span>
                               </td>
-                              <td className="py-3 px-5 text-slate-500">
+                              <td className="py-3 px-5 text-slate-400 font-mono">
                                 {new Date(result.submit_at).toLocaleString('id-ID', {
                                   day: '2-digit',
                                   month: 'short',
+                                  year: 'numeric',
                                   hour: '2-digit',
                                   minute: '2-digit'
                                 })}
