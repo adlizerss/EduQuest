@@ -393,12 +393,12 @@ export default function StudentRPG({ studentName, attendanceNum, className, ques
                     whileHover={isAnswered ? {} : { scale: 1.015, translateY: -1 }}
                     whileTap={isAnswered ? {} : { scale: 0.985 }}
                     onClick={() => handleOptionClick(opt)}
-                    className={`w-full border p-4 sm:p-5 rounded-2xl text-left text-xs sm:text-base font-bold transition-all duration-150 flex items-center justify-between gap-3 sm:gap-4 ${
+                    className={`w-full border p-4 sm:p-5 rounded-2xl text-left text-base sm:text-lg md:text-xl font-extrabold transition-all duration-150 flex items-center justify-between gap-3 sm:gap-4 ${
                       isAnswered ? '' : 'cursor-pointer'
                     } ${buttonStyle}`}
                   >
-                    <span className="leading-relaxed flex items-center gap-3">
-                      <span className="w-7 h-7 rounded-xl bg-purple-950/80 border border-purple-500/30 text-purple-300 flex items-center justify-center font-black text-xs shrink-0 font-display">
+                    <span className="leading-relaxed flex items-center gap-3.5">
+                      <span className="w-9 h-9 rounded-xl bg-purple-950/80 border border-purple-500/30 text-purple-300 flex items-center justify-center font-black text-sm shrink-0 font-display shadow-inner">
                         {opt}
                       </span>
                       {optionText}

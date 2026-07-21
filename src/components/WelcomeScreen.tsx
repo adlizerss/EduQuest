@@ -193,12 +193,12 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
  
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Input Kode Unik */}
-              <div className="space-y-2">
-                <label className="block text-xs font-bold text-purple-200 uppercase tracking-widest font-sans">
+              <div className="space-y-2.5">
+                <label className="block text-sm font-black text-purple-200 uppercase tracking-widest font-sans">
                   Masukkan Kode Unik Murid
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-400" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-purple-400" />
                   <input
                     type="text"
                     value={uniqueCode}
@@ -206,8 +206,8 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
                       setUniqueCode(e.target.value);
                       setError('');
                     }}
-                    placeholder="Contoh: EQ-8F2K9L"
-                    className="w-full bg-slate-950/90 border border-purple-500/30 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30 text-lg sm:text-xl font-mono font-bold rounded-2xl pl-12 pr-4 py-3.5 sm:py-4 outline-none text-purple-300 uppercase tracking-wider transition-all placeholder:text-slate-600 shadow-inner"
+                    placeholder="EQ-8F2K9L"
+                    className="w-full bg-slate-950/90 border-2 border-purple-500/40 focus:border-purple-400 focus:ring-4 focus:ring-purple-500/20 text-2xl sm:text-3xl font-mono font-black rounded-2xl pl-14 pr-4 py-4.5 outline-none text-purple-300 uppercase tracking-widest transition-all placeholder:text-slate-700 shadow-inner"
                   />
                 </div>
               </div>
@@ -218,24 +218,24 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="bg-purple-950/70 border border-purple-400/40 p-4 rounded-2xl space-y-2.5 font-sans shadow-lg neon-glow-purple"
+                  className="bg-purple-950/80 border-2 border-purple-400/50 p-4.5 rounded-2xl space-y-3 font-sans shadow-xl neon-glow-purple"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-purple-300 uppercase tracking-widest flex items-center gap-1">
-                      <CheckCircle className="w-3.5 h-3.5 text-emerald-400" /> Identitas Terverifikasi
+                    <span className="text-xs font-black text-purple-300 uppercase tracking-widest flex items-center gap-1.5">
+                      <CheckCircle className="w-4 h-4 text-emerald-400" /> Identitas Terverifikasi
                     </span>
-                    <span className="text-[10px] bg-purple-500/30 text-purple-200 font-bold px-2.5 py-0.5 rounded-full font-mono border border-purple-400/30">
+                    <span className="text-xs bg-purple-500/30 text-purple-200 font-black px-3 py-1 rounded-full font-mono border border-purple-400/40">
                       {foundStudent.nis}
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Nama Lengkap</span>
-                      <span className="font-bold text-white text-sm truncate block">{foundStudent.student_name}</span>
+                      <span className="text-slate-400 block text-xs uppercase font-extrabold">Nama Lengkap</span>
+                      <span className="font-black text-white text-base truncate block">{foundStudent.student_name}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Kelas (Absen)</span>
-                      <span className="font-bold text-purple-300 text-sm truncate block">{foundStudent.class_name} ({foundStudent.attendance_num})</span>
+                      <span className="text-slate-400 block text-xs uppercase font-extrabold">Kelas (Absen)</span>
+                      <span className="font-black text-purple-300 text-base truncate block">{foundStudent.class_name} ({foundStudent.attendance_num})</span>
                     </div>
                   </div>
                 </motion.div>
