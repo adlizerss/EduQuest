@@ -77,6 +77,27 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
   const [groupTargetClass, setGroupTargetClass] = useState<string>('All');
   const [generatedGroups, setGeneratedGroups] = useState<{ name: string; students: StudentResult[] }[]>([]);
 
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+  } | null>(null);
+
+  const showConfirm = (title: string, message: string, onConfirm: () => void | Promise<void>) => {
+    sound.playClick();
+    setConfirmConfig({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: async () => {
+        sound.playSpell();
+        await onConfirm();
+        setConfirmConfig(null);
+      }
+    });
+  };
+
   const [importLoading, setImportLoading] = useState(false);
   const [importSuccessCount, setImportSuccessCount] = useState<number | null>(null);
   const [importError, setImportError] = useState<string>('');
@@ -164,11 +185,14 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
   };
 
   const handleDeleteClass = async (targetClass: string) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus kelas "${targetClass}"?`)) {
-      await deleteClassFromDb(targetClass);
-      await loadClassesData();
-      sound.playDamage();
-    }
+    showConfirm(
+      "Hapus Kelas?",
+      `Apakah Anda yakin ingin menghapus kelas "${targetClass}"? Seluruh data murid di kelas ini akan kehilangan kelas mereka.`,
+      async () => {
+        await deleteClassFromDb(targetClass);
+        await loadClassesData();
+      }
+    );
   };
 
   const handleGenerateGroups = () => {
@@ -565,13 +589,16 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
   };
 
   const handleDeleteQuestion = async (id: string | number) => {
-    if (confirm('Apakah Anda yakin ingin menghapus soal ini?')) {
-      const success = await deleteQuiz(id);
-      if (success) {
-        sound.playDamage();
-        onRefreshQuizzes();
+    showConfirm(
+      "Hapus Soal?",
+      "Apakah Anda yakin ingin menghapus soal kuis ini dari database?",
+      async () => {
+        const success = await deleteQuiz(id);
+        if (success) {
+          onRefreshQuizzes();
+        }
       }
-    }
+    );
   };
 
   const handleSelectQuizToggle = (id: string | number) => {
@@ -602,31 +629,36 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
   };
 
   const handleBulkDelete = async () => {
-    if (confirm(`Apakah Anda yakin ingin menghapus ${selectedQuizzes.size} soal terpilih?`)) {
-      sound.playClick();
-      let successCount = 0;
-      for (const id of selectedQuizzes) {
-        const success = await deleteQuiz(id);
-        if (success) successCount++;
+    showConfirm(
+      "Hapus Soal Terpilih?",
+      `Apakah Anda yakin ingin menghapus ${selectedQuizzes.size} soal terpilih secara permanen?`,
+      async () => {
+        let successCount = 0;
+        for (const id of selectedQuizzes) {
+          const success = await deleteQuiz(id);
+          if (success) successCount++;
+        }
+        if (successCount > 0) {
+          setSelectedQuizzes(new Set());
+          onRefreshQuizzes();
+          alert(`Berhasil menghapus ${successCount} soal kuis.`);
+        }
       }
-      if (successCount > 0) {
-        sound.playDamage();
-        setSelectedQuizzes(new Set());
-        onRefreshQuizzes();
-        alert(`Berhasil menghapus ${successCount} soal kuis.`);
-      }
-    }
+    );
   };
 
   const handleResetToDefault = async () => {
-    if (confirm('Apakah Anda yakin ingin mengatur ulang database ke data bawaan kuis PKWU? Semua hasil rekap siswa dan soal saat ini akan dihapus.')) {
-      await resetDatabaseToDefault();
-      sound.playCorrect();
-      onRefreshQuizzes();
-      loadTrackerResults();
-      loadStudents();
-      alert('Database berhasil diatur ulang ke kuis bawaan PKWU!');
-    }
+    showConfirm(
+      "Atur Ulang Database?",
+      "Apakah Anda yakin ingin mengatur ulang database ke data bawaan kuis PKWU? Semua hasil rekap siswa dan soal saat ini akan dihapus permanen.",
+      async () => {
+        await resetDatabaseToDefault();
+        onRefreshQuizzes();
+        loadTrackerResults();
+        loadStudents();
+        alert('Database berhasil diatur ulang ke kuis bawaan PKWU!');
+      }
+    );
   };
 
   const handleImportStudentsFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -753,13 +785,16 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
   };
 
   const handleDeleteStudent = async (id: string | number) => {
-    if (confirm('Apakah Anda yakin ingin menghapus akun murid ini?')) {
-      const success = await deleteStudent(id);
-      if (success) {
-        sound.playDamage();
-        loadStudents();
+    showConfirm(
+      "Hapus Akun Murid?",
+      "Apakah Anda yakin ingin menghapus akun murid ini? Murid tersebut tidak akan bisa masuk ke aplikasi lagi.",
+      async () => {
+        const success = await deleteStudent(id);
+        if (success) {
+          loadStudents();
+        }
       }
-    }
+    );
   };
 
   const handleAddManualStudent = async (e: React.FormEvent) => {
@@ -846,20 +881,22 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
   };
 
   const handleBulkDeleteStudents = async () => {
-    if (confirm(`Apakah Anda yakin ingin menghapus ${selectedStudents.size} akun murid terpilih?`)) {
-      sound.playClick();
-      let successCount = 0;
-      for (const id of selectedStudents) {
-        const success = await deleteStudent(id);
-        if (success) successCount++;
+    showConfirm(
+      "Hapus Murid Terpilih?",
+      `Apakah Anda yakin ingin menghapus ${selectedStudents.size} akun murid terpilih secara permanen?`,
+      async () => {
+        let successCount = 0;
+        for (const id of selectedStudents) {
+          const success = await deleteStudent(id);
+          if (success) successCount++;
+        }
+        if (successCount > 0) {
+          setSelectedStudents(new Set());
+          loadStudents();
+          alert(`Berhasil menghapus ${successCount} akun murid.`);
+        }
       }
-      if (successCount > 0) {
-        sound.playDamage();
-        setSelectedStudents(new Set());
-        loadStudents();
-        alert(`Berhasil menghapus ${successCount} akun murid.`);
-      }
-    }
+    );
   };
 
   // Filter student results
@@ -898,21 +935,24 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
 
   const handleDeleteCategory = async (categoryToDelete: string) => {
     const categoryQuizzes = allQuizzes.filter(q => (q.category || 'Umum') === categoryToDelete);
-    if (confirm(`Apakah Anda yakin ingin menghapus folder paket "${categoryToDelete}" beserta seluruh ${categoryQuizzes.length} soal di dalamnya?`)) {
-      sound.playDamage();
-      let deleteCount = 0;
-      for (const q of categoryQuizzes) {
-        if (q.id) {
-          const success = await deleteQuiz(q.id);
-          if (success) deleteCount++;
+    showConfirm(
+      "Hapus Folder Kuis?",
+      `Apakah Anda yakin ingin menghapus folder paket "${categoryToDelete}" beserta seluruh ${categoryQuizzes.length} soal di dalamnya secara permanen?`,
+      async () => {
+        let deleteCount = 0;
+        for (const q of categoryQuizzes) {
+          if (q.id) {
+            const success = await deleteQuiz(q.id);
+            if (success) deleteCount++;
+          }
         }
+        const updatedPkgs = customPackages.filter(p => p !== categoryToDelete);
+        setCustomPackages(updatedPkgs);
+        localStorage.setItem('eduquest_custom_packages', JSON.stringify(updatedPkgs));
+        onRefreshQuizzes();
+        onRefreshAssignments();
       }
-      const updatedPkgs = customPackages.filter(p => p !== categoryToDelete);
-      setCustomPackages(updatedPkgs);
-      localStorage.setItem('eduquest_custom_packages', JSON.stringify(updatedPkgs));
-      onRefreshQuizzes();
-      onRefreshAssignments();
-    }
+    );
   };
 
   const sqlSchema = `-- SKEMA LENGKAP 5 TABEL SUPABASE UNTUK EDUQUEST
@@ -1264,11 +1304,16 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
             <ArrowLeft className="w-4 h-4" /> Kembali
           </button>
           <button 
-            onClick={async () => { 
-              sound.playClick(); 
-              await signOutTeacher();
-              setIsAuthenticated(false);
-              onBack(); 
+            onClick={() => { 
+              showConfirm(
+                "Keluar dari Sesi?",
+                "Apakah Anda yakin ingin keluar (Log Out) dari dashboard admin?",
+                async () => {
+                  await signOutTeacher();
+                  setIsAuthenticated(false);
+                  onBack();
+                }
+              );
             }}
             className="w-full bg-rose-950/80 hover:bg-rose-900 text-rose-100 border border-rose-500/35 py-2.5 rounded-2xl text-xs font-black flex items-center justify-center gap-2 transition cursor-pointer shadow-md"
           >
@@ -1398,11 +1443,15 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                       </button>
                       {results.length > 0 && (
                         <button 
-                          onClick={async () => {
-                            if (confirm("Hapus SEMUA rekap nilai?")) {
-                              await deleteAllStudentResults();
-                              loadTrackerResults();
-                            }
+                          onClick={() => {
+                            showConfirm(
+                              "Hapus Semua Nilai?",
+                              "Apakah Anda yakin ingin menghapus SELURUH data rekap nilai siswa secara permanen? Tindakan ini tidak dapat dibatalkan.",
+                              async () => {
+                                await deleteAllStudentResults();
+                                loadTrackerResults();
+                              }
+                            );
                           }}
                           className="bg-rose-900/80 text-rose-100 hover:bg-rose-800 border border-rose-400/50 p-2 px-3 rounded-xl text-xs font-black transition cursor-pointer"
                         >
@@ -1462,11 +1511,15 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                                 <td className="py-3 px-5 font-mono text-purple-200">{new Date(result.submit_at).toLocaleDateString()}</td>
                                 <td className="py-3 px-4 text-center">
                                   <button
-                                    onClick={async () => {
-                                      if (confirm(`Hapus skor ${result.student_name}?`)) {
-                                        await deleteStudentResult(result.id);
-                                        loadTrackerResults();
-                                      }
+                                    onClick={() => {
+                                      showConfirm(
+                                        "Hapus Skor Murid?",
+                                        `Apakah Anda yakin ingin menghapus skor milik ${result.student_name} secara permanen?`,
+                                        async () => {
+                                          await deleteStudentResult(result.id);
+                                          loadTrackerResults();
+                                        }
+                                      );
                                     }}
                                     className="text-rose-300 hover:text-white"
                                   >
@@ -2244,6 +2297,44 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                   </div>
                 </div>
               )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL 4: CUSTOM FLUID CONFIRMATION POPUP */}
+      <AnimatePresence>
+        {confirmConfig && confirmConfig.isOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 text-white font-sans">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} 
+              animate={{ scale: 1, opacity: 1, y: 0 }} 
+              exit={{ scale: 0.9, opacity: 0, y: 20 }} 
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="bg-gradient-to-br from-purple-900 via-violet-950 to-slate-950 border-2 border-rose-500/50 rounded-3xl p-6 w-full max-w-sm relative text-center shadow-[0_10px_50px_rgba(244,63,94,0.3)]"
+            >
+              <div className="w-14 h-14 bg-rose-500/20 text-rose-400 border-2 border-rose-500/40 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4 animate-pulse">
+                ⚠️
+              </div>
+              <h3 className="text-md font-black text-white uppercase tracking-wider mb-2 font-display">{confirmConfig.title}</h3>
+              <p className="text-xs text-purple-200 mb-6 leading-relaxed font-medium">{confirmConfig.message}</p>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <button 
+                  onClick={() => { sound.playClick(); setConfirmConfig(null); }}
+                  className="bg-purple-950/80 hover:bg-purple-900 border border-purple-300/30 text-purple-200 text-xs py-2.5 rounded-xl font-bold uppercase transition cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button 
+                  onClick={async () => {
+                    await confirmConfig.onConfirm();
+                  }}
+                  className="bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 text-white text-xs py-2.5 rounded-xl font-black uppercase transition cursor-pointer shadow-md"
+                >
+                  Ya, Lanjutkan
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
