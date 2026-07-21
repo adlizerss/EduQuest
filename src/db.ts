@@ -743,10 +743,13 @@ export async function updateCategoryName(oldName: string, newName: string): Prom
 }
 
 export async function resetDatabaseToDefault() {
-  localStorage.setItem('eduquest_quizzes', JSON.stringify(SEED_QUESTIONS));
+  localStorage.setItem('eduquest_quizzes', JSON.stringify([]));
   localStorage.setItem('eduquest_student_results', JSON.stringify([]));
+  localStorage.setItem('eduquest_students', JSON.stringify([]));
   localStorage.setItem('eduquest_class_assignments', JSON.stringify([]));
-  localStorage.setItem('eduquest_class_list', JSON.stringify(DEFAULT_CLASSES));
+  localStorage.setItem('eduquest_class_list', JSON.stringify([]));
+  localStorage.setItem('eduquest_custom_packages', JSON.stringify([]));
+  
   const supabase = getSupabaseClient();
   if (supabase) {
     try {
@@ -770,8 +773,10 @@ export async function resetDatabaseToDefault() {
         await supabase.from('class_assignments').delete().in('id', caData.map(d => d.id));
       }
 
-      await supabase.from('quizzes').insert(SEED_QUESTIONS);
-      await supabase.from('classes').insert(DEFAULT_CLASSES.map(c => ({ class_name: c })));
+      const { data: sData } = await supabase.from('students').select('id');
+      if (sData && sData.length > 0) {
+        await supabase.from('students').delete().in('id', sData.map(d => d.id));
+      }
     } catch (e) {
       console.warn("Gagal mereset database Supabase:", e);
       throw e;

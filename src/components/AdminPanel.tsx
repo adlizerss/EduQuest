@@ -649,14 +649,15 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
 
   const handleResetToDefault = async () => {
     showConfirm(
-      "Atur Ulang Database?",
-      "Apakah Anda yakin ingin mengatur ulang database ke data bawaan kuis PKWU? Semua hasil rekap siswa dan soal saat ini akan dihapus permanen.",
+      "Kosongkan Seluruh Database?",
+      "Apakah Anda yakin ingin menghapus seluruh data secara permanen? Semua soal kuis, rekap nilai siswa, daftar murid, kelas, dan folder kuis akan dikosongkan.",
       async () => {
         await resetDatabaseToDefault();
+        setCustomPackages([]);
         onRefreshQuizzes();
         loadTrackerResults();
         loadStudents();
-        alert('Database berhasil diatur ulang ke kuis bawaan PKWU!');
+        alert('Database berhasil dikosongkan sepenuhnya!');
       }
     );
   };
