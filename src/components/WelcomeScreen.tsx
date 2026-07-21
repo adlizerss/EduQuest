@@ -72,6 +72,187 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
     onStartGame(student_name, attendance_num, class_name, targetCategory);
   };
 
+  const loginCardElement = (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5, delay: 0.2 }}
+      className="glass-panel-purple border border-purple-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl relative neon-glow-purple overflow-hidden"
+    >
+      {/* Top Card Gradient Bar */}
+      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500" />
+
+      <div className="flex justify-between items-center mb-6 pt-1">
+        <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight font-display flex items-center gap-2">
+          <Zap className="w-5 h-5 text-purple-400" /> Mulai Kuis Murid
+        </h2>
+        <span className="text-[11px] bg-purple-950/80 border border-purple-500/40 px-3 py-1 rounded-full text-purple-300 font-mono font-bold">
+          {getQuestionCountForCategory(selectedCategory)} SOAL
+        </span>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Input Kode Unik */}
+        <div className="space-y-2.5">
+          <label className="block text-sm font-black text-purple-200 uppercase tracking-widest font-sans">
+            Masukkan Kode Unik Murid
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-purple-400" />
+            <input
+              type="text"
+              value={uniqueCode}
+              onChange={(e) => {
+                setUniqueCode(e.target.value);
+                setError('');
+              }}
+              placeholder="EQ-8F2K9L"
+              className="w-full bg-slate-950/90 border-2 border-purple-500/40 focus:border-purple-400 focus:ring-4 focus:ring-purple-500/20 text-2xl sm:text-3xl font-mono font-black rounded-2xl pl-14 pr-4 py-4.5 outline-none text-purple-300 uppercase tracking-widest transition-all placeholder:text-slate-700 shadow-inner"
+            />
+          </div>
+        </div>
+
+        {/* Dynamic Student Info Verification Badge */}
+        {foundStudent && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-purple-950/80 border-2 border-purple-400/50 p-4.5 rounded-2xl space-y-3 font-sans shadow-xl neon-glow-purple"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-purple-300 uppercase tracking-widest flex items-center gap-1.5">
+                <CheckCircle className="w-4 h-4 text-emerald-400" /> Identitas Terverifikasi
+              </span>
+              <span className="text-xs bg-purple-500/30 text-purple-200 font-black px-3 py-1 rounded-full font-mono border border-purple-400/40">
+                {foundStudent.nis}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <span className="text-slate-400 block text-xs uppercase font-extrabold">Nama Lengkap</span>
+                <span className="font-black text-white text-base truncate block">{foundStudent.student_name}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-xs uppercase font-extrabold">Kelas (Absen)</span>
+                <span className="font-black text-purple-300 text-base truncate block">{foundStudent.class_name} ({foundStudent.attendance_num})</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* CBT Assignment Status or Category Selector */}
+        {quizCount > 0 && (() => {
+          const targetClassName = foundStudent ? foundStudent.class_name : null;
+          const hasAnyAssignments = assignments && assignments.length > 0;
+
+          if (!foundStudent) {
+            return (
+              <div className="bg-slate-950/70 border border-purple-500/20 p-4 rounded-2xl text-center text-xs text-slate-400 font-medium">
+                🔑 Silakan masukkan <span className="text-purple-300 font-bold">Kode Unik</span> dari Guru untuk masuk kuis.
+              </div>
+            );
+          }
+
+          if (hasAnyAssignments && targetClassName) {
+            const activeAssignment = assignments.find(a => a.class_name.toLowerCase() === targetClassName.toLowerCase());
+            if (activeAssignment) {
+              return (
+                <div className="bg-purple-900/40 border border-purple-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-inner">
+                  <FolderOpen className="w-5 h-5 text-purple-300 shrink-0 animate-pulse" />
+                  <div>
+                    <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest block font-sans">
+                      Paket Kuis Aktif (CBT Mode)
+                    </span>
+                    <span className="text-sm font-extrabold text-white font-sans mt-0.5 block">
+                      📁 {activeAssignment.category} ({getQuestionCountForCategory(activeAssignment.category)} Soal)
+                    </span>
+                  </div>
+                </div>
+              );
+            } else {
+              return (
+                <div className="bg-rose-500/10 border border-rose-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-inner">
+                  <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+                  <div>
+                    <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest block font-sans">
+                      Status Ujian Kelas
+                    </span>
+                    <span className="text-xs font-bold text-rose-300 font-sans mt-0.5 block">
+                      🔴 Belum ada ujian aktif diposting untuk kelas {targetClassName}
+                    </span>
+                  </div>
+                </div>
+              );
+            }
+          } else {
+            return (
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-purple-200 uppercase tracking-widest font-sans">
+                  Pilih Paket / Folder Soal
+                </label>
+                <div className="relative">
+                  <FolderOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-400" />
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full bg-slate-950/90 border border-purple-500/30 focus:border-purple-400 text-base rounded-2xl pl-12 pr-4 py-3.5 outline-none text-purple-300 font-bold transition-all cursor-pointer appearance-none"
+                  >
+                    <option value="Semua" className="bg-slate-950 text-white">📦 Semua Paket ({quizzes.length} Soal)</option>
+                    {categories.map(cat => (
+                      <option key={cat} value={cat} className="bg-slate-950 text-white">
+                        📁 {cat} ({getQuestionCountForCategory(cat)} Soal)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            );
+          }
+        })()}
+
+        {/* Error messages */}
+        {error && (
+          <div className="text-xs sm:text-sm bg-rose-500/15 border border-rose-500/30 text-rose-300 p-4 rounded-2xl flex items-start gap-2.5 leading-relaxed font-semibold">
+            <AlertTriangle className="w-5 h-5 shrink-0 text-rose-400" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {quizCount === 0 && (
+          <div className="text-xs sm:text-sm bg-amber-500/15 border border-amber-500/30 text-amber-300 p-4 rounded-2xl flex items-start gap-2.5 leading-relaxed font-semibold">
+            <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400" />
+            <span>Soal kuis masih kosong! Minta Guru untuk menambahkan soal kuis di Panel Admin.</span>
+          </div>
+        )}
+
+        {/* Fluid Animated Submit Button matching reference theme */}
+        <motion.button
+          type="submit"
+          disabled={quizCount === 0 || !foundStudent}
+          whileHover={{ scale: 1.02, boxShadow: "0px 10px 30px rgba(147, 51, 234, 0.4)" }}
+          whileTap={{ scale: 0.97 }}
+          className="w-full bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-40 disabled:pointer-events-none text-white font-black py-4 px-4 rounded-2xl shadow-xl transition-all duration-150 flex items-center justify-center gap-2.5 cursor-pointer mt-4 text-base uppercase tracking-widest font-display"
+        >
+          <Play className="w-5 h-5 fill-white" /> Mulai Kuis Sekarang
+        </motion.button>
+      </form>
+
+      {/* Quick Link to Teacher Admin */}
+      <div className="mt-6 pt-5 border-t border-purple-500/20 flex items-center justify-between text-xs text-slate-400 font-medium">
+        <span>Khusus Pendidik:</span>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => { sound.playClick(); onGoToAdmin(); }}
+          className="text-purple-300 hover:text-purple-200 font-extrabold flex items-center gap-1.5 transition cursor-pointer text-sm"
+        >
+          <Lock className="w-4 h-4 text-purple-400" /> Panel Guru
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+
   return (
     <div className="min-h-screen bg-[#0b0518] text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden font-sans select-none">
       
@@ -83,7 +264,7 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
       <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center my-auto py-6">
         
         {/* Left Side: Electric Purple Hero Banner & Features */}
-        <div className="lg:col-span-7 space-y-6 sm:space-y-8 order-2 lg:order-1">
+        <div className="lg:col-span-7 space-y-6 sm:space-y-8">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -103,6 +284,11 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
             </p>
           </motion.div>
  
+          {/* Mobile Login Card: Positioned right under Welcome text on mobile screens */}
+          <div className="block lg:hidden w-full my-6">
+            {loginCardElement}
+          </div>
+
           {/* Gamification Features list with fluid hover cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
             <motion.div 
@@ -171,186 +357,9 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
           </div>
         </div>
  
-        {/* Right Side: Fluid Student Login Card */}
-        <div className="lg:col-span-5 w-full order-1 lg:order-2">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="glass-panel-purple border border-purple-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl relative neon-glow-purple overflow-hidden"
-          >
-            {/* Top Card Gradient Bar */}
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500" />
-
-            <div className="flex justify-between items-center mb-6 pt-1">
-              <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight font-display flex items-center gap-2">
-                <Zap className="w-5 h-5 text-purple-400" /> Mulai Kuis Murid
-              </h2>
-              <span className="text-[11px] bg-purple-950/80 border border-purple-500/40 px-3 py-1 rounded-full text-purple-300 font-mono font-bold">
-                {getQuestionCountForCategory(selectedCategory)} SOAL
-              </span>
-            </div>
- 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Input Kode Unik */}
-              <div className="space-y-2.5">
-                <label className="block text-sm font-black text-purple-200 uppercase tracking-widest font-sans">
-                  Masukkan Kode Unik Murid
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-purple-400" />
-                  <input
-                    type="text"
-                    value={uniqueCode}
-                    onChange={(e) => {
-                      setUniqueCode(e.target.value);
-                      setError('');
-                    }}
-                    placeholder="EQ-8F2K9L"
-                    className="w-full bg-slate-950/90 border-2 border-purple-500/40 focus:border-purple-400 focus:ring-4 focus:ring-purple-500/20 text-2xl sm:text-3xl font-mono font-black rounded-2xl pl-14 pr-4 py-4.5 outline-none text-purple-300 uppercase tracking-widest transition-all placeholder:text-slate-700 shadow-inner"
-                  />
-                </div>
-              </div>
-
-              {/* Dynamic Student Info Verification Badge */}
-              {foundStudent && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-purple-950/80 border-2 border-purple-400/50 p-4.5 rounded-2xl space-y-3 font-sans shadow-xl neon-glow-purple"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-purple-300 uppercase tracking-widest flex items-center gap-1.5">
-                      <CheckCircle className="w-4 h-4 text-emerald-400" /> Identitas Terverifikasi
-                    </span>
-                    <span className="text-xs bg-purple-500/30 text-purple-200 font-black px-3 py-1 rounded-full font-mono border border-purple-400/40">
-                      {foundStudent.nis}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-slate-400 block text-xs uppercase font-extrabold">Nama Lengkap</span>
-                      <span className="font-black text-white text-base truncate block">{foundStudent.student_name}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block text-xs uppercase font-extrabold">Kelas (Absen)</span>
-                      <span className="font-black text-purple-300 text-base truncate block">{foundStudent.class_name} ({foundStudent.attendance_num})</span>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* CBT Assignment Status or Category Selector */}
-              {quizCount > 0 && (() => {
-                const targetClassName = foundStudent ? foundStudent.class_name : null;
-                const hasAnyAssignments = assignments && assignments.length > 0;
-
-                if (!foundStudent) {
-                  return (
-                    <div className="bg-slate-950/70 border border-purple-500/20 p-4 rounded-2xl text-center text-xs text-slate-400 font-medium">
-                      🔑 Silakan masukkan <span className="text-purple-300 font-bold">Kode Unik</span> dari Guru untuk masuk kuis.
-                    </div>
-                  );
-                }
-
-                if (hasAnyAssignments && targetClassName) {
-                  const activeAssignment = assignments.find(a => a.class_name.toLowerCase() === targetClassName.toLowerCase());
-                  if (activeAssignment) {
-                    return (
-                      <div className="bg-purple-900/40 border border-purple-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-inner">
-                        <FolderOpen className="w-5 h-5 text-purple-300 shrink-0 animate-pulse" />
-                        <div>
-                          <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest block font-sans">
-                            Paket Kuis Aktif (CBT Mode)
-                          </span>
-                          <span className="text-sm font-extrabold text-white font-sans mt-0.5 block">
-                            📁 {activeAssignment.category} ({getQuestionCountForCategory(activeAssignment.category)} Soal)
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <div className="bg-rose-500/10 border border-rose-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-inner">
-                        <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
-                        <div>
-                          <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest block font-sans">
-                            Status Ujian Kelas
-                          </span>
-                          <span className="text-xs font-bold text-rose-300 font-sans mt-0.5 block">
-                            🔴 Belum ada ujian aktif diposting untuk kelas {targetClassName}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  }
-                } else {
-                  return (
-                    <div className="space-y-2">
-                      <label className="block text-xs font-bold text-purple-200 uppercase tracking-widest font-sans">
-                        Pilih Paket / Folder Soal
-                      </label>
-                      <div className="relative">
-                        <FolderOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-400" />
-                        <select
-                          value={selectedCategory}
-                          onChange={(e) => setSelectedCategory(e.target.value)}
-                          className="w-full bg-slate-950/90 border border-purple-500/30 focus:border-purple-400 text-base rounded-2xl pl-12 pr-4 py-3.5 outline-none text-purple-300 font-bold transition-all cursor-pointer appearance-none"
-                        >
-                          <option value="Semua" className="bg-slate-950 text-white">📦 Semua Paket ({quizzes.length} Soal)</option>
-                          {categories.map(cat => (
-                            <option key={cat} value={cat} className="bg-slate-950 text-white">
-                              📁 {cat} ({getQuestionCountForCategory(cat)} Soal)
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  );
-                }
-              })()}
-
-              {/* Error messages */}
-              {error && (
-                <div className="text-xs sm:text-sm bg-rose-500/15 border border-rose-500/30 text-rose-300 p-4 rounded-2xl flex items-start gap-2.5 leading-relaxed font-semibold">
-                  <AlertTriangle className="w-5 h-5 shrink-0 text-rose-400" />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {quizCount === 0 && (
-                <div className="text-xs sm:text-sm bg-amber-500/15 border border-amber-500/30 text-amber-300 p-4 rounded-2xl flex items-start gap-2.5 leading-relaxed font-semibold">
-                  <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400" />
-                  <span>Soal kuis masih kosong! Minta Guru untuk menambahkan soal kuis di Panel Admin.</span>
-                </div>
-              )}
-
-              {/* Fluid Animated Submit Button matching reference theme */}
-              <motion.button
-                type="submit"
-                disabled={quizCount === 0 || !foundStudent}
-                whileHover={{ scale: 1.02, boxShadow: "0px 10px 30px rgba(147, 51, 234, 0.4)" }}
-                whileTap={{ scale: 0.97 }}
-                className="w-full bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-40 disabled:pointer-events-none text-white font-black py-4 px-4 rounded-2xl shadow-xl transition-all duration-150 flex items-center justify-center gap-2.5 cursor-pointer mt-4 text-base uppercase tracking-widest font-display"
-              >
-                <Play className="w-5 h-5 fill-white" /> Mulai Kuis Sekarang
-              </motion.button>
-            </form>
- 
-            {/* Quick Link to Teacher Admin */}
-            <div className="mt-6 pt-5 border-t border-purple-500/20 flex items-center justify-between text-xs text-slate-400 font-medium">
-              <span>Khusus Pendidik:</span>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => { sound.playClick(); onGoToAdmin(); }}
-                className="text-purple-300 hover:text-purple-200 font-extrabold flex items-center gap-1.5 transition cursor-pointer text-sm"
-              >
-                <Lock className="w-4 h-4 text-purple-400" /> Panel Guru
-              </motion.button>
-            </div>
-          </motion.div>
+        {/* Right Side: Desktop Login Card */}
+        <div className="hidden lg:block lg:col-span-5 w-full">
+          {loginCardElement}
         </div>
       </div>
     </div>
