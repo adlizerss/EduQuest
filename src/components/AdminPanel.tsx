@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Database, Trash2, PlusCircle, Copy, CheckCircle, ArrowLeft, 
   Lock, RotateCcw, FileSpreadsheet, Users, BookOpen, Settings, Sparkles, LogOut, Check,
-  Upload, Download, AlertTriangle, Pencil, X, FolderOpen, School
+  Upload, Download, AlertTriangle, Pencil, X, FolderOpen, School, Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
@@ -11,7 +11,7 @@ import {
   addQuiz, deleteQuiz, fetchQuizzes, fetchStudentResults, 
   getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, resetDatabaseToDefault,
   updateCategoryName, updateQuizCategory, fetchStudents, addStudent, deleteStudent,
-  assignQuizToClass, removeClassAssignment
+  assignQuizToClass, removeClassAssignment, syncLocalDataToSupabase
 } from '../db';
 import sound from '../utils/audio';
 import { generateUniqueCode } from '../utils/codeGenerator';
@@ -109,6 +109,9 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
     const saved = localStorage.getItem('eduquest_class_list');
     return saved ? JSON.parse(saved) : DEFAULT_CLASSES;
   });
+
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState('');
 
   const [newClassNameInput, setNewClassNameInput] = useState('');
   const [addClassError, setAddClassError] = useState('');
@@ -961,12 +964,49 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
             
             <p className="text-xs text-slate-400 leading-relaxed">
               {isSbConnected 
-                ? 'Semua soal dan hasil ujian tersimpan secara langsung di tabel Cloud Supabase Anda.' 
+                ? 'Semua soal, akun murid, dan hasil ujian tersimpan aman & tersinkron di Cloud Supabase.' 
                 : 'Penyimpanan berjalan di Local Storage browser. Data dapat hilang jika Anda membersihkan cache.'
               }
             </p>
 
-            <div className="pt-2 border-t border-slate-800/60 flex flex-col gap-1.5">
+            {syncMessage && (
+              <div className="text-[11px] bg-purple-500/15 border border-purple-500/30 text-purple-200 p-2.5 rounded-xl font-medium leading-relaxed">
+                {syncMessage}
+              </div>
+            )}
+
+            <div className="pt-2 border-t border-slate-800/60 flex flex-col gap-2">
+              <button
+                type="button"
+                disabled={isSyncing}
+                onClick={async () => {
+                  sound.playClick();
+                  setIsSyncing(true);
+                  setSyncMessage('');
+                  try {
+                    const res = await syncLocalDataToSupabase();
+                    if (res.success) {
+                      sound.playCorrect();
+                      setSyncMessage(`✅ Sinkronisasi berhasil! ${res.syncedStudents} murid & ${res.syncedQuizzes} kuis tersinkron.`);
+                      onRefreshQuizzes();
+                      loadTrackerResults();
+                      loadStudents();
+                    } else {
+                      sound.playDamage();
+                      setSyncMessage('⚠️ Konfigurasi Supabase belum diset.');
+                    }
+                  } catch (e) {
+                    setSyncMessage('⚠️ Terjadi kesalahan sinkronisasi.');
+                  } finally {
+                    setIsSyncing(false);
+                  }
+                }}
+                className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md"
+              >
+                <Zap className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                {isSyncing ? 'Menyinkronkan...' : '⚡ Sinkronkan Data ke Supabase'}
+              </button>
+
               <button 
                 onClick={handleResetToDefault}
                 className="w-full bg-slate-900 hover:bg-rose-950 hover:text-rose-400 border border-slate-800 text-slate-400 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"

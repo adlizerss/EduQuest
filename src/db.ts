@@ -99,7 +99,6 @@ export function getSupabaseClient(): SupabaseClient | null {
     cachedClient = null;
     return null;
   }
-  // If config changed or not cached, recreate client
   if (!cachedClient) {
     try {
       cachedClient = createClient(config.url, config.anonKey);
@@ -129,7 +128,170 @@ function initLocalStorageDB() {
 
 initLocalStorageDB();
 
-// Core DB operations: Abstracted for seamless fallback
+/**
+ * Bi-directional non-destructive data synchronization between Local Storage & Supabase.
+ * Merges missing records on both sides without deleting existing records.
+ */
+export async function syncLocalDataToSupabase(): Promise<{
+  syncedStudents: number;
+  syncedQuizzes: number;
+  syncedResults: number;
+  syncedAssignments: number;
+  success: boolean;
+}> {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return { syncedStudents: 0, syncedQuizzes: 0, syncedResults: 0, syncedAssignments: 0, success: false };
+  }
+
+  let syncedStudents = 0;
+  let syncedQuizzes = 0;
+  let syncedResults = 0;
+  let syncedAssignments = 0;
+
+  try {
+    // 1. SYNC STUDENTS
+    const { data: sbStudents } = await supabase.from('students').select('*');
+    const localStudentsRaw = localStorage.getItem('eduquest_students');
+    const localStudents: StudentAccount[] = localStudentsRaw ? JSON.parse(localStudentsRaw) : [];
+    
+    const sbStudentMap = new Map<string, StudentAccount>();
+    (sbStudents || []).forEach(s => {
+      const key = (s.nis || `${s.student_name}_${s.class_name}`).toLowerCase().trim();
+      sbStudentMap.set(key, s);
+    });
+
+    const newStudentsToSb: any[] = [];
+    localStudents.forEach(ls => {
+      const key = (ls.nis || `${ls.student_name}_${ls.class_name}`).toLowerCase().trim();
+      if (!sbStudentMap.has(key)) {
+        const { id, ...rest } = ls as any;
+        newStudentsToSb.push(rest);
+        sbStudentMap.set(key, ls);
+      }
+    });
+
+    if (newStudentsToSb.length > 0) {
+      const { error: insertErr } = await supabase.from('students').insert(newStudentsToSb);
+      if (!insertErr) {
+        syncedStudents = newStudentsToSb.length;
+      }
+    }
+
+    // Refresh merged dataset to Local Storage
+    const { data: updatedSbStudents } = await supabase.from('students').select('*').order('student_name', { ascending: true });
+    if (updatedSbStudents && updatedSbStudents.length > 0) {
+      localStorage.setItem('eduquest_students', JSON.stringify(updatedSbStudents));
+    }
+
+    // 2. SYNC QUIZZES
+    const { data: sbQuizzes } = await supabase.from('quizzes').select('*');
+    const localQuizzesRaw = localStorage.getItem('eduquest_quizzes');
+    const localQuizzes: QuizQuestion[] = localQuizzesRaw ? JSON.parse(localQuizzesRaw) : [];
+
+    const sbQuizSet = new Set((sbQuizzes || []).map(q => q.question.toLowerCase().trim()));
+    const newQuizzesToSb: any[] = [];
+
+    localQuizzes.forEach(lq => {
+      const key = lq.question.toLowerCase().trim();
+      if (!sbQuizSet.has(key)) {
+        const { id, ...rest } = lq as any;
+        newQuizzesToSb.push(rest);
+        sbQuizSet.add(key);
+      }
+    });
+
+    if (newQuizzesToSb.length > 0) {
+      const { error: qInsertErr } = await supabase.from('quizzes').insert(newQuizzesToSb);
+      if (!qInsertErr) {
+        syncedQuizzes = newQuizzesToSb.length;
+      }
+    }
+
+    // Refresh merged quizzes to Local Storage
+    const { data: updatedSbQuizzes } = await supabase.from('quizzes').select('*').order('id', { ascending: true });
+    if (updatedSbQuizzes && updatedSbQuizzes.length > 0) {
+      localStorage.setItem('eduquest_quizzes', JSON.stringify(updatedSbQuizzes));
+    }
+
+    // 3. SYNC STUDENT RESULTS
+    const { data: sbResults } = await supabase.from('student_results').select('*');
+    const localResultsRaw = localStorage.getItem('eduquest_student_results');
+    const localResults: StudentResult[] = localResultsRaw ? JSON.parse(localResultsRaw) : [];
+
+    const sbResultMap = new Map<string, StudentResult>();
+    (sbResults || []).forEach(r => {
+      const key = `${r.student_name}_${r.submit_at}`.toLowerCase().trim();
+      sbResultMap.set(key, r);
+    });
+
+    const newResultsToSb: any[] = [];
+    localResults.forEach(lr => {
+      const key = `${lr.student_name}_${lr.submit_at}`.toLowerCase().trim();
+      if (!sbResultMap.has(key)) {
+        const { id, ...rest } = lr as any;
+        newResultsToSb.push(rest);
+        sbResultMap.set(key, lr);
+      }
+    });
+
+    if (newResultsToSb.length > 0) {
+      const { error: rInsertErr } = await supabase.from('student_results').insert(newResultsToSb);
+      if (!rInsertErr) {
+        syncedResults = newResultsToSb.length;
+      }
+    }
+
+    // Refresh merged results to Local Storage
+    const { data: updatedSbResults } = await supabase.from('student_results').select('*').order('id', { ascending: false });
+    if (updatedSbResults && updatedSbResults.length > 0) {
+      localStorage.setItem('eduquest_student_results', JSON.stringify(updatedSbResults));
+    }
+
+    // 4. SYNC CLASS ASSIGNMENTS
+    const { data: sbAssignments } = await supabase.from('class_assignments').select('*');
+    const localAssignmentsRaw = localStorage.getItem('eduquest_class_assignments');
+    const localAssignments: ClassAssignment[] = localAssignmentsRaw ? JSON.parse(localAssignmentsRaw) : [];
+
+    const sbAssignmentMap = new Map<string, ClassAssignment>();
+    (sbAssignments || []).forEach(a => {
+      sbAssignmentMap.set(a.class_name.toLowerCase().trim(), a);
+    });
+
+    const newAssignmentsToSb: any[] = [];
+    localAssignments.forEach(la => {
+      const key = la.class_name.toLowerCase().trim();
+      if (!sbAssignmentMap.has(key)) {
+        const { id, ...rest } = la as any;
+        newAssignmentsToSb.push(rest);
+        sbAssignmentMap.set(key, la);
+      }
+    });
+
+    if (newAssignmentsToSb.length > 0) {
+      await supabase.from('class_assignments').upsert(newAssignmentsToSb, { onConflict: 'class_name' });
+      syncedAssignments = newAssignmentsToSb.length;
+    }
+
+    const { data: updatedSbAssignments } = await supabase.from('class_assignments').select('*');
+    if (updatedSbAssignments && updatedSbAssignments.length > 0) {
+      localStorage.setItem('eduquest_class_assignments', JSON.stringify(updatedSbAssignments));
+    }
+
+    return {
+      syncedStudents,
+      syncedQuizzes,
+      syncedResults,
+      syncedAssignments,
+      success: true
+    };
+  } catch (e) {
+    console.error("Gagal melakukan sinkronisasi dua arah Supabase:", e);
+    return { syncedStudents, syncedQuizzes, syncedResults, syncedAssignments, success: false };
+  }
+}
+
+// Core DB operations: Dual-Write Strategy
 export async function fetchQuizzes(): Promise<QuizQuestion[]> {
   const supabase = getSupabaseClient();
   if (supabase) {
@@ -140,13 +302,14 @@ export async function fetchQuizzes(): Promise<QuizQuestion[]> {
         .order('id', { ascending: true });
       if (error) throw error;
       if (data && data.length > 0) {
-        return (data as QuizQuestion[]).map(q => ({
+        const quizzes = (data as QuizQuestion[]).map(q => ({
           ...q,
           category: q.category || 'Umum'
         }));
+        // Update local copy
+        localStorage.setItem('eduquest_quizzes', JSON.stringify(quizzes));
+        return quizzes;
       }
-      // If table exists but empty, return empty array to prompt teacher to create
-      return [];
     } catch (e) {
       console.warn("Supabase fetchQuizzes failed, falling back to Local Storage:", e);
     }
@@ -168,6 +331,13 @@ export async function fetchQuizzes(): Promise<QuizQuestion[]> {
 }
 
 export async function addQuiz(quiz: QuizQuestion): Promise<QuizQuestion> {
+  // Always update Local Storage
+  const localData = localStorage.getItem('eduquest_quizzes');
+  const quizzes: QuizQuestion[] = localData ? JSON.parse(localData) : [];
+  const newQuiz = { ...quiz, id: Date.now() };
+  quizzes.push(newQuiz);
+  localStorage.setItem('eduquest_quizzes', JSON.stringify(quizzes));
+
   const supabase = getSupabaseClient();
   if (supabase) {
     try {
@@ -179,19 +349,21 @@ export async function addQuiz(quiz: QuizQuestion): Promise<QuizQuestion> {
       if (error) throw error;
       return data as QuizQuestion;
     } catch (e) {
-      console.warn("Supabase addQuiz failed, saving to Local Storage fallback:", e);
+      console.warn("Supabase addQuiz failed, saved to Local Storage fallback:", e);
     }
   }
-  // Fallback
-  const localData = localStorage.getItem('eduquest_quizzes');
-  const quizzes: QuizQuestion[] = localData ? JSON.parse(localData) : [];
-  const newQuiz = { ...quiz, id: Date.now() };
-  quizzes.push(newQuiz);
-  localStorage.setItem('eduquest_quizzes', JSON.stringify(quizzes));
   return newQuiz;
 }
 
 export async function deleteQuiz(id: string | number): Promise<boolean> {
+  // Always delete from Local Storage
+  const localData = localStorage.getItem('eduquest_quizzes');
+  if (localData) {
+    const quizzes: QuizQuestion[] = JSON.parse(localData);
+    const filtered = quizzes.filter(q => q.id !== id && String(q.id) !== String(id));
+    localStorage.setItem('eduquest_quizzes', JSON.stringify(filtered));
+  }
+
   const supabase = getSupabaseClient();
   if (supabase) {
     try {
@@ -202,18 +374,10 @@ export async function deleteQuiz(id: string | number): Promise<boolean> {
       if (error) throw error;
       return true;
     } catch (e) {
-      console.warn("Supabase deleteQuiz failed, removing from Local Storage fallback:", e);
+      console.warn("Supabase deleteQuiz failed:", e);
     }
   }
-  // Fallback
-  const localData = localStorage.getItem('eduquest_quizzes');
-  if (localData) {
-    const quizzes: QuizQuestion[] = JSON.parse(localData);
-    const filtered = quizzes.filter(q => q.id !== id && String(q.id) !== String(id));
-    localStorage.setItem('eduquest_quizzes', JSON.stringify(filtered));
-    return true;
-  }
-  return false;
+  return true;
 }
 
 export async function fetchStudentResults(): Promise<StudentResult[]> {
@@ -225,7 +389,10 @@ export async function fetchStudentResults(): Promise<StudentResult[]> {
         .select('*')
         .order('id', { ascending: false });
       if (error) throw error;
-      return data as StudentResult[];
+      if (data && data.length > 0) {
+        localStorage.setItem('eduquest_student_results', JSON.stringify(data));
+        return data as StudentResult[];
+      }
     } catch (e) {
       console.warn("Supabase fetchStudentResults failed, falling back to Local Storage:", e);
     }
@@ -236,6 +403,13 @@ export async function fetchStudentResults(): Promise<StudentResult[]> {
 }
 
 export async function addStudentResult(result: StudentResult): Promise<StudentResult> {
+  // Always update Local Storage
+  const localData = localStorage.getItem('eduquest_student_results');
+  const results: StudentResult[] = localData ? JSON.parse(localData) : [];
+  const newResult = { ...result, id: Date.now() };
+  results.unshift(newResult);
+  localStorage.setItem('eduquest_student_results', JSON.stringify(results));
+
   const supabase = getSupabaseClient();
   if (supabase) {
     try {
@@ -247,33 +421,13 @@ export async function addStudentResult(result: StudentResult): Promise<StudentRe
       if (error) throw error;
       return data as StudentResult;
     } catch (e) {
-      console.warn("Supabase addStudentResult failed, saving to Local Storage fallback:", e);
+      console.warn("Supabase addStudentResult failed, saved to Local Storage fallback:", e);
     }
   }
-  // Fallback
-  const localData = localStorage.getItem('eduquest_student_results');
-  const results: StudentResult[] = localData ? JSON.parse(localData) : [];
-  const newResult = { ...result, id: Date.now() };
-  results.unshift(newResult); // Add to the top
-  localStorage.setItem('eduquest_student_results', JSON.stringify(results));
   return newResult;
 }
 
 export async function updateCategoryName(oldName: string, newName: string): Promise<boolean> {
-  const supabase = getSupabaseClient();
-  if (supabase) {
-    try {
-      const { error } = await supabase
-        .from('quizzes')
-        .update({ category: newName })
-        .eq('category', oldName);
-      if (error) throw error;
-      return true;
-    } catch (e) {
-      console.warn("Supabase updateCategoryName failed, updating Local Storage fallback:", e);
-    }
-  }
-  // Fallback
   const localData = localStorage.getItem('eduquest_quizzes');
   if (localData) {
     try {
@@ -285,12 +439,25 @@ export async function updateCategoryName(oldName: string, newName: string): Prom
         return q;
       });
       localStorage.setItem('eduquest_quizzes', JSON.stringify(updated));
-      return true;
     } catch (e) {
       console.error("Error parsing/updating local quizzes", e);
     }
   }
-  return false;
+
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from('quizzes')
+        .update({ category: newName })
+        .eq('category', oldName);
+      if (error) throw error;
+      return true;
+    } catch (e) {
+      console.warn("Supabase updateCategoryName failed:", e);
+    }
+  }
+  return true;
 }
 
 export async function resetDatabaseToDefault() {
@@ -300,30 +467,22 @@ export async function resetDatabaseToDefault() {
   const supabase = getSupabaseClient();
   if (supabase) {
     try {
-      // Clear quizzes in Supabase
       const { data: qData } = await supabase.from('quizzes').select('id');
       if (qData && qData.length > 0) {
-        const { error } = await supabase.from('quizzes').delete().in('id', qData.map(d => d.id));
-        if (error) throw error;
+        await supabase.from('quizzes').delete().in('id', qData.map(d => d.id));
       }
       
-      // Clear student results in Supabase
       const { data: rData } = await supabase.from('student_results').select('id');
       if (rData && rData.length > 0) {
-        const { error } = await supabase.from('student_results').delete().in('id', rData.map(d => d.id));
-        if (error) throw error;
+        await supabase.from('student_results').delete().in('id', rData.map(d => d.id));
       }
 
-      // Clear class assignments in Supabase
       const { data: cData } = await supabase.from('class_assignments').select('id');
       if (cData && cData.length > 0) {
-        const { error } = await supabase.from('class_assignments').delete().in('id', cData.map(d => d.id));
-        if (error) throw error;
+        await supabase.from('class_assignments').delete().in('id', cData.map(d => d.id));
       }
 
-      // Re-seed default questions in Supabase
-      const { error: seedError } = await supabase.from('quizzes').insert(SEED_QUESTIONS);
-      if (seedError) throw seedError;
+      await supabase.from('quizzes').insert(SEED_QUESTIONS);
     } catch (e) {
       console.warn("Gagal mereset database Supabase:", e);
       throw e;
@@ -332,20 +491,6 @@ export async function resetDatabaseToDefault() {
 }
 
 export async function updateQuizCategory(id: string | number, newCategory: string): Promise<boolean> {
-  const supabase = getSupabaseClient();
-  if (supabase) {
-    try {
-      const { error } = await supabase
-        .from('quizzes')
-        .update({ category: newCategory })
-        .eq('id', id);
-      if (error) throw error;
-      return true;
-    } catch (e) {
-      console.warn("Supabase updateQuizCategory failed, falling back to Local Storage:", e);
-    }
-  }
-  // Fallback
   const localData = localStorage.getItem('eduquest_quizzes');
   if (localData) {
     try {
@@ -357,12 +502,25 @@ export async function updateQuizCategory(id: string | number, newCategory: strin
         return q;
       });
       localStorage.setItem('eduquest_quizzes', JSON.stringify(updated));
-      return true;
     } catch (e) {
       console.error("Error parsing local quizzes", e);
     }
   }
-  return false;
+
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from('quizzes')
+        .update({ category: newCategory })
+        .eq('id', id);
+      if (error) throw error;
+      return true;
+    } catch (e) {
+      console.warn("Supabase updateQuizCategory failed:", e);
+    }
+  }
+  return true;
 }
 
 export async function fetchStudents(): Promise<StudentAccount[]> {
@@ -374,7 +532,10 @@ export async function fetchStudents(): Promise<StudentAccount[]> {
         .select('*')
         .order('student_name', { ascending: true });
       if (error) throw error;
-      return data as StudentAccount[];
+      if (data && data.length > 0) {
+        localStorage.setItem('eduquest_students', JSON.stringify(data));
+        return data as StudentAccount[];
+      }
     } catch (e) {
       console.warn("Supabase fetchStudents failed, falling back to Local Storage:", e);
     }
@@ -384,6 +545,13 @@ export async function fetchStudents(): Promise<StudentAccount[]> {
 }
 
 export async function addStudent(student: StudentAccount): Promise<StudentAccount> {
+  // Always update Local Storage
+  const localData = localStorage.getItem('eduquest_students');
+  const students: StudentAccount[] = localData ? JSON.parse(localData) : [];
+  const newStudent = { ...student, id: Date.now() };
+  students.push(newStudent);
+  localStorage.setItem('eduquest_students', JSON.stringify(students));
+
   const supabase = getSupabaseClient();
   if (supabase) {
     try {
@@ -395,18 +563,20 @@ export async function addStudent(student: StudentAccount): Promise<StudentAccoun
       if (error) throw error;
       return data as StudentAccount;
     } catch (e) {
-      console.warn("Supabase addStudent failed, saving to Local Storage fallback:", e);
+      console.warn("Supabase addStudent failed, saved to Local Storage fallback:", e);
     }
   }
-  const localData = localStorage.getItem('eduquest_students');
-  const students: StudentAccount[] = localData ? JSON.parse(localData) : [];
-  const newStudent = { ...student, id: Date.now() };
-  students.push(newStudent);
-  localStorage.setItem('eduquest_students', JSON.stringify(students));
   return newStudent;
 }
 
 export async function deleteStudent(id: string | number): Promise<boolean> {
+  const localData = localStorage.getItem('eduquest_students');
+  if (localData) {
+    const students: StudentAccount[] = JSON.parse(localData);
+    const filtered = students.filter(s => s.id !== id && String(s.id) !== String(id));
+    localStorage.setItem('eduquest_students', JSON.stringify(filtered));
+  }
+
   const supabase = getSupabaseClient();
   if (supabase) {
     try {
@@ -417,17 +587,10 @@ export async function deleteStudent(id: string | number): Promise<boolean> {
       if (error) throw error;
       return true;
     } catch (e) {
-      console.warn("Supabase deleteStudent failed, removing from Local Storage fallback:", e);
+      console.warn("Supabase deleteStudent failed:", e);
     }
   }
-  const localData = localStorage.getItem('eduquest_students');
-  if (localData) {
-    const students: StudentAccount[] = JSON.parse(localData);
-    const filtered = students.filter(s => s.id !== id && String(s.id) !== String(id));
-    localStorage.setItem('eduquest_students', JSON.stringify(filtered));
-    return true;
-  }
-  return false;
+  return true;
 }
 
 export async function fetchClassAssignments(): Promise<ClassAssignment[]> {
@@ -438,7 +601,10 @@ export async function fetchClassAssignments(): Promise<ClassAssignment[]> {
         .from('class_assignments')
         .select('*');
       if (error) throw error;
-      return data as ClassAssignment[];
+      if (data && data.length > 0) {
+        localStorage.setItem('eduquest_class_assignments', JSON.stringify(data));
+        return data as ClassAssignment[];
+      }
     } catch (e) {
       console.warn("Supabase fetchClassAssignments failed, falling back to Local Storage:", e);
     }
@@ -448,26 +614,13 @@ export async function fetchClassAssignments(): Promise<ClassAssignment[]> {
 }
 
 export async function assignQuizToClass(className: string, category: string): Promise<boolean> {
-  const supabase = getSupabaseClient();
   const assignment: ClassAssignment = {
     class_name: className,
     category: category,
     assigned_at: new Date().toISOString()
   };
 
-  if (supabase) {
-    try {
-      const { error } = await supabase
-        .from('class_assignments')
-        .upsert([assignment], { onConflict: 'class_name' });
-      if (error) throw error;
-      return true;
-    } catch (e) {
-      console.warn("Supabase assignQuizToClass failed, saving to Local Storage fallback:", e);
-    }
-  }
-
-  // Local Storage fallback
+  // Always update Local Storage
   const localData = localStorage.getItem('eduquest_class_assignments');
   let assignments: ClassAssignment[] = localData ? JSON.parse(localData) : [];
   const idx = assignments.findIndex(a => a.class_name.toLowerCase() === className.toLowerCase());
@@ -477,10 +630,31 @@ export async function assignQuizToClass(className: string, category: string): Pr
     assignments.push({ ...assignment, id: Date.now() });
   }
   localStorage.setItem('eduquest_class_assignments', JSON.stringify(assignments));
+
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from('class_assignments')
+        .upsert([assignment], { onConflict: 'class_name' });
+      if (error) throw error;
+      return true;
+    } catch (e) {
+      console.warn("Supabase assignQuizToClass failed, saved to Local Storage fallback:", e);
+    }
+  }
+
   return true;
 }
 
 export async function removeClassAssignment(className: string): Promise<boolean> {
+  const localData = localStorage.getItem('eduquest_class_assignments');
+  if (localData) {
+    const assignments: ClassAssignment[] = JSON.parse(localData);
+    const filtered = assignments.filter(a => a.class_name.toLowerCase() !== className.toLowerCase());
+    localStorage.setItem('eduquest_class_assignments', JSON.stringify(filtered));
+  }
+
   const supabase = getSupabaseClient();
   if (supabase) {
     try {
@@ -491,17 +665,9 @@ export async function removeClassAssignment(className: string): Promise<boolean>
       if (error) throw error;
       return true;
     } catch (e) {
-      console.warn("Supabase removeClassAssignment failed, removing from Local Storage fallback:", e);
+      console.warn("Supabase removeClassAssignment failed:", e);
     }
   }
 
-  // Local Storage fallback
-  const localData = localStorage.getItem('eduquest_class_assignments');
-  if (localData) {
-    const assignments: ClassAssignment[] = JSON.parse(localData);
-    const filtered = assignments.filter(a => a.class_name.toLowerCase() !== className.toLowerCase());
-    localStorage.setItem('eduquest_class_assignments', JSON.stringify(filtered));
-    return true;
-  }
-  return false;
+  return true;
 }

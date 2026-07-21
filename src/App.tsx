@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchQuizzes, fetchStudents, fetchClassAssignments } from './db';
+import { fetchQuizzes, fetchStudents, fetchClassAssignments, syncLocalDataToSupabase } from './db';
 import { QuizQuestion, StudentAccount, ClassAssignment } from './types';
 import WelcomeScreen from './components/WelcomeScreen';
 import StudentRPG from './components/StudentRPG';
@@ -28,6 +28,9 @@ export default function App() {
   const loadData = async () => {
     setIsLoading(true);
     try {
+      // Run bi-directional sync to push local records and pull Supabase records
+      await syncLocalDataToSupabase();
+
       const [questions, registeredStudents, classAssignments] = await Promise.all([
         fetchQuizzes(),
         fetchStudents(),
