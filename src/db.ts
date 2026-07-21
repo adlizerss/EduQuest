@@ -71,15 +71,27 @@ const DEFAULT_CLASSES = [
   'XII MIPA 1', 'XII MIPA 2', 'XII IPS 1', 'XII IPS 2',
 ];
 
-// Helper to get Supabase config from localStorage
+const HARDCODED_SUPABASE_URL = "https://dvagyvlkshwpqvbcxwjx.supabase.co";
+const HARDCODED_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2YWd5dmxrc2h3cHF2YmN4d2p4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4NjcxMzMsImV4cCI6MjA5MzQ0MzEzM30.iuczKpFeYEW6uuzshXLzSm3VYEdr7P0kZHmZwdkvtFY";
+
 export interface SupabaseConfig {
   url: string;
   anonKey: string;
 }
 
 export function getSupabaseConfig(): SupabaseConfig | null {
-  const url = localStorage.getItem('eduquest_supabase_url') || (import.meta as any).env.VITE_SUPABASE_URL;
-  const anonKey = localStorage.getItem('eduquest_supabase_anon_key') || (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+  const url = localStorage.getItem('eduquest_supabase_url') 
+    || (import.meta as any).env.VITE_SUPABASE_URL 
+    || (import.meta as any).env.SUPABASE_URL 
+    || (import.meta as any).env.NEXT_PUBLIC_SUPABASE_URL 
+    || HARDCODED_SUPABASE_URL;
+
+  const anonKey = localStorage.getItem('eduquest_supabase_anon_key') 
+    || (import.meta as any).env.VITE_SUPABASE_ANON_KEY 
+    || (import.meta as any).env.SUPABASE_ANON_KEY 
+    || (import.meta as any).env.NEXT_PUBLIC_SUPABASE_ANON_KEY 
+    || HARDCODED_SUPABASE_ANON_KEY;
+
   if (url && anonKey) {
     return { url, anonKey };
   }
