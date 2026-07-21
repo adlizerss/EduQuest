@@ -1,69 +1,8 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { QuizQuestion, StudentResult, StudentAccount, ClassAssignment } from './types';
 
-// Pre-seeded high-quality general questions
-const SEED_QUESTIONS: QuizQuestion[] = [
-  {
-    question: "Dalam metode ilmiah, setelah kita mengamati suatu fenomena atau masalah, langkah logis berikutnya yang paling tepat dilakukan adalah...",
-    option_a: "Menarik kesimpulan final tanpa melakukan eksperimen atau pengumpulan data tambahan",
-    option_b: "Menyusun hipotesis (dugaan sementara) yang masuk akal dan dapat diuji kebenarannya",
-    option_c: "Menulis laporan ilmiah lengkap untuk langsung diterbitkan di jurnal pendidikan",
-    option_d: "Mengabaikan fenomena tersebut jika hasilnya nanti diperkirakan tidak sesuai teori lama",
-    correct_answer: "B",
-    type: "cognitive",
-    category: "Sains & Logika"
-  },
-  {
-    question: "Saat bekerja dalam tim untuk membuat proyek pameran atau presentasi kelompok, peran apa yang paling nyaman Anda lakukan?",
-    option_a: "Menjadi konseptor ide, menyusun rencana alur kerja, dan melakukan analisis awal (Planner)",
-    option_b: "Menjadi praktisi teknis yang merakit alat, merapikan karya, atau memproses materi pengerjaan (Creator)",
-    option_c: "Menjadi presenter utama yang menyampaikan gagasan di depan publik dengan percaya diri (Communicator)",
-    option_d: "Menjadi koordinator kelompok yang memantau waktu, membagi tugas, dan menjaga disiplin tim (Coordinator)",
-    correct_answer: "A",
-    type: "interest",
-    category: "Eksplorasi Karakter"
-  },
-  {
-    question: "Berikut ini yang merupakan ciri utama dari sebuah argumen logis yang valid, kuat, dan tepercaya adalah...",
-    option_a: "Menggunakan istilah ilmiah yang rumit dan panjang agar terlihat meyakinkan",
-    option_b: "Didukung oleh fakta objektif, bukti data yang sahih, serta penalaran yang konsisten",
-    option_c: "Berdasarkan kepada opini pribadi atau kepercayaan mayoritas semata tanpa bukti ilmiah",
-    option_d: "Disampaikan dengan gaya bicara agresif agar lawan diskusi segera setuju",
-    correct_answer: "B",
-    type: "cognitive",
-    category: "Sains & Logika"
-  },
-  {
-    question: "Manakah di bawah ini yang merupakan contoh pemanfaatan sumber daya alam secara bijaksana dan berkelanjutan?",
-    option_a: "Melakukan penebangan pohon di hutan lindung secara massal demi industri kayu lapis",
-    option_b: "Menggunakan panel surya sebagai alternatif pembangkit energi ramah lingkungan",
-    option_c: "Membuka lahan pertambangan mineral baru di dekat kawasan pemukiman warga",
-    option_d: "Membakar sisa sampah rumah tangga secara terbuka di pekarangan pemukiman padat",
-    correct_answer: "B",
-    type: "cognitive",
-    category: "Lingkungan & Alam"
-  },
-  {
-    question: "Saat Anda diminta untuk melakukan presentasi di depan kelas, bagian manakah yang paling Anda sukai?",
-    option_a: "Merancang kerangka materi, meriset data pendukung, dan membuat outline presentasi",
-    option_b: "Membuat slide presentasi yang estetik, menambahkan gambar pendukung, dan merapikan visual",
-    option_c: "Berdiri di depan berbicara langsung kepada audiens dan menjawab pertanyaan sulit mereka",
-    option_d: "Mengatur pembagian giliran bicara anggota tim agar presentasi berjalan tepat waktu",
-    correct_answer: "C",
-    type: "interest",
-    category: "Eksplorasi Karakter"
-  },
-  {
-    question: "Jika dalam menyelesaikan sebuah soal kuis atau tugas kelompok Anda mengalami kegagalan, bagaimana cara Anda menyikapinya?",
-    option_a: "Menganalisis kesalahan data kognitif, meriset strategi belajar baru, dan menyusun peta konsep (Strategic Planner)",
-    option_b: "Segera mencoba memodifikasi hasil praktik, membongkar kesalahan teknis, dan memperbaiki alat (Creator / Maker)",
-    option_c: "Melatih cara mengomunikasikan materi, berdiskusi dengan guru, dan memperbaiki teknik penjelasan (Communicator)",
-    option_d: "Mengevaluasi pembagian peran tim agar kerja sama berikutnya menjadi lebih solid dan disiplin (Operations Coordinator)",
-    correct_answer: "D",
-    type: "interest",
-    category: "Eksplorasi Karakter"
-  }
-];
+// Default SEED_QUESTIONS cleared to provide a clean slate for teachers
+const SEED_QUESTIONS: QuizQuestion[] = [];
 
 const DEFAULT_CLASSES = [
   'X MIPA 1', 'X MIPA 2', 'X IPS 1', 'X IPS 2',
@@ -217,9 +156,21 @@ export async function getCurrentTeacherSession() {
 
 // Ensure local storage tables are initialized
 function initLocalStorageDB() {
-  if (!localStorage.getItem('eduquest_quizzes')) {
-    localStorage.setItem('eduquest_quizzes', JSON.stringify(SEED_QUESTIONS));
+  const localQuizzes = localStorage.getItem('eduquest_quizzes');
+  if (!localQuizzes) {
+    localStorage.setItem('eduquest_quizzes', JSON.stringify([]));
+  } else {
+    try {
+      const parsed: QuizQuestion[] = JSON.parse(localQuizzes);
+      const filtered = parsed.filter(q => !['Sains & Logika', 'Eksplorasi Karakter', 'Lingkungan & Alam'].includes(q.category || ''));
+      if (filtered.length !== parsed.length) {
+        localStorage.setItem('eduquest_quizzes', JSON.stringify(filtered));
+      }
+    } catch (e) {
+      console.error("Error purging legacy seed categories", e);
+    }
   }
+
   if (!localStorage.getItem('eduquest_student_results')) {
     localStorage.setItem('eduquest_student_results', JSON.stringify([]));
   }
