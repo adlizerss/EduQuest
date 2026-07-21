@@ -293,8 +293,25 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
           throw new Error("Tidak ada baris data yang valid ditemukan. Periksa kembali format kolom.");
         }
 
+        const newFoldersRegistered = new Set<string>();
         for (const quiz of importedQuizzes) {
+          const cat = quiz.category?.trim();
+          if (cat && !customPackages.some(p => p.toLowerCase() === cat.toLowerCase()) && !newFoldersRegistered.has(cat.toLowerCase())) {
+            newFoldersRegistered.add(cat.toLowerCase());
+          }
           await addQuiz(quiz);
+        }
+
+        if (newFoldersRegistered.size > 0) {
+          const updatedPackages = [...customPackages];
+          newFoldersRegistered.forEach(f => {
+            const matchingQuiz = importedQuizzes.find(q => q.category?.toLowerCase().trim() === f);
+            if (matchingQuiz && matchingQuiz.category) {
+              updatedPackages.push(matchingQuiz.category.trim());
+            }
+          });
+          setCustomPackages(updatedPackages);
+          localStorage.setItem('eduquest_custom_packages', JSON.stringify(updatedPackages));
         }
 
         sound.playSpell();
@@ -564,7 +581,13 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
         }
 
         let successCount = 0;
+        const newClassesRegistered = new Set<string>();
         for (const student of importedStudents) {
+          const cName = student.class_name.trim();
+          if (cName && !classList.some(c => c.toLowerCase() === cName.toLowerCase()) && !newClassesRegistered.has(cName.toLowerCase())) {
+            await addClassToDb(cName);
+            newClassesRegistered.add(cName.toLowerCase());
+          }
           await addStudent(student);
           successCount++;
         }
@@ -572,6 +595,7 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
         sound.playSpell();
         setStudentImportSuccess(successCount);
         loadStudents();
+        await loadClassesData();
       } catch (err: any) {
         sound.playDamage();
         setStudentImportError(err.message || "Gagal mengurai file Excel.");
@@ -662,6 +686,12 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
 
     try {
       sound.playSpell();
+      const cName = manualStudentClass.trim();
+      if (cName && !classList.some(c => c.toLowerCase() === cName.toLowerCase())) {
+        await addClassToDb(cName);
+        await loadClassesData();
+      }
+
       const success = await addStudent(newStudent);
       if (success) {
         setManualStudentSuccess(true);
@@ -2334,7 +2364,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
 
                       {/* Form Tambah Kelas */}
                       <form onSubmit={handleAddClass} className="space-y-2 mb-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col gap-2">
                           <input
                             type="text"
                             value={newClassNameInput}
@@ -2343,13 +2373,13 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                               setAddClassError('');
                             }}
                             placeholder="Contoh: X MERDEKA 1"
-                            className="flex-1 bg-purple-950/90 border-2 border-purple-300/50 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-300 transition placeholder:text-purple-300/40 font-semibold"
+                            className="w-full bg-purple-950/90 border-2 border-purple-300/50 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-amber-300 transition placeholder:text-purple-300/40 font-semibold"
                           />
                           <button
                             type="submit"
-                            className="bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 hover:from-amber-300 hover:to-pink-400 text-slate-950 font-black text-xs px-3.5 py-2 rounded-xl transition cursor-pointer flex items-center gap-1 uppercase tracking-wider shrink-0 shadow-md whitespace-nowrap"
+                            className="w-full bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 hover:from-amber-300 hover:to-pink-400 text-slate-950 font-black text-xs py-2.5 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 uppercase tracking-wider shadow-md"
                           >
-                            <PlusCircle className="w-3.5 h-3.5 text-slate-950" /> Tambah
+                            <PlusCircle className="w-3.5 h-3.5 text-slate-950" /> Tambah Kelas
                           </button>
                         </div>
                         {addClassError && (
