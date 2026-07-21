@@ -127,35 +127,53 @@ export async function signInTeacher(emailOrUsername: string, password: string): 
 }> {
   const supabase = getSupabaseClient();
   if (!supabase) {
-    return { success: false, error: 'Supabase URL & Anon Key belum diatur.' };
+    return { 
+      success: false, 
+      error: 'Supabase client belum terhubung. Periksa konfigurasi URL & Anon Key.' 
+    };
   }
 
-  let email = emailOrUsername.trim();
-  // If username does not contain '@', format to standard email pattern
-  if (!email.includes('@')) {
-    email = `${email}@eduquest.com`;
+  const rawInput = emailOrUsername.trim();
+  const rawPass = password.trim();
+
+  // Primary attempt: try entered string directly as email
+  const attempts = [rawInput];
+
+  // Secondary attempt: if no '@', try appending '@eduquest.com'
+  if (!rawInput.includes('@')) {
+    attempts.push(`${rawInput}@eduquest.com`);
   }
 
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+  let lastErrorMsg = '';
 
-    if (error) {
-      return { success: false, error: error.message };
+  for (const emailTarget of attempts) {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: emailTarget,
+        password: rawPass
+      });
+
+      if (!error && data.session) {
+        localStorage.setItem('eduquest_admin_authenticated', 'true');
+        return { success: true, session: data.session, user: data.user };
+      }
+
+      if (error) {
+        lastErrorMsg = error.message;
+      }
+    } catch (e: any) {
+      lastErrorMsg = e.message || 'Gagal terhubung ke Supabase Auth.';
     }
-
-    if (data.session) {
-      localStorage.setItem('eduquest_admin_authenticated', 'true');
-      return { success: true, session: data.session, user: data.user };
-    }
-
-    return { success: false, error: 'Sesi login tidak ditemukan.' };
-  } catch (e: any) {
-    console.error("Supabase Auth Exception:", e);
-    return { success: false, error: e.message || 'Terjadi kesalahan sistem.' };
   }
+
+  let userFriendlyError = lastErrorMsg;
+  if (lastErrorMsg.includes('Invalid login credentials')) {
+    userFriendlyError = 'Email / Username atau Password salah. Periksa kembali akun di Console Supabase Authentication.';
+  } else if (lastErrorMsg.includes('Email not confirmed')) {
+    userFriendlyError = 'Email belum dikonfirmasi. Buka Supabase Console ➔ Authentication ➔ Users ➔ klik user ➔ Confirm Email.';
+  }
+
+  return { success: false, error: userFriendlyError };
 }
 
 export async function signOutTeacher(): Promise<boolean> {
