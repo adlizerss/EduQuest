@@ -739,6 +739,41 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
     ...allQuizzes.map(q => q.category || 'Umum')
   ])).filter(Boolean);
 
+  const handleRenameCategory = async (oldCategory: string) => {
+    const newName = prompt(`Ubah nama folder kuis "${oldCategory}" menjadi:`, oldCategory);
+    if (newName && newName.trim() && newName.trim() !== oldCategory) {
+      const trimmed = newName.trim();
+      sound.playSpell();
+      const success = await updateCategoryName(oldCategory, trimmed);
+      if (success) {
+        const updatedPkgs = customPackages.map(p => p === oldCategory ? trimmed : p);
+        setCustomPackages(updatedPkgs);
+        localStorage.setItem('eduquest_custom_packages', JSON.stringify(updatedPkgs));
+        onRefreshQuizzes();
+        onRefreshAssignments();
+      }
+    }
+  };
+
+  const handleDeleteCategory = async (categoryToDelete: string) => {
+    const categoryQuizzes = allQuizzes.filter(q => (q.category || 'Umum') === categoryToDelete);
+    if (confirm(`Apakah Anda yakin ingin menghapus folder paket "${categoryToDelete}" beserta seluruh ${categoryQuizzes.length} soal di dalamnya?`)) {
+      sound.playDamage();
+      let deleteCount = 0;
+      for (const q of categoryQuizzes) {
+        if (q.id) {
+          const success = await deleteQuiz(q.id);
+          if (success) deleteCount++;
+        }
+      }
+      const updatedPkgs = customPackages.filter(p => p !== categoryToDelete);
+      setCustomPackages(updatedPkgs);
+      localStorage.setItem('eduquest_custom_packages', JSON.stringify(updatedPkgs));
+      onRefreshQuizzes();
+      onRefreshAssignments();
+    }
+  };
+
   const sqlSchema = `-- SKEMA LENGKAP 5 TABEL SUPABASE UNTUK EDUQUEST
 -- Jalankan di SQL Editor pada Console Cloud Supabase Anda.
 
@@ -1421,6 +1456,159 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-6"
               >
+                {/* TOP SECTION: KARTU FOLDER PAKET KUIS (GRID CARDS) */}
+                <div className="glass-panel-purple rounded-3xl border border-purple-500/30 p-6 shadow-2xl space-y-4 relative overflow-hidden neon-glow-purple">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-purple-500/20">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-purple-500/20 text-purple-300 border border-purple-400/30 rounded-2xl shadow-inner">
+                        <FolderOpen className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-black text-white font-display">Folder & Paket Kuis Ujian</h2>
+                        <p className="text-xs text-purple-300/80 font-medium">Kelola paket kuis, ubah nama folder, dan posting langsung ke kelas target.</p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newPkg = prompt("Masukkan nama paket / folder kuis baru:");
+                        if (newPkg && newPkg.trim()) {
+                          const trimmed = newPkg.trim();
+                          sound.playCorrect();
+                          const updated = [...new Set([...customPackages, trimmed])];
+                          setCustomPackages(updated);
+                          localStorage.setItem('eduquest_custom_packages', JSON.stringify(updated));
+                          setQuestionCategory(trimmed);
+                        }
+                      }}
+                      className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-black px-4 py-2.5 rounded-2xl text-xs flex items-center gap-2 transition cursor-pointer shadow-lg font-display uppercase tracking-wider shrink-0"
+                    >
+                      <PlusCircle className="w-4 h-4" /> ➕ Buat Folder Baru
+                    </button>
+                  </div>
+
+                  {/* Folder Cards Grid */}
+                  {allCategories.length === 0 ? (
+                    <div className="text-center py-8 text-purple-300/70 text-xs bg-slate-950/40 border border-purple-500/20 rounded-2xl border-dashed">
+                      📂 Belum ada folder paket kuis. Klik <b>"+ Buat Folder Baru"</b> di atas atau buat soal pertama Anda.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 font-sans">
+                      {allCategories.map((cat) => {
+                        const catQuestions = allQuizzes.filter(q => (q.category || 'Umum') === cat);
+                        const assignedToClasses = assignments.filter(a => a.category === cat).map(a => a.class_name);
+                        const isSelectedFilter = adminCategoryFilter === cat;
+
+                        return (
+                          <motion.div
+                            key={cat}
+                            whileHover={{ y: -2, scale: 1.01 }}
+                            className={`p-4.5 rounded-2xl border transition-all duration-200 flex flex-col justify-between space-y-3 relative overflow-hidden ${
+                              isSelectedFilter 
+                                ? 'bg-purple-950/90 border-2 border-purple-400 shadow-xl neon-glow-purple' 
+                                : 'bg-slate-950/80 border-purple-500/25 hover:border-purple-400/50 hover:bg-slate-900/90 shadow-md'
+                            }`}
+                          >
+                            {/* Top Accent Gradient Bar */}
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-violet-400" />
+
+                            <div className="space-y-2">
+                              <div className="flex items-start justify-between gap-2 pt-1">
+                                <div className="flex items-center gap-2.5">
+                                  <span className="p-2 bg-purple-500/20 text-purple-300 border border-purple-400/30 rounded-xl shrink-0">
+                                    <FolderOpen className="w-4 h-4 text-purple-300" />
+                                  </span>
+                                  <div>
+                                    <h3 className="text-base font-black text-white font-display truncate max-w-[150px]">{cat}</h3>
+                                    <span className="text-[11px] text-purple-300 font-extrabold font-mono">
+                                      {catQuestions.length} Soal Terdaftar
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRenameCategory(cat)}
+                                    className="p-1.5 bg-slate-900 hover:bg-purple-900/60 text-purple-300 hover:text-white border border-purple-500/30 rounded-lg text-xs font-bold transition cursor-pointer"
+                                    title="Ubah Nama Folder Ini"
+                                  >
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteCategory(cat)}
+                                    className="p-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 hover:text-white border border-rose-500/30 rounded-lg text-xs font-bold transition cursor-pointer"
+                                    title="Hapus Folder & Seluruh Soal"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Status Assignment Badges */}
+                              <div className="pt-1">
+                                {assignedToClasses.length > 0 ? (
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase">Posting di:</span>
+                                    {assignedToClasses.map(cName => (
+                                      <span key={cName} className="text-[10px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-black px-2 py-0.5 rounded-full font-mono">
+                                        🏫 {cName}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-[10px] text-slate-500 font-semibold italic block">
+                                    Belum diposting ke kelas tertentu
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Bottom Actions Row */}
+                            <div className="pt-3 border-t border-purple-500/20 flex items-center justify-between gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  sound.playClick();
+                                  setAdminCategoryFilter(isSelectedFilter ? 'All' : cat);
+                                }}
+                                className={`text-xs px-3 py-1.5 rounded-xl font-extrabold transition cursor-pointer flex items-center gap-1 ${
+                                  isSelectedFilter 
+                                    ? 'bg-purple-500/30 text-purple-200 border border-purple-400/40' 
+                                    : 'bg-slate-900 hover:bg-purple-950 text-slate-300 border border-purple-500/20'
+                                }`}
+                              >
+                                👁️ {isSelectedFilter ? 'Semua Soal' : 'Lihat Soal'}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const targetClass = prompt(`Posting paket "${cat}" untuk kelas apa?\nKelas yang ada: ${classes.join(', ')}`);
+                                  if (targetClass && targetClass.trim()) {
+                                    const trimmedClass = targetClass.trim();
+                                    sound.playSpell();
+                                    const success = await assignQuizToClass(trimmedClass, cat);
+                                    if (success) {
+                                      onRefreshAssignments();
+                                      alert(`Berhasil memposting kuis "${cat}" untuk kelas "${trimmedClass}"!`);
+                                    }
+                                  }
+                                }}
+                                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs transition cursor-pointer shadow-md flex items-center gap-1"
+                              >
+                                🚀 Posting
+                              </button>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
                 {/* Two Column Layout: Single Addition & Bulk Import */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
                   
