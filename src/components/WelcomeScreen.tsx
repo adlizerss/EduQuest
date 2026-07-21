@@ -13,9 +13,7 @@ interface WelcomeScreenProps {
 }
 
 export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, students, assignments }: WelcomeScreenProps) {
-  const [name, setName] = useState('');
-  const [attendanceNum, setAttendanceNum] = useState('');
-  const [className, setClassName] = useState('X MIPA 1');
+  const [uniqueCode, setUniqueCode] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [error, setError] = useState('');
 
@@ -27,26 +25,36 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
     return quizzes.filter(q => (q.category || 'Umum') === cat).length;
   };
 
+  // Find student by entered unique code
+  const foundStudent = students.find(s => 
+    s.nis && s.nis.trim().toLowerCase() === uniqueCode.trim().toLowerCase()
+  );
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     sound.playClick();
-    if (!name.trim()) {
-      setError('Nama lengkap tidak boleh kosong!');
+    if (!uniqueCode.trim()) {
+      setError('Kode unik murid tidak boleh kosong!');
       sound.playDamage();
       return;
     }
-    if (!attendanceNum.trim()) {
-      setError('Nomor absen tidak boleh kosong!');
+
+    if (!foundStudent) {
+      setError('Kode unik murid tidak terdaftar! Periksa kembali kode Anda atau hubungi Guru.');
+      sound.playDamage();
+      return;
     }
+
+    const { student_name, class_name, attendance_num } = foundStudent;
 
     // CBT Assignment mode
     const hasAnyAssignments = assignments && assignments.length > 0;
     let targetCategory = selectedCategory;
 
     if (hasAnyAssignments) {
-      const activeAssignment = assignments.find(a => a.class_name.toLowerCase() === className.toLowerCase());
+      const activeAssignment = assignments.find(a => a.class_name.toLowerCase() === class_name.toLowerCase());
       if (!activeAssignment) {
-        setError(`Belum ada kuis/ujian yang aktif diposting untuk kelas ${className}!`);
+        setError(`Belum ada kuis/ujian yang aktif diposting untuk kelas ${class_name}!`);
         sound.playDamage();
         return;
       }
@@ -59,28 +67,9 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
       return;
     }
 
-    // Validate registered student account if the list is not empty
-    if (students && students.length > 0) {
-      const formattedName = name.trim().toLowerCase();
-      const formattedClass = className.trim().toLowerCase();
-      const formattedAbsen = String(Number(attendanceNum));
-
-      const found = students.find(s => 
-        s.student_name.trim().toLowerCase() === formattedName &&
-        s.class_name.trim().toLowerCase() === formattedClass &&
-        String(Number(s.attendance_num)) === formattedAbsen
-      );
-
-      if (!found) {
-        setError('Nama, kelas, atau nomor absen Anda tidak terdaftar sebagai murid! Silakan hubungi Guru Anda.');
-        sound.playDamage();
-        return;
-      }
-    }
-
     setError('');
     sound.playSpell();
-    onStartGame(name, attendanceNum, className, targetCategory);
+    onStartGame(student_name, attendance_num, class_name, targetCategory);
   };
 
   const commonClasses = [
@@ -109,7 +98,7 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
               <Sparkles className="w-4 h-4 animate-pulse" /> EduQuest Kuis RPG
             </div>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-white leading-none font-display">
-              Jelajahi <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-pink-400">EduQuest</span>
+              Selamat Datang di <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-pink-400">EduQuest</span>
             </h1>
             <p className="text-slate-300 text-lg md:text-xl font-medium leading-relaxed">
               Platform kuis interaktif serbaguna. Jawab soal strategis dari Guru, gunakan jurus bertahan, lindungi HP karaktermu, dan temukan profil gaya belajarmu!
@@ -195,62 +184,69 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
             </div>
  
             <form onSubmit={handleSubmit} className="space-y-5">
-              
-              {/* Input Nama */}
+                 {/* Input Kode Unik */}
               <div className="space-y-2">
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Nama Lengkap Siswa</label>
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">
+                  Kode Unik Murid
+                </label>
                 <div className="relative">
-                  <User className="absolute left-4 top-4.5 w-5 h-5 text-slate-400" />
+                  <Lock className="absolute left-4 top-4.5 w-5 h-5 text-slate-400" />
                   <input
                     type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Contoh: Rian Anggoro"
-                    className="w-full bg-slate-950/90 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 text-base font-semibold rounded-2xl pl-12 pr-4 py-4 outline-none text-white transition placeholder:text-slate-600"
+                    value={uniqueCode}
+                    onChange={(e) => {
+                      setUniqueCode(e.target.value);
+                      setError('');
+                    }}
+                    placeholder="Contoh: EQ-8F2K9L"
+                    className="w-full bg-slate-950/90 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 text-lg font-mono font-bold rounded-2xl pl-12 pr-4 py-4 outline-none text-cyan-400 uppercase tracking-wider transition placeholder:text-slate-600"
                   />
                 </div>
               </div>
- 
-              <div className="grid grid-cols-2 gap-4">
-                {/* Input Absen */}
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Nomor Absen</label>
-                  <div className="relative">
-                    <Hash className="absolute left-4 top-4.5 w-5 h-5 text-slate-400" />
-                    <input
-                      type="text"
-                      maxLength={2}
-                      value={attendanceNum}
-                      onChange={(e) => setAttendanceNum(e.target.value.replace(/\D/g, ''))}
-                      placeholder="01"
-                      className="w-full bg-slate-950/90 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 text-lg rounded-2xl pl-11 pr-3 py-4 outline-none text-white transition text-center font-black"
-                    />
+
+              {/* Dynamic Student Info Verification Badge */}
+              {foundStudent && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-cyan-500/10 border border-cyan-500/25 p-4 rounded-2xl space-y-2 font-sans shadow-inner"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest block">
+                      ✓ Identitas Murid Terverifikasi
+                    </span>
+                    <span className="text-[10px] bg-cyan-500/20 text-cyan-300 font-bold px-2 py-0.5 rounded-full font-mono">
+                      {foundStudent.nis}
+                    </span>
                   </div>
-                </div>
- 
-                {/* Dropdown Kelas */}
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Kelas</label>
-                  <div className="relative">
-                    <School className="absolute left-4 top-4.5 w-5 h-5 text-slate-400" />
-                    <select
-                      value={className}
-                      onChange={(e) => setClassName(e.target.value)}
-                      className="w-full bg-slate-950/90 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 text-base rounded-2xl pl-11 pr-2 py-4 outline-none text-white transition cursor-pointer appearance-none font-bold text-center"
-                    >
-                      {commonClasses.map(c => (
-                        <option key={c} value={c} className="bg-slate-950">{c}</option>
-                      ))}
-                    </select>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Nama Murid</span>
+                      <span className="font-bold text-white text-sm">{foundStudent.student_name}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Kelas & Absen</span>
+                      <span className="font-bold text-white text-sm">{foundStudent.class_name} (Absen {foundStudent.attendance_num})</span>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </motion.div>
+              )}
 
               {/* CBT Class Assignment Active Status vs Manual Dropdown Fallback */}
               {quizCount > 0 && (() => {
+                const targetClassName = foundStudent ? foundStudent.class_name : null;
                 const hasAnyAssignments = assignments && assignments.length > 0;
-                if (hasAnyAssignments) {
-                  const activeAssignment = assignments.find(a => a.class_name.toLowerCase() === className.toLowerCase());
+
+                if (!foundStudent) {
+                  return (
+                    <div className="bg-slate-950/60 border border-slate-800/80 p-4 rounded-2xl text-center text-xs text-slate-400 font-medium">
+                      🔑 Silakan masukkan <span className="text-cyan-400 font-bold">Kode Unik</span> yang diberikan Guru untuk masuk.
+                    </div>
+                  );
+                }
+
+                if (hasAnyAssignments && targetClassName) {
+                  const activeAssignment = assignments.find(a => a.class_name.toLowerCase() === targetClassName.toLowerCase());
                   if (activeAssignment) {
                     return (
                       <div className="bg-indigo-500/10 border border-indigo-500/20 p-4 rounded-2xl flex items-center gap-3.5 shadow-inner">
@@ -274,7 +270,7 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
                             Status Ujian Kelas
                           </span>
                           <span className="text-sm font-bold text-rose-400 font-sans mt-0.5 block">
-                            🔴 Belum ada ujian terposting untuk kelas {className}
+                            🔴 Belum ada ujian terposting untuk kelas {targetClassName}
                           </span>
                         </div>
                       </div>
@@ -305,7 +301,7 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
                   );
                 }
               })()}
- 
+
               {/* Warnings & Errors */}
               {error && (
                 <div className="text-sm bg-rose-500/10 border border-rose-500/30 text-rose-400 p-4 rounded-2xl flex items-start gap-2.5 leading-relaxed font-semibold">
@@ -313,18 +309,18 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
                   <span>{error}</span>
                 </div>
               )}
- 
+
               {quizCount === 0 && (
                 <div className="text-sm bg-amber-500/10 border border-amber-500/30 text-amber-400 p-4 rounded-2xl flex items-start gap-2.5 leading-relaxed font-semibold">
                   <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400" />
                   <span>Kuis kosong! Silakan minta Guru mengisi soal kuis di Panel Guru.</span>
                 </div>
               )}
- 
+
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={quizCount === 0}
+                disabled={quizCount === 0 || !foundStudent}
                 className="w-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-pink-500 hover:from-cyan-400 hover:to-pink-400 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none text-white font-black py-4.5 px-4 rounded-2xl shadow-xl shadow-cyan-500/10 transition duration-150 flex items-center justify-center gap-2 cursor-pointer mt-4 text-base uppercase tracking-widest"
               >
                 <Play className="w-5 h-5 fill-white" /> Mulai Petualangan Kuis

@@ -14,6 +14,7 @@ import {
   assignQuizToClass, removeClassAssignment
 } from '../db';
 import sound from '../utils/audio';
+import { generateUniqueCode } from '../utils/codeGenerator';
 
 interface AdminPanelProps {
   onBack: () => void;
@@ -87,6 +88,7 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
   const [studentImportLoading, setStudentImportLoading] = useState(false);
   const [studentImportSuccess, setStudentImportSuccess] = useState<number | null>(null);
   const [studentImportError, setStudentImportError] = useState('');
+  const [studentImportClass, setStudentImportClass] = useState<string>('X MIPA 1');
 
   // Student manual account creation states
   const [manualStudentName, setManualStudentName] = useState('');
@@ -475,26 +477,27 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
         const headerRow = (rows[0] || []).map(h => String(h || '').toLowerCase().trim());
         
         let colName = headerRow.findIndex(h => h.includes('nama') || h.includes('name') || h.includes('siswa') || h.includes('student'));
+        let colNis = headerRow.findIndex(h => h.includes('kode') || h.includes('unik') || h.includes('nis') || h.includes('id') || h.includes('code'));
         let colClass = headerRow.findIndex(h => h.includes('kelas') || h.includes('class'));
         let colAbsen = headerRow.findIndex(h => h.includes('absen') || h.includes('attendance') || h.includes('no') || h.includes('nomor'));
-        let colNis = headerRow.findIndex(h => h.includes('nis') || h.includes('id'));
 
-        // Fallbacks
+        // Fallbacks if header matching missed
         if (colName === -1) colName = 0;
-        if (colClass === -1) colClass = 1;
-        if (colAbsen === -1) colAbsen = 2;
-        if (colNis === -1) colNis = 3;
 
         for (let i = 1; i < rows.length; i++) {
           const row = rows[i];
           if (!row || row.length === 0 || !row[colName]) continue;
 
           const student_name = String(row[colName] || '').trim();
-          const class_name = String(row[colClass] || 'X MIPA 1').trim();
-          const attendance_num = String(row[colAbsen] || '').trim();
-          const nis = colNis !== -1 && row[colNis] ? String(row[colNis]).trim() : undefined;
+          let nis = colNis !== -1 && row[colNis] ? String(row[colNis]).trim() : undefined;
+          const class_name = String((colClass !== -1 && row[colClass]) ? row[colClass] : studentImportClass).trim();
+          const attendance_num = String((colAbsen !== -1 && row[colAbsen]) ? row[colAbsen] : i).padStart(2, '0').trim();
 
-          if (student_name && class_name && attendance_num) {
+          if (!nis) {
+            nis = generateUniqueCode([...students, ...importedStudents]);
+          }
+
+          if (student_name) {
             importedStudents.push({
               student_name,
               class_name,
@@ -539,21 +542,21 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
     sound.playClick();
     const headers = [
       "Nama Siswa", 
-      "Kelas (Contoh: X MIPA 1)", 
-      "Nomor Absen", 
-      "NIS (Opsional)"
+      "Kode Unik", 
+      "Kelas", 
+      "Nomor Absen"
     ];
     const sampleRow1 = [
       "Ahmad Fauzi",
+      "EQ-8F2K9L",
       "X MIPA 1",
-      "01",
-      "212210001"
+      "01"
     ];
     const sampleRow2 = [
       "Budi Santoso",
+      "EQ-3M7P1W",
       "X MIPA 1",
-      "02",
-      "212210002"
+      "02"
     ];
     
     const ws = XLSX.utils.aoa_to_sheet([headers, sampleRow1, sampleRow2]);
@@ -593,11 +596,16 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
       return;
     }
 
+    let nis = manualStudentNis.trim();
+    if (!nis) {
+      nis = generateUniqueCode(students);
+    }
+
     const newStudent: StudentAccount = {
       student_name: manualStudentName.trim(),
       class_name: manualStudentClass.trim(),
       attendance_num: manualStudentAbsen.trim(),
-      nis: manualStudentNis.trim() || undefined
+      nis: nis
     };
 
     try {
@@ -1891,7 +1899,7 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                                   <th className="py-3 px-4 w-12 text-center">Absen</th>
                                   <th className="py-3 px-4">Nama Siswa</th>
                                   <th className="py-3 px-4 w-32">Kelas</th>
-                                  <th className="py-3 px-4 w-32">NIS</th>
+                                  <th className="py-3 px-4 w-36">Kode Unik / NIS</th>
                                   <th className="py-3 px-4 w-20 text-center">Aksi</th>
                                 </tr>
                               </thead>
@@ -1915,8 +1923,10 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                                     <td className="py-2.5 px-4 font-semibold text-slate-300">
                                       {s.class_name}
                                     </td>
-                                    <td className="py-2.5 px-4 text-slate-400 font-mono">
-                                      {s.nis || '-'}
+                                    <td className="py-2.5 px-4 font-mono font-bold text-cyan-400">
+                                      <span className="bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded text-[11px]">
+                                        {s.nis || '-'}
+                                      </span>
                                     </td>
                                     <td className="py-2.5 px-4 text-center">
                                       <button
@@ -1945,9 +1955,29 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                           <Upload className="w-5 h-5 text-cyan-400" />
                           Impor Akun Murid
                         </h2>
-                        <p className="text-xs text-slate-400 mb-6 font-sans">
+                        <p className="text-xs text-slate-400 mb-4 font-sans">
                           Unggah daftar nama murid Anda dari Excel agar murid terdaftar dan dapat login ke aplikasi.
                         </p>
+
+                        {/* Target Class Selector */}
+                        <div className="mb-4 space-y-1 font-sans">
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            Target Kelas (Jika di Excel Kosong)
+                          </label>
+                          <select
+                            value={studentImportClass}
+                            onChange={(e) => setStudentImportClass(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none cursor-pointer focus:border-cyan-500 transition text-xs font-semibold"
+                          >
+                            {[
+                              'X MIPA 1', 'X MIPA 2', 'X IPS 1', 'X IPS 2',
+                              'XI MIPA 1', 'XI MIPA 2', 'XI IPS 1', 'XI IPS 2',
+                              'XII MIPA 1', 'XII MIPA 2', 'XII IPS 1', 'XII IPS 2',
+                            ].map(cls => (
+                              <option key={cls} value={cls} className="bg-slate-950 text-white">{cls}</option>
+                            ))}
+                          </select>
+                        </div>
 
                         <div className="border-2 border-dashed border-slate-800 hover:border-cyan-500/50 rounded-2xl p-6 flex flex-col items-center justify-center text-center transition relative bg-slate-950/40">
                           <input
@@ -1962,7 +1992,7 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                             {studentImportLoading ? 'Memproses data...' : 'Klik/seret Excel Siswa'}
                           </span>
                           <span className="text-[9px] text-slate-500 mt-1">
-                            Format kolom: Nama Siswa, Kelas, Nomor Absen, NIS
+                            Format kolom: Nama Siswa, Kode Unik, Kelas, Nomor Absen
                           </span>
                         </div>
 
@@ -2052,17 +2082,17 @@ CREATE POLICY "Akses Publik Kelola Student Results" ON student_results FOR ALL U
                             </div>
                           </div>
 
-                          {/* NIS */}
+                          {/* NIS / Kode Unik */}
                           <div>
                             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                              NIS (Nomor Induk Siswa - Opsional)
+                              Kode Unik / NIS (Dibuat otomatis jika kosong)
                             </label>
                             <input
                               type="text"
                               value={manualStudentNis}
                               onChange={(e) => setManualStudentNis(e.target.value)}
-                              placeholder="212210001"
-                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-indigo-500 transition placeholder:text-slate-800"
+                              placeholder="Contoh: EQ-8F2K9L atau 212210001"
+                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-indigo-500 transition placeholder:text-slate-800 font-mono"
                             />
                           </div>
 
