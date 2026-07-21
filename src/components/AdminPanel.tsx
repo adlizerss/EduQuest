@@ -2081,14 +2081,21 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                     <button type="submit" className="w-full bg-gradient-to-r from-amber-400 to-pink-500 text-slate-950 font-black py-2 rounded-xl text-xs uppercase">Simpan & Hubungkan</button>
                   </form>
 
-                  <div className="mt-6 pt-4 border-t border-purple-300/20">
+                  <div className="mt-6 pt-4 border-t border-purple-300/20 space-y-3">
                     <button onClick={async () => {
                       setIsSyncing(true);
                       const res = await syncLocalDataToSupabase();
                       setIsSyncing(false);
                       if (res.success) alert("Sinkronisasi berhasil!");
-                    }} disabled={isSyncing} className="w-full bg-purple-950 text-amber-300 border border-purple-300/40 py-2 rounded-xl text-xs font-bold">
-                      {isSyncing ? "Menyinkronkan..." : "⚡ Sinkronkan Data"}
+                    }} disabled={isSyncing} className="w-full bg-purple-950 text-amber-300 border border-purple-300/40 py-2.5 rounded-xl text-xs font-black transition cursor-pointer">
+                      {isSyncing ? "Menyinkronkan..." : "⚡ SINKRONKAN DATA"}
+                    </button>
+
+                    <button 
+                      onClick={handleResetToDefault}
+                      className="w-full bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white border border-red-500/40 py-2.5 rounded-xl text-xs font-black transition cursor-pointer uppercase tracking-wider"
+                    >
+                      🚨 KOSONGKAN SELURUH DATA (RESET)
                     </button>
                   </div>
                 </div>
