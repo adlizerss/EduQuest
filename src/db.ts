@@ -1,13 +1,317 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { QuizQuestion, StudentResult, StudentAccount, ClassAssignment } from './types';
 
-// Default SEED_QUESTIONS cleared to provide a clean slate for teachers
-const SEED_QUESTIONS: QuizQuestion[] = [];
+// 30 diagnostic assessment questions (Seni Rupa X, Informatika X, PKWU XI)
+const SEED_QUESTIONS: QuizQuestion[] = [
+  // === SENI RUPA (10 Soal - Kelas X) ===
+  {
+    question: "Unsur seni rupa paling dasar dari mana semua desain dimulai adalah...",
+    option_a: "Titik",
+    option_b: "Garis",
+    option_c: "Bidang",
+    option_d: "Warna",
+    correct_answer: "A",
+    type: "cognitive",
+    category: "Seni Rupa"
+  },
+  {
+    question: "Percampuran antara warna merah dan kuning dengan proporsi sama menghasilkan warna...",
+    option_a: "Hijau",
+    option_b: "Jingga/Oranye",
+    option_c: "Ungu",
+    option_d: "Cokelat",
+    correct_answer: "B",
+    type: "cognitive",
+    category: "Seni Rupa"
+  },
+  {
+    question: "Teknik menggambar menggunakan titik-titik untuk membentuk gradasi gelap terang disebut...",
+    option_a: "Arsir",
+    option_b: "Dussel",
+    option_c: "Pointilis",
+    option_d: "Siluet",
+    correct_answer: "C",
+    type: "cognitive",
+    category: "Seni Rupa"
+  },
+  {
+    question: "Prinsip seni rupa yang mengatur keseimbangan objek agar terlihat harmonis dinamakan...",
+    option_a: "Keseimbangan/Balance",
+    option_b: "Kesatuan",
+    option_c: "Kontras",
+    option_d: "Irama",
+    correct_answer: "A",
+    type: "cognitive",
+    category: "Seni Rupa"
+  },
+  {
+    question: "Karya seni rupa yang memiliki dimensi panjang, lebar, dan tinggi serta dapat dilihat dari segala arah disebut...",
+    option_a: "2 Dimensi",
+    option_b: "3 Dimensi",
+    option_c: "Mural",
+    option_d: "Lukisan",
+    correct_answer: "B",
+    type: "cognitive",
+    category: "Seni Rupa"
+  },
+  {
+    question: "Canting merupakan alat utama yang digunakan dalam proses pembuatan seni rupa...",
+    option_a: "Lukis",
+    option_b: "Batik Tulis",
+    option_c: "Patung",
+    option_d: "Keramik",
+    correct_answer: "B",
+    type: "cognitive",
+    category: "Seni Rupa"
+  },
+  {
+    question: "Ketika melihat pameran seni rupa, bagian apa yang paling membuatmu tertarik?",
+    option_a: "Konsep/ide di balik karya seni tersebut",
+    option_b: "Detail teknis pembuatan karya seni tersebut",
+    option_c: "Cara mempromosikan pameran tersebut agar ramai",
+    option_d: "Mengatur tata letak karya di galeri pameran",
+    correct_answer: "A",
+    type: "interest",
+    category: "Seni Rupa"
+  },
+  {
+    question: "Jika diminta membuat proyek seni kelompok, peran apa yang paling kamu inginkan?",
+    option_a: "Menentukan konsep & tema lukisan",
+    option_b: "Menggambar & mewarnai kanvas secara teknis",
+    option_c: "Menjelaskan makna lukisan kepada pengunjung",
+    option_d: "Memimpin koordinasi pembagian tugas kelompok",
+    correct_answer: "A",
+    type: "interest",
+    category: "Seni Rupa"
+  },
+  {
+    question: "Media seni rupa apa yang paling ingin kamu eksplorasi lebih dalam?",
+    option_a: "Seni digital & desain grafis konseptual",
+    option_b: "Melukis dengan cat minyak & kriya patung",
+    option_c: "Desain kemasan produk & media pemasaran visual",
+    option_d: "Kurator pameran seni & manajemen festival kreatif",
+    correct_answer: "A",
+    type: "interest",
+    category: "Seni Rupa"
+  },
+  {
+    question: "Bagaimana kamu menilai keberhasilan sebuah karya seni yang kamu buat?",
+    option_a: "Jika karya tersebut memiliki pesan sosial mendalam",
+    option_b: "Jika karya tersebut rapi secara teknik & estetika",
+    option_c: "Jika banyak orang menyukai & ingin membeli karya itu",
+    option_d: "Jika proses pembuatan karya berjalan sesuai rencana",
+    correct_answer: "A",
+    type: "interest",
+    category: "Seni Rupa"
+  },
+
+  // === INFORMATIKA (10 Soal - Kelas X) ===
+  {
+    question: "Urutan langkah-langkah logis yang sistematis untuk menyelesaikan suatu masalah disebut...",
+    option_a: "Algoritma",
+    option_b: "Pseudocode",
+    option_c: "Variabel",
+    option_d: "Diagram Alir",
+    correct_answer: "A",
+    type: "cognitive",
+    category: "Informatika"
+  },
+  {
+    question: "Jenis topologi jaringan yang menyerupai cincin di mana setiap komputer terhubung ke dua tetangganya adalah...",
+    option_a: "Star",
+    option_b: "Bus",
+    option_c: "Ring",
+    option_d: "Mesh",
+    correct_answer: "C",
+    type: "cognitive",
+    category: "Informatika"
+  },
+  {
+    question: "Otak dari komputer yang berfungsi mengatur semua instruksi dan pemrosesan data adalah...",
+    option_a: "RAM",
+    option_b: "CPU",
+    option_c: "Harddisk",
+    option_d: "Motherboard",
+    correct_answer: "B",
+    type: "cognitive",
+    category: "Informatika"
+  },
+  {
+    question: "Perangkat lunak yang berfungsi sebagai penghubung antara pengguna dengan perangkat keras komputer adalah...",
+    option_a: "Aplikasi",
+    option_b: "Sistem Operasi",
+    option_c: "Driver",
+    option_d: "Browser",
+    correct_answer: "B",
+    type: "cognitive",
+    category: "Informatika"
+  },
+  {
+    question: "Dalam konsep berpikir komputasional, memecah masalah besar menjadi bagian-bagian kecil disebut...",
+    option_a: "Dekomposisi",
+    option_b: "Pengenalan Pola",
+    option_c: "Abstraksi",
+    option_d: "Algoritma",
+    correct_answer: "A",
+    type: "cognitive",
+    category: "Informatika"
+  },
+  {
+    question: "Ekstensi file yang menunjukkan berkas dokumen Microsoft Excel adalah...",
+    option_a: ".docx",
+    option_b: ".xlsx",
+    option_c: ".pptx",
+    option_d: ".pdf",
+    correct_answer: "B",
+    type: "cognitive",
+    category: "Informatika"
+  },
+  {
+    question: "Bidang informatika mana yang paling ingin kamu pelajari secara mendalam?",
+    option_a: "Analisis data & kecerdasan buatan (AI)",
+    option_b: "Pemrograman web & pembuatan aplikasi/game",
+    option_c: "Pemasaran digital & optimasi mesin pencari",
+    option_d: "Keamanan jaringan & infrastruktur IT",
+    correct_answer: "A",
+    type: "interest",
+    category: "Informatika"
+  },
+  {
+    question: "Ketika menghadapi error pada program komputer, apa tindakan pertamamu?",
+    option_a: "Menganalisis alur logika kode untuk cari kesalahan",
+    option_b: "Menulis ulang baris kode secara teknis",
+    option_c: "Berdiskusi mencari bantuan di forum online",
+    option_d: "Mengatur jadwal pengerjaan agar selesai tepat waktu",
+    correct_answer: "A",
+    type: "interest",
+    category: "Informatika"
+  },
+  {
+    question: "Proyek teknologi informasi apa yang paling menarik bagi minatmu?",
+    option_a: "Merancang arsitektur sistem software kompleks",
+    option_b: "Menulis kode program & debugging aplikasi",
+    option_c: "Mendesain tampilan aplikasi (UI/UX) menarik",
+    option_d: "Megoordinasikan tim & memimpin proyek startup",
+    correct_answer: "A",
+    type: "interest",
+    category: "Informatika"
+  },
+  {
+    question: "Apa tujuan utamamu dalam mempelajari teknologi informatika?",
+    option_a: "Menemukan metode pemecahan masalah yang efisien",
+    option_b: "Menjadi ahli teknis programmer yang andal",
+    option_c: "Memanfaatkan produk digital untuk bisnis",
+    option_d: "Mengatur tata kelola implementasi digitalisasi",
+    correct_answer: "A",
+    type: "interest",
+    category: "Informatika"
+  },
+
+  // === PKWU (10 Soal - Kelas XI) ===
+  {
+    question: "Sikap dan perilaku seseorang yang memiliki kemampuan dalam menciptakan hal baru secara kreatif dan inovatif disebut...",
+    option_a: "Kewirausahaan",
+    option_b: "Manajemen",
+    option_c: "Pemasaran",
+    option_d: "Kepemimpinan",
+    correct_answer: "A",
+    type: "cognitive",
+    category: "PKWU"
+  },
+  {
+    question: "Analisis SWOT digunakan untuk memetakan kekuatan, kelemahan, peluang, dan ancaman. Huruf 'O' dalam SWOT singkatan dari...",
+    option_a: "Organization",
+    option_b: "Opportunity",
+    option_c: "Objective",
+    option_d: "Operational",
+    correct_answer: "B",
+    type: "cognitive",
+    category: "PKWU"
+  },
+  {
+    question: "Biaya yang jumlahnya tetap dan tidak bergantung pada volume produksi yang dihasilkan disebut...",
+    option_a: "Biaya Variabel",
+    option_b: "Biaya Tetap",
+    option_c: "Biaya Total",
+    option_d: "Biaya Rata-rata",
+    correct_answer: "B",
+    type: "cognitive",
+    category: "PKWU"
+  },
+  {
+    question: "Titik di mana pendapatan usaha sama dengan modal/biaya yang dikeluarkan sehingga tidak untung maupun rugi disebut...",
+    option_a: "Break Even Point (BEP)",
+    option_b: "Return on Investment (ROI)",
+    option_c: "Net Profit",
+    option_d: "Revenue",
+    correct_answer: "A",
+    type: "cognitive",
+    category: "PKWU"
+  },
+  {
+    question: "Metode promosi produk secara langsung ke konsumen tanpa perantara ritel disebut...",
+    option_a: "Penjualan Langsung",
+    option_b: "Iklan Media Massa",
+    option_c: "Pameran Dagang",
+    option_d: "Endorsement",
+    correct_answer: "A",
+    type: "cognitive",
+    category: "PKWU"
+  },
+  {
+    question: "Bahan kemasan produk kerajinan yang ramah lingkungan dan mudah terurai secara alami adalah...",
+    option_a: "Plastik mika",
+    option_b: "Styrofoam",
+    option_c: "Kertas karton/kardus",
+    option_d: "Kaleng alumunium",
+    correct_answer: "C",
+    type: "cognitive",
+    category: "PKWU"
+  },
+  {
+    question: "Dalam mendirikan usaha baru, tahap mana yang paling menantang & menarik bagimu?",
+    option_a: "Melakukan riset pasar & perencanaan bisnis",
+    option_b: "Membuat prototipe produk & memproduksi barang",
+    option_c: "Merancang strategi pemasaran & promosi penjualan",
+    option_d: "Mengatur alur kas keuangan & mengelola tim",
+    correct_answer: "A",
+    type: "interest",
+    category: "PKWU"
+  },
+  {
+    question: "Jika kamu menjadi bagian dari tim startup PKWU, posisi mana yang paling kamu inginkan?",
+    option_a: "Business Planner / Analis Strategi Usaha",
+    option_b: "Product Maker / Pembuat Produk Kerajinan/Jasa",
+    option_c: "Marketing & PR Officer / Pemasar Produk",
+    option_d: "Chief Executive Officer / Koordinator Tim",
+    correct_answer: "A",
+    type: "interest",
+    category: "PKWU"
+  },
+  {
+    question: "Kategori bisnis PKWU apa yang paling ingin kamu kembangkan?",
+    option_a: "Jasa konsultasi bisnis & investasi keuangan",
+    option_b: "Usaha kriya kerajinan tangan & kuliner kreatif",
+    option_c: "Agen pemasaran digital & agency periklanan",
+    option_d: "Event organizer & manajemen retail",
+    correct_answer: "A",
+    type: "interest",
+    category: "PKWU"
+  },
+  {
+    question: "Bagaimana caramu mengambil keputusan dalam menghadapi persaingan bisnis?",
+    option_a: "Menganalisis kelemahan kompetitor dari data pasar",
+    option_b: "Meningkatkan kualitas detail estetika produk",
+    option_c: "Membuat promo diskon besar & gencar beriklan",
+    option_d: "Mengatur ulang SOP kerja & koordinasi tim",
+    correct_answer: "A",
+    type: "interest",
+    category: "PKWU"
+  }
+];
 
 const DEFAULT_CLASSES = [
-  'X MIPA 1', 'X MIPA 2', 'X IPS 1', 'X IPS 2',
-  'XI MIPA 1', 'XI MIPA 2', 'XI IPS 1', 'XI IPS 2',
-  'XII MIPA 1', 'XII MIPA 2', 'XII IPS 1', 'XII IPS 2',
+  'X MIPA 1', 'X MIPA 2', 'XI MIPA 1', 'XI MIPA 2'
 ];
 
 const HARDCODED_SUPABASE_URL = "https://dvagyvlkshwpqvbcxwjx.supabase.co";
@@ -157,18 +461,30 @@ export async function getCurrentTeacherSession() {
 // Ensure local storage tables are initialized
 function initLocalStorageDB() {
   const localQuizzes = localStorage.getItem('eduquest_quizzes');
-  if (!localQuizzes) {
-    localStorage.setItem('eduquest_quizzes', JSON.stringify([]));
-  } else {
+  let isLegacy = false;
+  if (localQuizzes) {
     try {
-      const parsed: QuizQuestion[] = JSON.parse(localQuizzes);
-      const filtered = parsed.filter(q => !['Sains & Logika', 'Eksplorasi Karakter', 'Lingkungan & Alam'].includes(q.category || ''));
-      if (filtered.length !== parsed.length) {
-        localStorage.setItem('eduquest_quizzes', JSON.stringify(filtered));
+      const parsed = JSON.parse(localQuizzes);
+      if (parsed.length !== 30 || parsed.some((q: any) => q.category === 'Sains & Logika' || q.category === 'Eksplorasi Karakter' || q.category === 'Umum')) {
+        isLegacy = true;
       }
     } catch (e) {
-      console.error("Error purging legacy seed categories", e);
+      isLegacy = true;
     }
+  }
+
+  if (!localQuizzes || isLegacy) {
+    localStorage.setItem('eduquest_quizzes', JSON.stringify(SEED_QUESTIONS));
+    localStorage.setItem('eduquest_custom_packages', JSON.stringify(['Seni Rupa', 'Informatika', 'PKWU']));
+    localStorage.setItem('eduquest_class_list', JSON.stringify(DEFAULT_CLASSES));
+    
+    const initialAssignments: ClassAssignment[] = [
+      { class_name: 'X MIPA 1', category: 'Seni Rupa', assigned_at: new Date().toISOString() },
+      { class_name: 'X MIPA 2', category: 'Informatika', assigned_at: new Date().toISOString() },
+      { class_name: 'XI MIPA 1', category: 'PKWU', assigned_at: new Date().toISOString() },
+      { class_name: 'XI MIPA 2', category: 'PKWU', assigned_at: new Date().toISOString() }
+    ];
+    localStorage.setItem('eduquest_class_assignments', JSON.stringify(initialAssignments));
   }
 
   if (!localStorage.getItem('eduquest_student_results')) {
@@ -176,12 +492,6 @@ function initLocalStorageDB() {
   }
   if (!localStorage.getItem('eduquest_students')) {
     localStorage.setItem('eduquest_students', JSON.stringify([]));
-  }
-  if (!localStorage.getItem('eduquest_class_assignments')) {
-    localStorage.setItem('eduquest_class_assignments', JSON.stringify([]));
-  }
-  if (!localStorage.getItem('eduquest_class_list')) {
-    localStorage.setItem('eduquest_class_list', JSON.stringify(DEFAULT_CLASSES));
   }
 }
 
