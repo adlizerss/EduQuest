@@ -2092,6 +2092,20 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                     </button>
 
                     <button 
+                      onClick={() => {
+                        localStorage.removeItem('eduquest_seeded');
+                        localStorage.removeItem('eduquest_quizzes');
+                        localStorage.removeItem('eduquest_class_list');
+                        localStorage.removeItem('eduquest_class_assignments');
+                        localStorage.removeItem('eduquest_custom_packages');
+                        window.location.reload();
+                      }}
+                      className="w-full bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black py-2.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer transition hover:from-emerald-300 hover:to-teal-400"
+                    >
+                      🌱 SEED DATA AWAL DIAGNOSTIK
+                    </button>
+
+                    <button 
                       onClick={handleResetToDefault}
                       className="w-full bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white border border-red-500/40 py-2.5 rounded-xl text-xs font-black transition cursor-pointer uppercase tracking-wider"
                     >
