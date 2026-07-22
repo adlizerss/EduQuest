@@ -1977,44 +1977,105 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                 className="grid grid-cols-1 lg:grid-cols-12 gap-6"
               >
                 <div className="lg:col-span-8 bg-gradient-to-br from-purple-900/90 via-violet-950/90 to-slate-950/90 border-2 border-purple-400/40 rounded-3xl p-6 shadow-2xl text-white font-sans">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-md font-bold">Daftar Akun Murid Terdaftar ({students.length})</h3>
-                    <div className="flex gap-2">
-                      <input type="text" placeholder="Cari..." value={studentsSearch} onChange={(e) => setStudentsSearch(e.target.value)} className="bg-purple-950 border border-purple-300/40 text-xs px-2.5 py-1 rounded-xl text-white" />
-                      {selectedStudents.size > 0 && (
-                        <button onClick={handleBulkDeleteStudents} className="bg-rose-900 text-xs px-2.5 py-1 rounded-xl font-bold">Hapus ({selectedStudents.size})</button>
-                      )}
-                    </div>
-                  </div>
+                  {(() => {
+                    const filteredList = students.filter(s => {
+                      const matchSearch = s.student_name.toLowerCase().includes(studentsSearch.toLowerCase()) || 
+                                          (s.nis && s.nis.toLowerCase().includes(studentsSearch.toLowerCase()));
+                      const matchClass = studentsClassFilter === 'All' || s.class_name === studentsClassFilter;
+                      return matchSearch && matchClass;
+                    });
+                    
+                    return (
+                      <>
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+                          <h3 className="text-md font-bold">Daftar Akun Murid Terdaftar ({filteredList.length})</h3>
+                          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                            <select
+                              value={studentsClassFilter}
+                              onChange={(e) => setStudentsClassFilter(e.target.value)}
+                              className="bg-purple-950 border border-purple-300/40 text-xs px-2.5 py-1.5 rounded-xl text-amber-300 font-bold cursor-pointer transition outline-none"
+                            >
+                              <option value="All" className="bg-purple-950 text-white">Semua Kelas</option>
+                              {classList.map(cls => (
+                                <option key={cls} value={cls} className="bg-purple-950 text-white">{cls}</option>
+                              ))}
+                            </select>
+                            <input 
+                              type="text" 
+                              placeholder="Cari nama / NIS..." 
+                              value={studentsSearch} 
+                              onChange={(e) => setStudentsSearch(e.target.value)} 
+                              className="bg-purple-950 border border-purple-300/40 text-xs px-2.5 py-1.5 rounded-xl text-white outline-none flex-1 sm:flex-initial" 
+                            />
+                            {selectedStudents.size > 0 && (
+                              <button 
+                                onClick={handleBulkDeleteStudents} 
+                                className="bg-rose-900 text-xs px-2.5 py-1.5 rounded-xl font-bold text-white shadow transition cursor-pointer"
+                              >
+                                Hapus ({selectedStudents.size})
+                              </button>
+                            )}
+                          </div>
+                        </div>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="bg-purple-950 text-[10px] text-amber-300 uppercase">
-                          <th className="py-2 px-3 text-center"><input type="checkbox" onChange={() => handleSelectAllStudentsToggle(students)} className="cursor-pointer" /></th>
-                          <th className="py-2 px-3">Absen</th>
-                          <th className="py-2 px-3">Nama</th>
-                          <th className="py-2 px-3">Kelas</th>
-                          <th className="py-2 px-3">Kode NIS</th>
-                          <th className="py-2 px-3 text-center">Aksi</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-purple-300/20 text-xs">
-                        {students.filter(s => s.student_name.toLowerCase().includes(studentsSearch.toLowerCase())).map((s, idx) => (
-                          <tr key={s.id || idx}>
-                            <td className="py-2 px-3 text-center"><input type="checkbox" checked={selectedStudents.has(s.id!)} onChange={() => handleSelectStudentToggle(s.id!)} className="cursor-pointer" /></td>
-                            <td className="py-2 px-3">{s.attendance_num}</td>
-                            <td className="py-2 px-3 font-bold text-white">{s.student_name}</td>
-                            <td className="py-2 px-3">{s.class_name}</td>
-                            <td className="py-2 px-3 text-amber-300 font-mono">{s.nis}</td>
-                            <td className="py-2 px-3 text-center">
-                              <button onClick={() => handleDeleteStudent(s.id!)} className="text-rose-300 hover:text-white p-1 hover:bg-rose-900/60 rounded transition"><Trash2 className="w-3.5 h-3.5" /></button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left">
+                            <thead>
+                              <tr className="bg-purple-950 text-[10px] text-amber-300 uppercase">
+                                <th className="py-2 px-3 w-10 text-center">
+                                  <input 
+                                    type="checkbox" 
+                                    checked={filteredList.length > 0 && filteredList.every(s => selectedStudents.has(s.id!))}
+                                    onChange={() => handleSelectAllStudentsToggle(filteredList)} 
+                                    className="cursor-pointer" 
+                                  />
+                                </th>
+                                <th className="py-2 px-3">Absen</th>
+                                <th className="py-2 px-3">Nama</th>
+                                <th className="py-2 px-3">Kelas</th>
+                                <th className="py-2 px-3">Kode NIS</th>
+                                <th className="py-2 px-3 text-center">Aksi</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-purple-300/20 text-xs">
+                              {filteredList.length === 0 ? (
+                                <tr>
+                                  <td colSpan={6} className="py-8 text-center text-purple-300 italic">
+                                    Tidak ada data murid yang sesuai filter.
+                                  </td>
+                                </tr>
+                              ) : (
+                                filteredList.map((s, idx) => (
+                                  <tr key={s.id || idx} className="hover:bg-purple-900/40 transition">
+                                    <td className="py-2 px-3 text-center">
+                                      <input 
+                                        type="checkbox" 
+                                        checked={selectedStudents.has(s.id!)} 
+                                        onChange={() => handleSelectStudentToggle(s.id!)} 
+                                        className="cursor-pointer" 
+                                      />
+                                    </td>
+                                    <td className="py-2 px-3">{s.attendance_num}</td>
+                                    <td className="py-2 px-3 font-bold text-white">{s.student_name}</td>
+                                    <td className="py-2 px-3">{s.class_name}</td>
+                                    <td className="py-2 px-3 text-amber-300 font-mono">{s.nis}</td>
+                                    <td className="py-2 px-3 text-center">
+                                      <button 
+                                        onClick={() => handleDeleteStudent(s.id!)} 
+                                        className="text-rose-300 hover:text-white p-1 hover:bg-rose-900/60 rounded transition cursor-pointer"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 <div className="lg:col-span-4 space-y-6">
