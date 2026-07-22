@@ -488,7 +488,23 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
 
   const loadTrackerResults = async () => {
     const data = await fetchStudentResults();
-    setResults(data);
+    const cleaned = data.map(r => {
+      if (r.class_name && r.class_name.includes(' (Absen ')) {
+        const parts = r.class_name.split(' (Absen ');
+        const cleanClass = parts[0].trim();
+        const absenPart = parts[1].replace(')', '').trim();
+        const cleanStudentName = r.student_name.includes(' (Absen ') 
+          ? r.student_name 
+          : `${r.student_name} (Absen ${absenPart})`;
+        return {
+          ...r,
+          student_name: cleanStudentName,
+          class_name: cleanClass
+        };
+      }
+      return r;
+    });
+    setResults(cleaned);
   };
 
   const loadStudents = async () => {
