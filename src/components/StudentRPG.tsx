@@ -169,8 +169,8 @@ export default function QuizPlayground({ studentName, attendanceNum, className, 
     const finalRoleStr = `${dominantRole} | ${cognitiveLevel}`;
     
     const finalResult: StudentResult = {
-      student_name: studentName,
-      class_name: `${className} (Absen ${attendanceNum})`,
+      student_name: `${studentName} (Absen ${attendanceNum})`,
+      class_name: className,
       score: score,
       remaining_hp: 100,
       role: finalRoleStr,

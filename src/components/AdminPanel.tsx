@@ -911,7 +911,10 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
   });
 
   // Unique classes for filtering
-  const classes = Array.from(new Set(results.map(r => r.class_name)));
+  const classes = Array.from(new Set([
+    ...classList,
+    ...results.map(r => r.class_name)
+  ])).filter(Boolean).sort();
 
   // Combine custom packages and existing categories in allQuizzes
   const allCategories = Array.from(new Set([
@@ -1996,7 +1999,10 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                               className="bg-purple-950 border border-purple-300/40 text-xs px-2.5 py-1.5 rounded-xl text-amber-300 font-bold cursor-pointer transition outline-none"
                             >
                               <option value="All" className="bg-purple-950 text-white">Semua Kelas</option>
-                              {classList.map(cls => (
+                              {Array.from(new Set([
+                                ...classList,
+                                ...students.map(s => s.class_name)
+                              ])).filter(Boolean).sort().map(cls => (
                                 <option key={cls} value={cls} className="bg-purple-950 text-white">{cls}</option>
                               ))}
                             </select>
