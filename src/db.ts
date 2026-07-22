@@ -603,7 +603,7 @@ export async function syncLocalDataToSupabase(): Promise<{
       }
 
       const { data: updatedSbClasses } = await supabase.from('classes').select('class_name').order('class_name', { ascending: true });
-      if (updatedSbClasses && updatedSbClasses.length > 0) {
+      if (updatedSbClasses) {
         localStorage.setItem('eduquest_class_list', JSON.stringify(updatedSbClasses.map(c => c.class_name)));
       }
       clearDeletedList('classes');
@@ -778,7 +778,7 @@ export async function syncLocalDataToSupabase(): Promise<{
     }
 
     const { data: updatedSbAssignments } = await supabase.from('class_assignments').select('*');
-    if (updatedSbAssignments && updatedSbAssignments.length > 0) {
+    if (updatedSbAssignments) {
       localStorage.setItem('eduquest_class_assignments', JSON.stringify(updatedSbAssignments));
     }
 
@@ -806,7 +806,7 @@ export async function fetchClasses(): Promise<string[]> {
         .select('class_name')
         .order('class_name', { ascending: true });
       if (error) throw error;
-      if (data && data.length > 0) {
+      if (data) {
         const classNames = data.map(c => c.class_name);
         localStorage.setItem('eduquest_class_list', JSON.stringify(classNames));
         return classNames;
