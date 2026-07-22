@@ -5,7 +5,7 @@ import WelcomeScreen from './components/WelcomeScreen';
 import QuizPlayground from './components/StudentRPG';
 import AdminPanel from './components/AdminPanel';
 import sound from './utils/audio';
-
+// EduQuest main app root entry
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'welcome' | 'game' | 'admin'>('welcome');
   const [allQuizzes, setAllQuizzes] = useState<QuizQuestion[]>([]);
