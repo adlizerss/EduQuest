@@ -40,6 +40,7 @@ export default function AdminPanel({ onBack, allQuizzes, onRefreshQuizzes, assig
   
   // Dashboard Pages: 'tracker' | 'assignments' | 'bank' | 'builder' | 'students' | 'classes' | 'settings'
   const [activePage, setActivePage] = useState<'tracker' | 'assignments' | 'bank' | 'builder' | 'students' | 'classes' | 'settings'>('tracker');
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [selectedFolderDetail, setSelectedFolderDetail] = useState<string | null>(null);
   const [editingQuiz, setEditingQuiz] = useState<QuizQuestion | null>(null);
   const [editingClass, setEditingClass] = useState<{ oldName: string; newName: string } | null>(null);
@@ -1162,8 +1163,16 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
       <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-purple-600/15 rounded-full blur-[130px] -z-10" />
       <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-violet-600/15 rounded-full blur-[140px] -z-10" />
 
+      {/* Sidebar Backdrop Overlay on Mobile */}
+      {isSidebarOpen && (
+        <div 
+          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 md:hidden transition-all duration-300"
+        />
+      )}
+
       {/* FULL-HEIGHT LEFT SIDEBAR */}
-      <aside className="w-64 sm:w-72 shrink-0 border-r-2 border-purple-400/40 bg-gradient-to-b from-purple-950 via-violet-950 to-slate-950 flex flex-col justify-between p-6 z-20 text-white shadow-2xl">
+      <aside className={`fixed inset-y-0 left-0 w-64 sm:w-72 border-r-2 border-purple-400/40 bg-gradient-to-b from-purple-950 via-violet-950 to-slate-950 flex flex-col justify-between p-6 z-30 text-white shadow-2xl transition-transform duration-300 md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="space-y-6">
           {/* Logo & Header Info */}
           <div className="flex items-center gap-3 border-b border-purple-300/20 pb-4">
@@ -1184,7 +1193,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
             
             {/* 1. Live Tracker */}
             <button
-              onClick={() => { sound.playClick(); setActivePage('tracker'); setSelectedFolderDetail(null); }}
+              onClick={() => { sound.playClick(); setActivePage('tracker'); setSelectedFolderDetail(null); setIsSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer ${
                 activePage === 'tracker' 
                   ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
@@ -1197,7 +1206,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
 
             {/* 2. Posting Ujian */}
             <button
-              onClick={() => { sound.playClick(); setActivePage('assignments'); setSelectedFolderDetail(null); }}
+              onClick={() => { sound.playClick(); setActivePage('assignments'); setSelectedFolderDetail(null); setIsSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer ${
                 activePage === 'assignments' 
                   ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
@@ -1210,7 +1219,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
 
             {/* 3. Bank Kuis */}
             <button
-              onClick={() => { sound.playClick(); setActivePage('bank'); setSelectedFolderDetail(null); }}
+              onClick={() => { sound.playClick(); setActivePage('bank'); setSelectedFolderDetail(null); setIsSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer ${
                 activePage === 'bank' 
                   ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
@@ -1230,7 +1239,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
 
             {/* 4. Buat Kuis */}
             <button
-              onClick={() => { sound.playClick(); setActivePage('builder'); setSelectedFolderDetail(null); }}
+              onClick={() => { sound.playClick(); setActivePage('builder'); setSelectedFolderDetail(null); setIsSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer ${
                 activePage === 'builder' 
                   ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
@@ -1243,7 +1252,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
 
             {/* 5. Daftar Murid */}
             <button
-              onClick={() => { sound.playClick(); setActivePage('students'); setSelectedFolderDetail(null); }}
+              onClick={() => { sound.playClick(); setActivePage('students'); setSelectedFolderDetail(null); setIsSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer ${
                 activePage === 'students' 
                   ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
@@ -1263,7 +1272,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
 
             {/* 6. Kelola Kelas */}
             <button
-              onClick={() => { sound.playClick(); setActivePage('classes'); setSelectedFolderDetail(null); }}
+              onClick={() => { sound.playClick(); setActivePage('classes'); setSelectedFolderDetail(null); setIsSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer ${
                 activePage === 'classes' 
                   ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
@@ -1283,7 +1292,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
 
             {/* 7. Pengaturan Supabase */}
             <button
-              onClick={() => { sound.playClick(); setActivePage('settings'); setSelectedFolderDetail(null); }}
+              onClick={() => { sound.playClick(); setActivePage('settings'); setSelectedFolderDetail(null); setIsSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-3 transition cursor-pointer ${
                 activePage === 'settings' 
                   ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 shadow-lg' 
@@ -1299,13 +1308,14 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
         {/* Sidebar Footer Buttons */}
         <div className="space-y-2 font-display">
           <button 
-            onClick={() => { sound.playClick(); onBack(); }}
+            onClick={() => { sound.playClick(); onBack(); setIsSidebarOpen(false); }}
             className="w-full bg-purple-900/40 hover:bg-purple-800 text-purple-200 hover:text-white border border-purple-300/30 py-2.5 rounded-2xl text-xs font-extrabold flex items-center justify-center gap-2 transition cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" /> Kembali
           </button>
           <button 
             onClick={() => { 
+              setIsSidebarOpen(false);
               showConfirm(
                 "Keluar dari Sesi?",
                 "Apakah Anda yakin ingin keluar (Log Out) dari dashboard admin?",
@@ -1324,28 +1334,40 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
       </aside>
 
       {/* MAIN VIEWPORT (RIGHT SIDE) */}
-      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto z-10">
+      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto z-10 w-full">
         
         {/* Active Page Header bar */}
-        <header className="bg-gradient-to-r from-purple-900/40 via-violet-950/40 to-slate-950/40 border-b border-purple-300/20 px-6 py-4 flex items-center justify-between shadow-md">
-          <div>
-            <h2 className="text-md font-extrabold text-white font-display uppercase tracking-widest">
-              {activePage === 'tracker' && 'Live Student Tracker'}
-              {activePage === 'assignments' && 'Posting Penugasan Ujian'}
-              {activePage === 'bank' && (selectedFolderDetail ? `Bank Kuis > Folder: ${selectedFolderDetail}` : 'Bank Kuis')}
-              {activePage === 'builder' && 'Buat Kuis Baru'}
-              {activePage === 'students' && 'Manajemen Akun Murid'}
-              {activePage === 'classes' && 'Manajemen Daftar Kelas'}
-              {activePage === 'settings' && 'Pengaturan Supabase Cloud'}
-            </h2>
-            <p className="text-xs text-purple-300 font-sans mt-0.5">
-              EduQuest • Panel Guru Terintegrasi
-            </p>
+        <header className="bg-gradient-to-r from-purple-900/40 via-violet-950/40 to-slate-950/40 border-b border-purple-300/20 px-4 sm:px-6 py-4 flex items-center justify-between shadow-md gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Hamburger Button for Mobile */}
+            <button 
+              onClick={() => { sound.playClick(); setIsSidebarOpen(!isSidebarOpen); }}
+              className="p-2 md:hidden bg-purple-950/85 hover:bg-purple-900 text-amber-300 border border-purple-300/45 rounded-xl transition cursor-pointer shrink-0"
+              aria-label="Toggle Navigation Sidebar"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={isSidebarOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+              </svg>
+            </button>
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-md font-extrabold text-white font-display uppercase tracking-widest truncate">
+                {activePage === 'tracker' && 'Live Student Tracker'}
+                {activePage === 'assignments' && 'Posting Penugasan Ujian'}
+                {activePage === 'bank' && (selectedFolderDetail ? `Bank Kuis > ${selectedFolderDetail}` : 'Bank Kuis')}
+                {activePage === 'builder' && 'Buat Kuis Baru'}
+                {activePage === 'students' && 'Manajemen Akun Murid'}
+                {activePage === 'classes' && 'Manajemen Daftar Kelas'}
+                {activePage === 'settings' && 'Pengaturan Supabase Cloud'}
+              </h2>
+              <p className="text-[10px] sm:text-xs text-purple-300 font-sans mt-0.5 truncate">
+                EduQuest • Panel Guru Terintegrasi
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className={`w-2.5 h-2.5 rounded-full ${isSbConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-            <span className="text-[10px] text-purple-200 font-bold uppercase tracking-wider font-mono">
-              {isSbConnected ? 'Supabase Sync Active' : 'Offline Sandbox'}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full ${isSbConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+            <span className="text-[9px] sm:text-[10px] text-purple-200 font-bold uppercase tracking-wider font-mono">
+              {isSbConnected ? 'Supabase Sync' : 'Offline'}
             </span>
           </div>
         </header>
@@ -2126,7 +2148,7 @@ CREATE POLICY "Akses Publik Assignments" ON class_assignments FOR ALL USING (tru
                 onRefreshQuizzes();
               }} className="space-y-4">
                 <textarea value={editingQuiz.question} onChange={(e) => setEditingQuiz({ ...editingQuiz, question: e.target.value })} className="w-full bg-purple-950 border rounded-xl p-2 text-xs" />
-                <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <input type="text" value={editingQuiz.option_a} onChange={(e) => setEditingQuiz({ ...editingQuiz, option_a: e.target.value })} className="bg-purple-950 border rounded p-2" />
                   <input type="text" value={editingQuiz.option_b} onChange={(e) => setEditingQuiz({ ...editingQuiz, option_b: e.target.value })} className="bg-purple-950 border rounded p-2" />
                   <input type="text" value={editingQuiz.option_c} onChange={(e) => setEditingQuiz({ ...editingQuiz, option_c: e.target.value })} className="bg-purple-950 border rounded p-2" />

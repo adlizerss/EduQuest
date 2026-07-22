@@ -128,7 +128,7 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
                 {foundStudent.nis}
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div>
                 <span className="text-purple-300 block text-xs uppercase font-extrabold">Nama Lengkap</span>
                 <span className="font-black text-white text-base truncate block">{foundStudent.student_name}</span>

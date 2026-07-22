@@ -434,17 +434,19 @@ export default function QuizPlayground({ studentName, attendanceNum, className, 
                     whileHover={isAnswered ? {} : { scale: 1.015, translateY: -1 }}
                     whileTap={isAnswered ? {} : { scale: 0.985 }}
                     onClick={() => handleOptionClick(opt)}
-                    className={`w-full p-4 sm:p-5 rounded-2xl text-left text-base sm:text-lg md:text-xl font-extrabold transition-all duration-150 flex items-center justify-between gap-3 sm:gap-4 ${
+                    className={`w-full p-4 sm:p-5 rounded-2xl text-left text-base sm:text-lg md:text-xl font-extrabold transition-all duration-150 flex items-start justify-between gap-3 sm:gap-4 ${
                       isAnswered ? '' : 'cursor-pointer'
                     } ${buttonStyle}`}
                   >
-                    <span className="leading-relaxed flex items-center gap-3.5">
+                    <span className="leading-relaxed flex items-start gap-3.5">
                       <span className="w-9 h-9 rounded-xl bg-purple-900/90 border border-purple-300/40 text-amber-300 flex items-center justify-center font-black text-sm shrink-0 font-display shadow-inner">
                         {opt}
                       </span>
-                      {optionText}
+                      <span className="pt-0.5">{optionText}</span>
                     </span>
-                    {iconFeedback}
+                    <div className="shrink-0 pt-1">
+                      {iconFeedback}
+                    </div>
                   </motion.button>
                 );
               })}
