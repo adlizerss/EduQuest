@@ -881,7 +881,7 @@ export async function fetchQuizzes(): Promise<QuizQuestion[]> {
         .select('*')
         .order('id', { ascending: true });
       if (error) throw error;
-      if (data && data.length > 0) {
+      if (data) {
         const quizzes = (data as QuizQuestion[]).map(q => ({
           ...q,
           category: q.category || 'Umum'
@@ -967,7 +967,7 @@ export async function fetchStudentResults(): Promise<StudentResult[]> {
         .select('*')
         .order('id', { ascending: false });
       if (error) throw error;
-      if (data && data.length > 0) {
+      if (data) {
         localStorage.setItem('eduquest_student_results', JSON.stringify(data));
         return data as StudentResult[];
       }
@@ -1259,7 +1259,7 @@ export async function fetchStudents(): Promise<StudentAccount[]> {
         .select('*')
         .order('student_name', { ascending: true });
       if (error) throw error;
-      if (data && data.length > 0) {
+      if (data) {
         localStorage.setItem('eduquest_students', JSON.stringify(data));
         return data as StudentAccount[];
       }
@@ -1329,7 +1329,7 @@ export async function fetchClassAssignments(): Promise<ClassAssignment[]> {
         .from('class_assignments')
         .select('*');
       if (error) throw error;
-      if (data && data.length > 0) {
+      if (data) {
         localStorage.setItem('eduquest_class_assignments', JSON.stringify(data));
         return data as ClassAssignment[];
       }
