@@ -265,7 +265,7 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
             </h1>
             
             <p className="text-slate-300 text-base sm:text-lg md:text-xl font-medium leading-relaxed max-w-2xl">
-              Platform kuis interaktif berkecepatan tinggi. Jawab soal presisi 25 detik, kumpulkan poin bonus maksimal, dan jadilah yang terbaik di kelasmu!
+              Platform kuis interaktif. Jawab soal presisi 1 menit per soal, kumpulkan poin bonus maksimal, dan jadilah yang terbaik di kelasmu!
             </p>
           </motion.div>
  
@@ -287,8 +287,8 @@ export default function WelcomeScreen({ onStartGame, onGoToAdmin, quizzes, stude
                 ⏱️
               </div>
               <div>
-                <h3 className="text-xs sm:text-sm font-extrabold text-white uppercase tracking-wider font-display">Timer 25 Detik</h3>
-                <p className="text-xs text-blue-100 mt-1 leading-snug">Setiap soal berdurasi 25 detik. Berpikir cepat dan tentukan pilihanmu!</p>
+                <h3 className="text-xs sm:text-sm font-extrabold text-white uppercase tracking-wider font-display">Timer 1 Menit</h3>
+                <p className="text-xs text-blue-100 mt-1 leading-snug">Setiap soal berdurasi 1 menit. Berpikir jernih dan tentukan pilihanmu!</p>
               </div>
             </motion.div>
  

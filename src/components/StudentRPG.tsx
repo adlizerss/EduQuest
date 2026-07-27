@@ -21,7 +21,7 @@ export default function QuizPlayground({ studentName, attendanceNum, className, 
   const [score, setScore] = useState<number>(0);
   const [correctCount, setCorrectCount] = useState<number>(0);
   const [currentIdx, setCurrentIdx] = useState<number>(0);
-  const [timeLeft, setTimeLeft] = useState<number>(25);
+  const [timeLeft, setTimeLeft] = useState<number>(60);
   
   // Interaction State
   const [selectedAnswer, setSelectedAnswer] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
@@ -55,11 +55,11 @@ export default function QuizPlayground({ studentName, attendanceNum, className, 
     showCombatEvent("⏰ WAKTU HABIS! (+0 Poin)", "text-amber-400 font-extrabold");
   };
 
-  // Countdown Timer Effect (25 seconds per question)
+  // Countdown Timer Effect (60 seconds per question)
   useEffect(() => {
     if (isAnswered || isGameOver) return;
     
-    setTimeLeft(25);
+    setTimeLeft(60);
     
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -342,15 +342,15 @@ export default function QuizPlayground({ studentName, attendanceNum, className, 
                 </span>
               </div>
 
-              {/* 25-Second Countdown Timer Display */}
+              {/* 60-Second Countdown Timer Display */}
               {!isAnswered ? (
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-amber-300" />
                   <span className="text-[10px] font-black text-purple-200 uppercase tracking-widest font-mono">WAKTU:</span>
                   <span className={`font-black font-display text-xs sm:text-sm px-3 py-1 rounded-lg border transition-all duration-150 flex items-center gap-1 ${
-                    timeLeft > 15 
+                    timeLeft > 30 
                       ? 'bg-emerald-500/30 text-emerald-200 border-emerald-400/50' 
-                      : timeLeft > 7 
+                      : timeLeft > 15 
                       ? 'bg-amber-500/30 text-amber-200 border-amber-400/50 animate-pulse' 
                       : 'bg-rose-500/30 text-rose-200 border-rose-400/50 font-black'
                   }`}>
@@ -369,13 +369,13 @@ export default function QuizPlayground({ studentName, attendanceNum, className, 
               <div className="w-full bg-purple-950/90 h-2.5 border border-purple-400/30 rounded-full overflow-hidden relative mb-6 shadow-inner">
                 <div 
                   className={`h-full rounded-full transition-all duration-1000 ${
-                    timeLeft > 15 
+                    timeLeft > 30 
                       ? 'bg-gradient-to-r from-purple-400 via-pink-400 to-emerald-400' 
-                      : timeLeft > 7 
+                      : timeLeft > 15 
                       ? 'bg-gradient-to-r from-amber-400 to-orange-400 animate-pulse' 
                       : 'bg-gradient-to-r from-rose-600 to-rose-400 animate-pulse'
                   }`}
-                  style={{ width: `${(timeLeft / 25) * 100}%` }}
+                  style={{ width: `${(timeLeft / 60) * 100}%` }}
                 />
               </div>
             )}
@@ -492,16 +492,16 @@ export default function QuizPlayground({ studentName, attendanceNum, className, 
               </div>
               <ul className="text-xs text-purple-100 space-y-2 font-medium">
                 <li className="flex items-center justify-between">
-                  <span>⏱️ Jawab detik 25:</span>
-                  <span className="font-bold text-emerald-300 font-display">300 Poin</span>
+                  <span>⏱️ Jawab detik 60:</span>
+                  <span className="font-bold text-emerald-300 font-display">650 Poin</span>
                 </li>
                 <li className="flex items-center justify-between">
-                  <span>⏱️ Jawab detik 15:</span>
-                  <span className="font-bold text-amber-300 font-display">200 Poin</span>
+                  <span>⏱️ Jawab detik 30:</span>
+                  <span className="font-bold text-amber-300 font-display">350 Poin</span>
                 </li>
                 <li className="flex items-center justify-between">
-                  <span>⏱️ Jawab detik 5:</span>
-                  <span className="font-bold text-pink-300 font-display">100 Poin</span>
+                  <span>⏱️ Jawab detik 10:</span>
+                  <span className="font-bold text-pink-300 font-display">150 Poin</span>
                 </li>
                 <li className="flex items-center justify-between">
                   <span>❌ Salah / Timeout:</span>
